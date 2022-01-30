@@ -2,6 +2,7 @@ import logging
 import typing
 
 import h5py
+import numpy as np
 import tensorflow as tf
 
 from znh5md.core.generators import BatchGenerator
@@ -18,21 +19,28 @@ class H5MDGroup:
     def __repr__(self):
         return f"H5MD Group <{self._group}>"
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> np.ndarray:
+        """Read the H5MD File
+
+        This is the only method to load data from the file
+        """
         with h5py.File(self._file) as f:
             return f[self._group][item]
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Get the length of the H5MD data"""
         with h5py.File(self._file) as f:
             return len(f[self._group])
 
     @property
-    def shape(self):
+    def shape(self) -> tuple:
+        """Get the shape of the H5MD data"""
         with h5py.File(self._file) as f:
             return f[self._group].shape
 
     @property
     def dtype(self):
+        """Get the dtype of the H5MD data"""
         with h5py.File(self._file) as f:
             return f[self._group].dtype
 
@@ -63,7 +71,9 @@ class H5MDGroup:
             gathered from the file in sizes of 1 along the dimension to iterate over.
             With prefetching it will load the first #prefetch elements. This will
             only affect performance and memory but not the shape of the generator.
-            Prefetch defaults to the batch_size.
+            Prefetch defaults to the batch_size. If axis !=0 for prefetching to work
+            the dataset has to be transposed twice. Therefore, under certain circumstances
+            it could be slower.
         batch_size: int
             The size of the batch to return. For axis=0 this would be (batch, n_atoms, 3)
             where batch is over the dimension of configurations.
@@ -161,6 +171,7 @@ class H5MDProperty:
         return len(self.value)
 
     def get_dataset(self, **kwargs) -> tf.data.Dataset:
+        """Combined dataset from step/time/value"""
         return tf.data.Dataset.zip(
             {
                 "step": self.step.get_dataset(**kwargs),
@@ -179,12 +190,15 @@ class H5MDProperty:
 
     @property
     def step(self) -> H5MDGroup:
+        """Property to access the step data of the selected group"""
         return H5MDGroup(self._database, self._group + "/step")
 
     @property
     def time(self) -> H5MDGroup:
+        """Property to access the time data of the selected group"""
         return H5MDGroup(self._database, self._group + "/time")
 
     @property
     def value(self) -> H5MDGroup:
+        """Property to access the value of the selected group"""
         return H5MDGroup(self._database, self._group + "/value")

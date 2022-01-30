@@ -1,4 +1,4 @@
-name: Check black coding style
+name: Check coding style
 
 on:
   push:

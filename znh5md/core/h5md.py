@@ -39,8 +39,8 @@ class H5MDGroup:
     def get_dataset(
         self,
         axis: typing.Union[typing.List, int] = 0,
-        selection=None,
-        loop_indices=None,
+        selection: list = None,
+        loop_indices: list = None,
         prefetch: int = None,
         batch_size: int = 1,
     ) -> tf.data.Dataset:
@@ -76,6 +76,15 @@ class H5MDGroup:
             (n_configurations, n_atoms, 3) for most values, e.g. positions/value
             or shape (n_configurations) for time / step
         """
+        if selection is not None:
+            if not (isinstance(selection, list) or isinstance(selection, slice)):
+                raise ValueError(f"Selection must be list but found {type(selection)}")
+        if loop_indices is not None:
+            if not isinstance(loop_indices, list):
+                raise ValueError(
+                    f"Loop indices must be list but found {type(loop_indices)}"
+                )
+
         if prefetch is None:
             prefetch = batch_size
 

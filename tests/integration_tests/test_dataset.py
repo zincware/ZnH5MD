@@ -1,3 +1,4 @@
+import numpy.testing as np_test
 import pytest
 import tensorflow as tf
 from zinchub import DataHub
@@ -133,3 +134,33 @@ def test_loop_indices_axis_1(traj):
     element = next(iter(ds))
     # the loop only contains 3 indices
     assert element.shape == (5, 3, 3)
+
+
+def test_validate_gen_against_getitem_ax1(traj):
+    # no selection
+    dataset = traj.position.value.get_dataset(axis=0)
+    dataset = tf.concat(list(dataset), axis=0)
+    np_test.assert_array_equal(dataset, traj.position)
+    # single selection
+    dataset = traj.position.value.get_dataset(selection=[5], axis=0)
+    dataset = tf.concat(list(dataset), axis=0)
+    np_test.assert_array_equal(dataset[:, 0], traj.position[:, 5])
+    # multi_selection
+    dataset = traj.position.value.get_dataset(selection=[1, 7, 11], axis=0)
+    dataset = tf.concat(list(dataset), axis=0)
+    np_test.assert_array_equal(dataset, traj.position[:, [1, 7, 11]])
+
+
+def test_validate_gen_against_getitem_ax2(traj):
+    # no selection
+    dataset = traj.position.value.get_dataset(axis=1)
+    dataset = tf.concat(list(dataset), axis=1)
+    np_test.assert_array_equal(dataset, traj.position)
+    # single selection
+    dataset = traj.position.value.get_dataset(selection=[5], axis=1)
+    dataset = tf.concat(list(dataset), axis=1)
+    np_test.assert_array_equal(dataset[0], traj.position[5])
+    # multi_selection
+    dataset = traj.position.value.get_dataset(selection=[1, 7, 11], axis=1)
+    dataset = tf.concat(list(dataset), axis=1)
+    np_test.assert_array_equal(dataset, traj.position[[1, 7, 11]])

@@ -5,6 +5,7 @@ import h5py
 import tensorflow as tf
 
 from znh5md.core.generators import BatchGenerator
+from znh5md.templates.base import H5MDTemplate
 
 log = logging.getLogger(__name__)
 
@@ -126,26 +127,25 @@ class H5MDGroup:
 
 
 class H5MDProperty:
-    def __init__(self, *, attribute, group):
-        self._attribute = attribute
-        self._file = None
+    def __init__(self, group):
+        self._database = None
         self._group = group
 
     def __set__(self, instance, value):
         """Can not write to H5MDProperty"""
         raise AttributeError("can't set attribute")
 
-    def __get__(self, instance, owner):
-        # This is called before getitem / accessing properties but I'm not sure
+    def __get__(self, instance: H5MDTemplate, owner):
+        # This is called before getitem / accessing properties, but I'm not sure
         #  if this is the best way to handle that.
-        self._file = getattr(instance, self._attribute)
+
+        self._database = instance.database
         return self
 
     def __repr__(self):
         return f"H5MD Property <{self._group}>"
 
     def __getitem__(self, item):
-        # print(item)
         return self.value[item]
 
     def __len__(self):
@@ -170,12 +170,12 @@ class H5MDProperty:
 
     @property
     def step(self) -> H5MDGroup:
-        return H5MDGroup(self._file, self._group + "/step")
+        return H5MDGroup(self._database, self._group + "/step")
 
     @property
     def time(self) -> H5MDGroup:
-        return H5MDGroup(self._file, self._group + "/time")
+        return H5MDGroup(self._database, self._group + "/time")
 
     @property
     def value(self) -> H5MDGroup:
-        return H5MDGroup(self._file, self._group + "/value")
+        return H5MDGroup(self._database, self._group + "/value")

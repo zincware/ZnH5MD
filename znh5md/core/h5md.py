@@ -4,7 +4,7 @@ import typing
 import h5py
 import tensorflow as tf
 
-from znh5md.core.generators import BatchGenerator, BatchSelectionGenerator
+from znh5md.core.generators import BatchGenerator
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +41,7 @@ class H5MDGroup:
         selection=None,
         loop_indices=None,
         prefetch: int = None,
+        batch_size: int = 1,
     ) -> tf.data.Dataset:
         """Generate a TensorFlow DataSet for the given Property
 
@@ -60,34 +61,32 @@ class H5MDGroup:
             Prefetch data for faster loading. Without prefetching, the dataset will be
             gathered from the file in sizes of 1 along the dimension to iterate over.
             With prefetching it will load the first #prefetch elements. This will
-            only affect performance and memory but not the shape of the generator
+            only affect performance and memory but not the shape of the generator.
+            Prefetch defaults to the batch_size.
+        batch_size: int
+            The size of the batch to return. For axis=0 this would be (batch, n_atoms, 3)
+            where batch is over the dimension of configurations.
 
         Returns
         -------
 
         tf.data.DataSet:
-            A dataset for the given property / group that e.g. can be batched via
-            ds.batch(16) to convert (n_atoms, 3) -> (16, n_atoms, 3) for the first 16
-            configurations.
+            A dataset for the given property / group with shape
+            (n_configurations, n_atoms, 3) for most values, e.g. positions/value
+            or shape (n_configurations) for time / step
         """
+        if prefetch is None:
+            prefetch = batch_size
+
         if isinstance(axis, int):
-            if selection is None:
-                generator = BatchGenerator(
-                    obj=self,
-                    shape=self.shape,
-                    axis=axis,
-                    loop_indices=loop_indices,
-                    prefetch=prefetch,
-                )
-            else:
-                generator = BatchSelectionGenerator(
-                    obj=self,
-                    shape=self.shape,
-                    axis=axis,
-                    loop_indices=loop_indices,
-                    selection=selection,
-                    prefetch=prefetch,
-                )
+            generator = BatchGenerator(
+                obj=self,
+                shape=self.shape,
+                axis=axis,
+                loop_indices=loop_indices,
+                prefetch=prefetch,
+                selection=selection,
+            )
 
             dataset = tf.data.Dataset.from_generator(
                 generator.loop,
@@ -95,12 +94,24 @@ class H5MDGroup:
                     shape=generator.loop_shape, dtype=self.dtype
                 ),
             )
-            if prefetch is not None:
-                return dataset.unbatch()
+
+            if prefetch != batch_size:
+                if axis == 0:
+                    dataset = dataset.unbatch().batch(batch_size)
+                elif axis == 1:
+                    dataset = dataset.map(lambda x: tf.transpose(x, [1, 0, 2]))
+                    dataset = dataset.unbatch().batch(batch_size)
+                    dataset = dataset.map(lambda x: tf.transpose(x, [1, 0, 2]))
+                elif axis == 2:
+                    dataset = dataset.map(lambda x: tf.transpose(x, [2, 0, 1]))
+                    dataset = dataset.unbatch().batch(batch_size)
+                    dataset = dataset.map(lambda x: tf.transpose(x, [2, 0, 1]))
+
             return dataset
+
         elif tuple(axis) == (0, 1):
-            # WARNING: this is currently very slow and could use some prefetching
-            # we could add prefetching to the last dimension
+            log.warning(f"Iterating over {axis} is experimental and can be very slow!")
+
             def generator():
                 for config_index in range(self.shape[0]):
                     for species_index in range(self.shape[1]):
@@ -109,7 +120,7 @@ class H5MDGroup:
             return tf.data.Dataset.from_generator(
                 generator,
                 output_signature=tf.TensorSpec(shape=self.shape[2:], dtype=self.dtype),
-            )
+            ).batch(batch_size)
 
         raise ValueError(f"axis {axis} is not supported.")
 
@@ -140,12 +151,12 @@ class H5MDProperty:
     def __len__(self):
         return len(self.value)
 
-    def get_dataset(self) -> tf.data.Dataset:
+    def get_dataset(self, **kwargs) -> tf.data.Dataset:
         return tf.data.Dataset.zip(
             {
-                "step": self.step.get_dataset(),
-                "time": self.time.get_dataset(),
-                "value": self.value.get_dataset(),
+                "step": self.step.get_dataset(**kwargs),
+                "time": self.time.get_dataset(**kwargs),
+                "value": self.value.get_dataset(**kwargs),
             }
         )
 

@@ -1,46 +1,122 @@
+"""ZnH5MD: A Zincwarecode package.
+
+License
+-------
+This program and the accompanying materials are made available under the terms
+of the Eclipse Public License v2.0 which accompanies this distribution, and is
+available at https://www.eclipse.org/legal/epl-v20.html
+
+SPDX-License-Identifier: EPL-2.0
+
+Copyright Contributors to the Zincwarecode Project.
+
+Contact Information
+-------------------
+email: zincwarecode@gmail.com
+github: https://github.com/zincware
+web: https://zincwarecode.com/
+"""
+
+from __future__ import annotations
+
 import logging
 import typing
 
 import h5py
+import numpy as np
 import tensorflow as tf
 
+from znh5md.core.exceptions import GroupNotFound
 from znh5md.core.generators import BatchGenerator
-from znh5md.templates.base import H5MDTemplate
+
+if typing.TYPE_CHECKING:
+    from znh5md.templates.base import H5MDTemplate
 
 log = logging.getLogger(__name__)
 
 
 class H5MDGroup:
+    """Provide access to a H5MD Group
+
+    Examples
+    --------
+    For position this would allow accessing
+
+    >>> traj.position.value[:5]
+
+    """
+
     def __init__(self, file, group):
+        """
+
+        Parameters
+        ----------
+        file: str
+            path to the h5 datafile
+        group: str
+            The group to read from, e.g. "particles/all/position/value"
+        """
         self._file = file
         self._group = group
 
     def __repr__(self):
         return f"H5MD Group <{self._group}>"
 
-    def __getitem__(self, item):
-        with h5py.File(self._file) as f:
-            return f[self._group][item]
+    def __getitem__(self, item) -> np.ndarray:
+        """Read the H5MD File
 
-    def __len__(self):
-        with h5py.File(self._file) as f:
-            return len(f[self._group])
+        This is the only method to load data from the file.
+
+        Raises
+        ------
+        znh5md.core.exceptions.GroupNotFound:
+            If the requested group is not available
+        """
+        try:
+            with h5py.File(self._file) as file:
+                return file[self._group][item]
+        except KeyError as error:
+            raise GroupNotFound(
+                f"Could not load {self._group} from {self._file}"
+            ) from error
+
+    def __len__(self) -> int:
+        """Get the length of the H5MD data"""
+        try:
+            with h5py.File(self._file) as file:
+                return len(file[self._group])
+        except KeyError as error:
+            raise GroupNotFound(
+                f"Could not load {self._group} from {self._file}"
+            ) from error
 
     @property
-    def shape(self):
-        with h5py.File(self._file) as f:
-            return f[self._group].shape
+    def shape(self) -> tuple:
+        """Get the shape of the H5MD data"""
+        try:
+            with h5py.File(self._file) as file:
+                return file[self._group].shape
+        except KeyError as error:
+            raise GroupNotFound(
+                f"Could not load {self._group} from {self._file}"
+            ) from error
 
     @property
     def dtype(self):
-        with h5py.File(self._file) as f:
-            return f[self._group].dtype
+        """Get the dtype of the H5MD data"""
+        try:
+            with h5py.File(self._file) as file:
+                return file[self._group].dtype
+        except KeyError as error:
+            raise GroupNotFound(
+                f"Could not load {self._group} from {self._file}"
+            ) from error
 
     def get_dataset(
         self,
         axis: typing.Union[typing.List, int] = 0,
-        selection=None,
-        loop_indices=None,
+        selection: list = None,
+        loop_indices: list = None,
         prefetch: int = None,
         batch_size: int = 1,
     ) -> tf.data.Dataset:
@@ -63,7 +139,9 @@ class H5MDGroup:
             gathered from the file in sizes of 1 along the dimension to iterate over.
             With prefetching it will load the first #prefetch elements. This will
             only affect performance and memory but not the shape of the generator.
-            Prefetch defaults to the batch_size.
+            Prefetch defaults to the batch_size. If axis !=0 for prefetching to work
+            the dataset has to be transposed twice. Therefore, under certain circumstances
+            it could be slower.
         batch_size: int
             The size of the batch to return. For axis=0 this would be (batch, n_atoms, 3)
             where batch is over the dimension of configurations.
@@ -76,6 +154,15 @@ class H5MDGroup:
             (n_configurations, n_atoms, 3) for most values, e.g. positions/value
             or shape (n_configurations) for time / step
         """
+        if selection is not None:
+            if not isinstance(selection, (list, slice)):
+                raise ValueError(f"Selection must be list but found {type(selection)}")
+        if loop_indices is not None:
+            if not isinstance(loop_indices, list):
+                raise ValueError(
+                    f"Loop indices must be list but found {type(loop_indices)}"
+                )
+
         if prefetch is None:
             prefetch = batch_size
 
@@ -122,12 +209,22 @@ class H5MDGroup:
                 generator,
                 output_signature=tf.TensorSpec(shape=self.shape[2:], dtype=self.dtype),
             ).batch(batch_size)
-
-        raise ValueError(f"axis {axis} is not supported.")
+        else:
+            raise ValueError(f"axis {axis} is not supported.")
 
 
 class H5MDProperty:
+    """Property  for accessing value/step/time"""
+
     def __init__(self, group):
+        """Pass the group
+
+        Parameters
+        ----------
+        group: str
+            Parent group, e.g. "particles/all/position"
+            This group must contain the subgroups "step, time, value"
+        """
         self._database = None
         self._group = group
 
@@ -136,6 +233,7 @@ class H5MDProperty:
         raise AttributeError("can't set attribute")
 
     def __get__(self, instance: H5MDTemplate, owner):
+        """Custom getter to save the instance"""
         # This is called before getitem / accessing properties, but I'm not sure
         #  if this is the best way to handle that.
 
@@ -152,6 +250,7 @@ class H5MDProperty:
         return len(self.value)
 
     def get_dataset(self, **kwargs) -> tf.data.Dataset:
+        """Combined dataset from step/time/value"""
         return tf.data.Dataset.zip(
             {
                 "step": self.step.get_dataset(**kwargs),
@@ -162,20 +261,25 @@ class H5MDProperty:
 
     @property
     def shape(self) -> tuple:
+        """Get the shape of value"""
         return self.value.shape
 
     @property
     def dtype(self):
+        """Get the dtype of value"""
         return self.value.dtype
 
     @property
     def step(self) -> H5MDGroup:
+        """Property to access the step data of the selected group"""
         return H5MDGroup(self._database, self._group + "/step")
 
     @property
     def time(self) -> H5MDGroup:
+        """Property to access the time data of the selected group"""
         return H5MDGroup(self._database, self._group + "/time")
 
     @property
     def value(self) -> H5MDGroup:
+        """Property to access the value of the selected group"""
         return H5MDGroup(self._database, self._group + "/value")

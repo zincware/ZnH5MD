@@ -49,6 +49,9 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.x'
+      - name: Install package
+        run: |
+          pip install .
       - name: Install pylint
         run: |
           pip install pylint

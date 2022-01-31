@@ -9,3 +9,4 @@ class LammpsH5MD(H5MDTemplate):
     position = H5MDProperty(group="particles/all/position")
     species = H5MDProperty(group="particles/all/species")
     velocity = H5MDProperty(group="particles/all/velocity")
+    not_exist = H5MDProperty(group="particles/all/sdfsd")

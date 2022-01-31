@@ -3,5 +3,3 @@ class GroupNotFound(Exception):
 
     H5Py defaults to a KeyError. This Error is more specific
     """
-
-    pass

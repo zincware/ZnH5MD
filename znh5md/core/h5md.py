@@ -35,36 +35,44 @@ class H5MDGroup:
             If the requested group is not available
         """
         try:
-            with h5py.File(self._file) as f:
-                return f[self._group][item]
-        except KeyError:
-            raise GroupNotFound(f"Could not load {self._group} from {self._file}")
+            with h5py.File(self._file) as file:
+                return file[self._group][item]
+        except KeyError as error:
+            raise GroupNotFound(
+                f"Could not load {self._group} from {self._file}"
+            ) from error
 
     def __len__(self) -> int:
         """Get the length of the H5MD data"""
         try:
-            with h5py.File(self._file) as f:
-                return len(f[self._group])
-        except KeyError:
-            raise GroupNotFound(f"Could not load {self._group} from {self._file}")
+            with h5py.File(self._file) as file:
+                return len(file[self._group])
+        except KeyError as error:
+            raise GroupNotFound(
+                f"Could not load {self._group} from {self._file}"
+            ) from error
 
     @property
     def shape(self) -> tuple:
         """Get the shape of the H5MD data"""
         try:
-            with h5py.File(self._file) as f:
-                return f[self._group].shape
-        except KeyError:
-            raise GroupNotFound(f"Could not load {self._group} from {self._file}")
+            with h5py.File(self._file) as file:
+                return file[self._group].shape
+        except KeyError as error:
+            raise GroupNotFound(
+                f"Could not load {self._group} from {self._file}"
+            ) from error
 
     @property
     def dtype(self):
         """Get the dtype of the H5MD data"""
         try:
-            with h5py.File(self._file) as f:
-                return f[self._group].dtype
-        except KeyError:
-            raise GroupNotFound(f"Could not load {self._group} from {self._file}")
+            with h5py.File(self._file) as file:
+                return file[self._group].dtype
+        except KeyError as error:
+            raise GroupNotFound(
+                f"Could not load {self._group} from {self._file}"
+            ) from error
 
     def get_dataset(
         self,
@@ -109,7 +117,7 @@ class H5MDGroup:
             or shape (n_configurations) for time / step
         """
         if selection is not None:
-            if not (isinstance(selection, list) or isinstance(selection, slice)):
+            if not isinstance(selection, (list, slice)):
                 raise ValueError(f"Selection must be list but found {type(selection)}")
         if loop_indices is not None:
             if not isinstance(loop_indices, list):
@@ -163,8 +171,8 @@ class H5MDGroup:
                 generator,
                 output_signature=tf.TensorSpec(shape=self.shape[2:], dtype=self.dtype),
             ).batch(batch_size)
-
-        raise ValueError(f"axis {axis} is not supported.")
+        else:
+            raise ValueError(f"axis {axis} is not supported.")
 
 
 class H5MDProperty:

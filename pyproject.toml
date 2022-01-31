@@ -20,4 +20,6 @@ disable = [
     "too-many-arguments",
     # seems to fail for some cases
     "no-else-return",
+    # allow for open TODOs
+    "fixme",
 ]

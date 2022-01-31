@@ -1,3 +1,22 @@
+"""ZnH5MD: A Zincwarecode package.
+
+License
+-------
+This program and the accompanying materials are made available under the terms
+of the Eclipse Public License v2.0 which accompanies this distribution, and is
+available at https://www.eclipse.org/legal/epl-v20.html
+
+SPDX-License-Identifier: EPL-2.0
+
+Copyright Contributors to the Zincwarecode Project.
+
+Contact Information
+-------------------
+email: zincwarecode@gmail.com
+github: https://github.com/zincware
+web: https://zincwarecode.com/
+"""
+
 from __future__ import annotations
 
 import logging
@@ -17,7 +36,25 @@ log = logging.getLogger(__name__)
 
 
 class H5MDGroup:
+    """Provide access to a H5MD Group
+
+    Examples
+    --------
+    For position this would allow accessing
+
+    >>> traj.position.value[:5]
+
+    """
     def __init__(self, file, group):
+        """
+
+        Parameters
+        ----------
+        file: str
+            path to the h5 datafile
+        group: str
+            The group to read from, e.g. "particles/all/position/value"
+        """
         self._file = file
         self._group = group
 
@@ -176,7 +213,16 @@ class H5MDGroup:
 
 
 class H5MDProperty:
+    """Property  for accessing value/step/time"""
     def __init__(self, group):
+        """Pass the group
+
+        Parameters
+        ----------
+        group: str
+            Parent group, e.g. "particles/all/position"
+            This group must contain the subgroups "step, time, value"
+        """
         self._database = None
         self._group = group
 
@@ -185,6 +231,7 @@ class H5MDProperty:
         raise AttributeError("can't set attribute")
 
     def __get__(self, instance: H5MDTemplate, owner):
+        """Custom getter to save the instance"""
         # This is called before getitem / accessing properties, but I'm not sure
         #  if this is the best way to handle that.
 
@@ -212,10 +259,12 @@ class H5MDProperty:
 
     @property
     def shape(self) -> tuple:
+        """Get the shape of value"""
         return self.value.shape
 
     @property
     def dtype(self):
+        """Get the dtype of value"""
         return self.value.dtype
 
     @property

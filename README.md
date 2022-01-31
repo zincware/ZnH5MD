@@ -1,4 +1,5 @@
 [![code-style](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black/)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/zincware/ZnH5MD/HEAD)
 
 # ZnH5MD - High Performance Interface for H5MD Trajectories
 

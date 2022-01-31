@@ -45,6 +45,7 @@ class H5MDGroup:
     >>> traj.position.value[:5]
 
     """
+
     def __init__(self, file, group):
         """
 
@@ -214,6 +215,7 @@ class H5MDGroup:
 
 class H5MDProperty:
     """Property  for accessing value/step/time"""
+
     def __init__(self, group):
         """Pass the group
 

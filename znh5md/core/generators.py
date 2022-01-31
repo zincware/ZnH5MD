@@ -17,6 +17,7 @@ github: https://github.com/zincware
 web: https://zincwarecode.com/
 """
 
+
 def chunk_gen(lst, chunk_size):
     """Yield successive chunk_sized chunks from lst.
 

@@ -26,6 +26,7 @@ from znh5md.core.h5md import H5MDProperty
 
 class H5MDTemplate:
     """Template for all H5MD classes to read files"""
+
     def __init__(self, database: typing.Union[pathlib.Path, str]):
         """Initialize Parameters
 

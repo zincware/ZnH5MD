@@ -27,6 +27,7 @@ class LammpsH5MD(H5MDTemplate):
     Created with
     "dump   myDump all h5md  1000 NPT.lammpstraj position image velocity force species"
     """
+
     box = H5MDProperty(group="particles/all/box/edges")
     force = H5MDProperty(group="particles/all/force")
     image = H5MDProperty(group="particles/all/image")

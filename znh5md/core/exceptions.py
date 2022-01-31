@@ -17,6 +17,7 @@ github: https://github.com/zincware
 web: https://zincwarecode.com/
 """
 
+
 class GroupNotFound(Exception):
     """Raise if a Group does not exist in the H5MD file
 

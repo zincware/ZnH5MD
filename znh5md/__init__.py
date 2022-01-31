@@ -1,4 +1,4 @@
-from znh5md.templates import LammpsH5MD
+from znh5md.templates.lammps import LammpsH5MD
 
 __all__ = [LammpsH5MD.__name__]
 

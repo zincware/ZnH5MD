@@ -1,6 +1,9 @@
 import pathlib
 import typing
 
+from znh5md.core.exceptions import GroupNotFound
+from znh5md.core.h5md import H5MDProperty
+
 
 class H5MDTemplate:
     def __init__(self, database: typing.Union[pathlib.Path, str]):
@@ -14,3 +17,15 @@ class H5MDTemplate:
     @database.setter
     def database(self, value):
         self._database = value
+
+    def get_groups(self) -> typing.List[str]:
+        """Get all available groups in the provided file"""
+        groups = []
+        for name, group in vars(type(self)).items():
+            if isinstance(group, H5MDProperty):
+                try:
+                    _ = getattr(self, name)[0]
+                    groups.append(name)
+                except GroupNotFound:
+                    pass
+        return groups

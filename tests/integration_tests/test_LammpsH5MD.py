@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from zinchub import DataHub
 
-from znh5md.templates import LammpsH5MD
+from znh5md.templates.lammps import LammpsH5MD
 
 
 @pytest.fixture(scope="session")

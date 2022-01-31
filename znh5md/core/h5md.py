@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import typing
 
@@ -5,8 +7,11 @@ import h5py
 import numpy as np
 import tensorflow as tf
 
+from znh5md.core.exceptions import GroupNotFound
 from znh5md.core.generators import BatchGenerator
-from znh5md.templates.base import H5MDTemplate
+
+if typing.TYPE_CHECKING:
+    from znh5md.templates.base import H5MDTemplate
 
 log = logging.getLogger(__name__)
 
@@ -22,27 +27,44 @@ class H5MDGroup:
     def __getitem__(self, item) -> np.ndarray:
         """Read the H5MD File
 
-        This is the only method to load data from the file
+        This is the only method to load data from the file.
+
+        Raises
+        ------
+        znh5md.core.exceptions.GroupNotFound:
+            If the requested group is not available
         """
-        with h5py.File(self._file) as f:
-            return f[self._group][item]
+        try:
+            with h5py.File(self._file) as f:
+                return f[self._group][item]
+        except KeyError:
+            raise GroupNotFound(f"Could not load {self._group} from {self._file}")
 
     def __len__(self) -> int:
         """Get the length of the H5MD data"""
-        with h5py.File(self._file) as f:
-            return len(f[self._group])
+        try:
+            with h5py.File(self._file) as f:
+                return len(f[self._group])
+        except KeyError:
+            raise GroupNotFound(f"Could not load {self._group} from {self._file}")
 
     @property
     def shape(self) -> tuple:
         """Get the shape of the H5MD data"""
-        with h5py.File(self._file) as f:
-            return f[self._group].shape
+        try:
+            with h5py.File(self._file) as f:
+                return f[self._group].shape
+        except KeyError:
+            raise GroupNotFound(f"Could not load {self._group} from {self._file}")
 
     @property
     def dtype(self):
         """Get the dtype of the H5MD data"""
-        with h5py.File(self._file) as f:
-            return f[self._group].dtype
+        try:
+            with h5py.File(self._file) as f:
+                return f[self._group].dtype
+        except KeyError:
+            raise GroupNotFound(f"Could not load {self._group} from {self._file}")
 
     def get_dataset(
         self,

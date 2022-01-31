@@ -1,4 +1,4 @@
-from znh5md.core import H5MDProperty
+from znh5md.core.h5md import H5MDProperty
 from znh5md.templates.base import H5MDTemplate
 
 

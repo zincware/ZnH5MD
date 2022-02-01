@@ -16,8 +16,10 @@ email: zincwarecode@gmail.com
 github: https://github.com/zincware
 web: https://zincwarecode.com/
 """
-from znh5md.templates.lammps import LammpsH5MD
 
-__all__ = [LammpsH5MD.__name__]
 
-__version__ = "0.1.0"
+class GroupNotFound(Exception):
+    """Raise if a Group does not exist in the H5MD file
+
+    H5Py defaults to a KeyError. This Error is more specific
+    """

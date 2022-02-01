@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r dev-requirements.txt
-        pip install coverage coveralls
+        pip install coverage[toml] coveralls
     - name: Install package
       run: |
         pip install .

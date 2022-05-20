@@ -22,7 +22,9 @@ def traj_file(tmp_path_factory) -> str:
     """Download trajectory file into a temporary directory and keep it for all tests"""
     temporary_path = tmp_path_factory.getbasetemp()
 
-    NaCl = DataHub(url="https://github.com/zincware/DataHub/tree/main/NaClH5MD")
+    NaCl = DataHub(
+        url="https://github.com/zincware/DataHub/tree/main/NaClH5MD", tag="v0.1.1"
+    )
     NaCl.get_file(path=temporary_path)
 
     return (temporary_path / NaCl.file_raw).as_posix()

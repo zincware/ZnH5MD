@@ -45,6 +45,7 @@ zinchub = {git = "https://github.com/zincware/ZincHub.git", rev = "main"}
 black = "^22.3.0"
 isort = "^5.10.1"
 flake8 = "^4.0.1"
+coveralls = "^3.3.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

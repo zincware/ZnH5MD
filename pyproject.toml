@@ -23,3 +23,29 @@ disable = [
     # allow for open TODOs
     "fixme",
 ]
+[tool.poetry]
+name = "ZnH5MD"
+version = "0.1.0"
+description = "Managing H5MD Trajectories in Python"
+authors = ["zincwarecode <zincwarecode@gmail.com>"]
+license = "Apache-2.0"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.11"
+h5py = "^3.6.0"
+tensorflow = "^2.9.0"
+numpy = "^1.22.3"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
+pre-commit = "^2.19.0"
+jupyterlab = "^3.4.2"
+coverage = {extras = ["toml"], version = "^6.3.3"}
+zinchub = {git = "https://github.com/zincware/ZincHub.git", rev = "main"}
+black = "^22.3.0"
+isort = "^5.10.1"
+flake8 = "^4.0.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

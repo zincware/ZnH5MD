@@ -1,22 +1,3 @@
-"""ZnH5MD: A Zincwarecode package.
-
-License
--------
-This program and the accompanying materials are made available under the terms
-of the Eclipse Public License v2.0 which accompanies this distribution, and is
-available at https://www.eclipse.org/legal/epl-v20.html
-
-SPDX-License-Identifier: EPL-2.0
-
-Copyright Contributors to the Zincwarecode Project.
-
-Contact Information
--------------------
-email: zincwarecode@gmail.com
-github: https://github.com/zincware
-web: https://zincwarecode.com/
-"""
-
 from __future__ import annotations
 
 import logging
@@ -149,16 +130,16 @@ class H5MDGroup:
         Returns
         -------
 
-        tf.data.DataSet:
+        tf.data.Dataset:
             A dataset for the given property / group with shape
             (n_configurations, n_atoms, 3) for most values, e.g. positions/value
             or shape (n_configurations) for time / step
         """
         if selection is not None:
-            if not isinstance(selection, (list, slice)):
+            if not isinstance(selection, (list, tuple, slice)):
                 raise ValueError(f"Selection must be list but found {type(selection)}")
         if loop_indices is not None:
-            if not isinstance(loop_indices, list):
+            if not isinstance(loop_indices, (list, tuple)):
                 raise ValueError(
                     f"Loop indices must be list but found {type(loop_indices)}"
                 )

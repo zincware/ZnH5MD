@@ -41,20 +41,3 @@ jobs:
       - name: run flake8
         run: |
           flake8 . --count --show-source --statistics
-
-  pylint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      - name: Install package
-        run: |
-          pip install .
-      - name: Install pylint
-        run: |
-          pip install pylint
-      - name: run pylint
-        run: |
-          pylint znh5md

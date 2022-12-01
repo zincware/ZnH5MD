@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "znh5md"
+version = "0.1.0"
+description = "High Performance Interface for H5MD Trajectories"
+authors = ["zincwarecode <zincwarecode@gmail.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+h5py = "^3.7.0"
+dask = {extras = ["array"], version = "^2022.11.1"}
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.10.0"
+isort = "^5.10.1"
+ruff = "^0.0.149"
+pytest = "^7.2.0"
+jupyterlab = "^3.5.0"
+graphviz = "^0.20.1"
+pre-commit = "^2.20.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 90
+preview = true
+
+[tool.isort]
+profile = 'black'
+multi_line_output = 3
+
+[tool.ruff]
+line-length = 90
+
+select = ["E", "F", "D", "N", "C"] #, "ANN"]
+extend-ignore = [
+    "D213", "D203", "N802", "N801"
+]
+
+exclude = [
+    "tmp",
+    "tests",
+    "docs",
+]

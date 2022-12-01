@@ -1,9 +1,12 @@
 from __future__ import annotations
 import dataclasses
 import functools
+import typing
+
 from znh5md.format import FormatHandler
 import h5py
 import dask.array
+import ase
 
 
 @functools.singledispatch
@@ -69,15 +72,18 @@ class DaskDataSet:
             species=self.species[item],
         )
 
+    def __len__(self) -> int:
+        return len(self.value)
+
     def batch(self, size, axis):
         start = 0
         while start < self.value.shape[axis]:
             if axis == 0:
-                yield self[start : start + size]
+                yield self[start: start + size]
             elif axis == 1:
-                yield self[:, start : start + size]
+                yield self[:, start: start + size]
             elif axis == 2:
-                yield self[:, :, start : start + size]
+                yield self[:, :, start: start + size]
             else:
                 raise ValueError(
                     f"axis must be in (0, 1, 2). 'axis={axis}' is currently not"
@@ -88,6 +94,45 @@ class DaskDataSet:
     @property
     def shape(self):
         return self.value.shape
+
+
+@dataclasses.dataclass
+class ASEH5MD:
+    filename: str
+
+    @functools.cached_property
+    def file(self) -> FormatHandler:
+        return FormatHandler(self.filename)
+
+    def __getattr__(self, item):
+        return DaskDataSet.from_file(
+            item=getattr(self.file, item),
+            species=self.file.species,
+            value_chunks="auto",
+            time_chunks="auto",
+        )
+
+    def get_atoms_list(self) -> typing.List[ase.Atoms]:
+        """Get an 'ase.Atoms' list for all data.
+
+        Notes
+        -----
+        This is not memory safe.
+        """
+        species = self.species.value.compute()
+        box = self.box.value.compute()
+        position = self.position.value.compute()
+        velocity = self.velocity.value.compute()
+
+        return [
+            ase.Atoms(
+                species[idx],
+                cell=box[idx],
+                positions=position[idx],
+                velocities=velocity[idx],
+            )
+            for idx in range(len(self.position))
+        ]
 
 
 @dataclasses.dataclass

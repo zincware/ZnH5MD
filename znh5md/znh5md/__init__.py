@@ -1,12 +1,15 @@
 from __future__ import annotations
+
 import dataclasses
 import functools
+import os
 import typing
 
-from znh5md.format import FormatHandler
-import h5py
-import dask.array
 import ase
+import dask.array
+import h5py
+
+from znh5md.format import FormatHandler
 
 
 @functools.singledispatch
@@ -40,6 +43,10 @@ class DaskDataSet:
 
         return cls(value=value, time=time, step=step, species=species)
 
+    @classmethod
+    def from_values(cls, value, time, step, species):
+        return cls(value=value, time=time, step=step, species=species)
+
     def slice_by_species(self, species) -> "DaskDataSet":
         species_flattened = self.species.reshape(-1)
         # species_mask = sum(species_flattened == x for x in species)
@@ -55,22 +62,14 @@ class DaskDataSet:
             .reshape((self.species.shape[0], -1))
         )
 
-        return type(self)(value=value, time=self.time, step=self.step, species=species)
+        return self.from_values(value=value, time=self.time, step=self.step, species=species)
 
     def __getitem__(self, item):
         if isinstance(item, (list, tuple)) and isinstance(item[0], slice):
-            return type(self)(
-                value=self.value[item],
-                time=self.time[item[0]],
-                step=self.step[item[0]],
-                species=self.species[item[:2]],
-            )
-        return type(self)(
-            value=self.value[item],
-            time=self.time[item],
-            step=self.step[item],
-            species=self.species[item],
-        )
+            return self.from_values(value=self.value[item], time=self.time[item[0]], step=self.step[item[0]],
+                                    species=self.species[item[:2]])
+        return self.from_values(value=self.value[item], time=self.time[item], step=self.step[item],
+                                species=self.species[item])
 
     def __len__(self) -> int:
         return len(self.value)
@@ -79,11 +78,11 @@ class DaskDataSet:
         start = 0
         while start < self.value.shape[axis]:
             if axis == 0:
-                yield self[start: start + size]
+                yield self[start : start + size]
             elif axis == 1:
-                yield self[:, start: start + size]
+                yield self[:, start : start + size]
             elif axis == 2:
-                yield self[:, :, start: start + size]
+                yield self[:, :, start : start + size]
             else:
                 raise ValueError(
                     f"axis must be in (0, 1, 2). 'axis={axis}' is currently not"
@@ -147,7 +146,7 @@ class DaskH5MD:
 
     """
 
-    filename: str
+    filename: os.PathLike
     time_chunk_size: int = 10
     species_chunk_size: int = 10
     fixed_species_index: bool = False

@@ -1,5 +1,6 @@
 import dataclasses
 import typing
+
 import h5py
 
 
@@ -9,9 +10,11 @@ class FormatHandler:
 
     def __post_init__(self):
         self.particle_key = None
-        for particle_key in ["all", "atoms"]:
-            if particle_key in h5py.File(self.filename)["particles"]:
-                self.particle_key = particle_key
+        with self.file as file:
+            for particle_key in ["all", "atoms"]:
+                if particle_key in file["particles"]:
+                    # TODO what if all and atoms appear?
+                    self.particle_key = particle_key
         if self.particle_key is None:
             raise ValueError("Could not determine required key '/particles/<...>'")
 

@@ -107,7 +107,9 @@ class DaskDataSet:
 
 @dataclasses.dataclass
 class ASEH5MD:
-    filename: str
+    # TODO slicing
+    # TODO select / use all properties implemented
+    filename: os.PathLike
 
     @functools.cached_property
     def file(self) -> FormatHandler:
@@ -129,16 +131,12 @@ class ASEH5MD:
         This is not memory safe.
         """
         species = self.species.value.compute()
-        box = self.box.value.compute()
         position = self.position.value.compute()
-        velocity = self.velocity.value.compute()
 
         return [
             ase.Atoms(
                 species[idx],
-                cell=box[idx],
                 positions=position[idx],
-                velocities=velocity[idx],
             )
             for idx in range(len(self.position))
         ]

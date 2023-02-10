@@ -1,4 +1,5 @@
 import dataclasses
+import os
 import typing
 
 import h5py
@@ -6,7 +7,7 @@ import h5py
 
 @dataclasses.dataclass
 class FormatHandler:
-    filename: str
+    filename: os.PathLike
 
     def __post_init__(self):
         self.particle_key = None

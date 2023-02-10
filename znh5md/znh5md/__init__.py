@@ -62,14 +62,24 @@ class DaskDataSet:
             .reshape((self.species.shape[0], -1))
         )
 
-        return self.from_values(value=value, time=self.time, step=self.step, species=species)
+        return self.from_values(
+            value=value, time=self.time, step=self.step, species=species
+        )
 
     def __getitem__(self, item):
         if isinstance(item, (list, tuple)) and isinstance(item[0], slice):
-            return self.from_values(value=self.value[item], time=self.time[item[0]], step=self.step[item[0]],
-                                    species=self.species[item[:2]])
-        return self.from_values(value=self.value[item], time=self.time[item], step=self.step[item],
-                                species=self.species[item])
+            return self.from_values(
+                value=self.value[item],
+                time=self.time[item[0]],
+                step=self.step[item[0]],
+                species=self.species[item[:2]],
+            )
+        return self.from_values(
+            value=self.value[item],
+            time=self.time[item],
+            step=self.step[item],
+            species=self.species[item],
+        )
 
     def __len__(self) -> int:
         return len(self.value)

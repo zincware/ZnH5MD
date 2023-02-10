@@ -80,3 +80,154 @@ def test_slice_compute(example_h5):
         sliced.species.compute(),
         np.concatenate([np.ones((100, 5)), 2 * np.ones((100, 5))], axis=1),
     )
+
+
+def test_batch_shape(example_h5):
+    traj = znh5md.DaskH5MD(example_h5)
+
+    batches = list(traj.position.batch(67, axis=0))
+    assert len(batches) == 2
+    assert batches[0].value.shape == (67, 10, 3)
+    assert batches[0].time.shape == (67,)
+    assert batches[0].step.shape == (67,)
+    assert batches[0].species.shape == (67, 10)
+    assert batches[1].value.shape == (33, 10, 3)
+    assert batches[1].time.shape == (33,)
+    assert batches[1].step.shape == (33,)
+    assert batches[1].species.shape == (33, 10)
+
+
+def test_batch_compute(example_h5):
+    traj = znh5md.DaskH5MD(example_h5)
+
+    batches = list(traj.position.batch(67, axis=0))
+    assert len(batches) == 2
+    npt.assert_array_equal(
+        batches[0].value.compute(), traj.position.value.compute()[:67, :, :]
+    )
+    npt.assert_array_equal(batches[0].time.compute(), traj.position.time.compute()[:67])
+    npt.assert_array_equal(batches[0].step.compute(), traj.position.step.compute()[:67])
+    npt.assert_array_equal(
+        batches[0].species.compute(), traj.position.species.compute()[:67]
+    )
+
+    npt.assert_array_equal(
+        batches[1].value.compute(), traj.position.value.compute()[67:, :, :]
+    )
+    npt.assert_array_equal(batches[1].time.compute(), traj.position.time.compute()[67:])
+    npt.assert_array_equal(batches[1].step.compute(), traj.position.step.compute()[67:])
+    npt.assert_array_equal(
+        batches[1].species.compute(), traj.position.species.compute()[67:]
+    )
+
+
+def test_slice_batch_shape(example_h5):
+    traj = znh5md.DaskH5MD(example_h5)
+    # species 1
+    sliced = traj.position.slice_by_species([1])
+    batches = list(sliced.batch(67, axis=0))
+    assert len(batches) == 2
+    assert batches[0].value.shape == (67, 5, 3)
+    assert batches[0].time.shape == (67,)
+    assert batches[0].step.shape == (67,)
+    assert batches[0].species.shape == (67, 5)
+    assert batches[1].value.shape == (33, 5, 3)
+    assert batches[1].time.shape == (33,)
+    assert batches[1].step.shape == (33,)
+    assert batches[1].species.shape == (33, 5)
+    # species 2
+    sliced = traj.position.slice_by_species([2])
+    batches = list(sliced.batch(67, axis=0))
+    assert len(batches) == 2
+    assert batches[0].value.shape == (67, 5, 3)
+    assert batches[0].time.shape == (67,)
+    assert batches[0].step.shape == (67,)
+    assert batches[0].species.shape == (67, 5)
+    assert batches[1].value.shape == (33, 5, 3)
+    assert batches[1].time.shape == (33,)
+    assert batches[1].step.shape == (33,)
+    assert batches[1].species.shape == (33, 5)
+    # species 1 and 2
+    sliced = traj.position.slice_by_species([1, 2])
+    batches = list(sliced.batch(67, axis=0))
+    assert len(batches) == 2
+    assert batches[0].value.shape == (67, 10, 3)
+    assert batches[0].time.shape == (67,)
+    assert batches[0].step.shape == (67,)
+    assert batches[0].species.shape == (67, 10)
+    assert batches[1].value.shape == (33, 10, 3)
+    assert batches[1].time.shape == (33,)
+    assert batches[1].step.shape == (33,)
+    assert batches[1].species.shape == (33, 10)
+
+
+def test_slice_batch_compute(example_h5):
+    traj = znh5md.DaskH5MD(example_h5)
+    # species 1
+    sliced = traj.position.slice_by_species([1])
+    batches = list(sliced.batch(67, axis=0))
+    assert len(batches) == 2
+    npt.assert_array_equal(
+        batches[0].value.compute(),
+        np.arange(100 * 10 * 3).reshape((100, 10, 3))[:67, :5, :],
+    )
+    npt.assert_array_equal(batches[0].time.compute(), traj.position.time.compute()[:67])
+    npt.assert_array_equal(batches[0].step.compute(), traj.position.step.compute()[:67])
+    npt.assert_array_equal(
+        batches[0].species.compute(), traj.position.species.compute()[:67, :5]
+    )
+    npt.assert_array_equal(
+        batches[1].value.compute(),
+        np.arange(100 * 10 * 3).reshape((100, 10, 3))[67:, :5, :],
+    )
+    npt.assert_array_equal(batches[1].time.compute(), traj.position.time.compute()[67:])
+    npt.assert_array_equal(batches[1].step.compute(), traj.position.step.compute()[67:])
+    npt.assert_array_equal(
+        batches[1].species.compute(), traj.position.species.compute()[67:, :5]
+    )
+
+    # species 2
+    sliced = traj.position.slice_by_species([2])
+    batches = list(sliced.batch(67, axis=0))
+    assert len(batches) == 2
+    npt.assert_array_equal(
+        batches[0].value.compute(),
+        np.arange(100 * 10 * 3).reshape((100, 10, 3))[:67, 5:, :],
+    )
+    npt.assert_array_equal(batches[0].time.compute(), traj.position.time.compute()[:67])
+    npt.assert_array_equal(batches[0].step.compute(), traj.position.step.compute()[:67])
+    npt.assert_array_equal(
+        batches[0].species.compute(), traj.position.species.compute()[:67, 5:]
+    )
+    npt.assert_array_equal(
+        batches[1].value.compute(),
+        np.arange(100 * 10 * 3).reshape((100, 10, 3))[67:, 5:, :],
+    )
+    npt.assert_array_equal(batches[1].time.compute(), traj.position.time.compute()[67:])
+    npt.assert_array_equal(batches[1].step.compute(), traj.position.step.compute()[67:])
+    npt.assert_array_equal(
+        batches[1].species.compute(), traj.position.species.compute()[67:, 5:]
+    )
+
+    # species 1 and 2
+    sliced = traj.position.slice_by_species([1, 2])
+    batches = list(sliced.batch(67, axis=0))
+    assert len(batches) == 2
+    npt.assert_array_equal(
+        batches[0].value.compute(),
+        np.arange(100 * 10 * 3).reshape((100, 10, 3))[:67, :, :],
+    )
+    npt.assert_array_equal(batches[0].time.compute(), traj.position.time.compute()[:67])
+    npt.assert_array_equal(batches[0].step.compute(), traj.position.step.compute()[:67])
+    npt.assert_array_equal(
+        batches[0].species.compute(), traj.position.species.compute()[:67, :]
+    )
+    npt.assert_array_equal(
+        batches[1].value.compute(),
+        np.arange(100 * 10 * 3).reshape((100, 10, 3))[67:, :, :],
+    )
+    npt.assert_array_equal(batches[1].time.compute(), traj.position.time.compute()[67:])
+    npt.assert_array_equal(batches[1].step.compute(), traj.position.step.compute()[67:])
+    npt.assert_array_equal(
+        batches[1].species.compute(), traj.position.species.compute()[67:, :]
+    )

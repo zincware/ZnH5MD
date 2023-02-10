@@ -29,5 +29,5 @@ print(traj.position.value)
 # You can iterate through the data
 for item in traj.position.batch(size=27, axis=0):
     for x in item.batch(size=17, axis=1):
-        print(x.compute())
+        print(x.value.compute())
 ```

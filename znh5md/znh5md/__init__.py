@@ -4,12 +4,15 @@ import dataclasses
 import functools
 import os
 import typing
+import pathlib
 
 import ase
 import dask.array
 import h5py
 
 from znh5md.format import FormatHandler
+
+PATHLIKE = typing.Union[str, pathlib.Path, os.PathLike]
 
 
 @functools.singledispatch
@@ -107,7 +110,7 @@ class DaskDataSet:
 
 @dataclasses.dataclass
 class ASEH5MD:
-    filename: str
+    filename: PATHLIKE
 
     @functools.cached_property
     def file(self) -> FormatHandler:
@@ -146,7 +149,7 @@ class ASEH5MD:
 
 @dataclasses.dataclass
 class DaskH5MD:
-    """
+    """Dask interface for H5MD files.
 
     Attributes
     ----------
@@ -156,7 +159,7 @@ class DaskH5MD:
 
     """
 
-    filename: os.PathLike
+    filename: PATHLIKE
     time_chunk_size: int = 10
     species_chunk_size: int = 10
     fixed_species_index: bool = False

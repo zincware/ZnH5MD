@@ -231,3 +231,16 @@ def test_slice_batch_compute(example_h5):
     npt.assert_array_equal(
         batches[1].species.compute(), traj.position.species.compute()[67:, :]
     )
+
+
+def test_slice(example_h5):
+    traj = znh5md.DaskH5MD(example_h5)
+
+    npt.assert_array_equal(
+        traj.position.value[::2].compute(),
+        np.arange(100 * 10 * 3).reshape((100, 10, 3))[::2],
+    )
+    npt.assert_array_equal(
+        traj.position.value[[1, 2, 5]].compute(),
+        np.arange(100 * 10 * 3).reshape((100, 10, 3))[[1, 2, 5]],
+    )

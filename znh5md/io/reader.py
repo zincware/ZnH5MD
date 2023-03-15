@@ -33,7 +33,7 @@ class AtomsReader(DataReader):
         return np.array([x.get_cell() for x in atoms])
 
     def yield_chunks(
-        self, group_name: list = None
+        self, group_names: list = None
     ) -> typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]:
         start_index = 0
         stop_index = 0
@@ -55,7 +55,7 @@ class AtomsReader(DataReader):
                 "box": self._get_box,
             }
 
-            for name in group_name or functions:
+            for name in group_names or functions:
                 if name not in functions:
                     raise ValueError(f"Value {name} not supported")
 
@@ -66,8 +66,8 @@ class AtomsReader(DataReader):
                         step=np.arange(start_index, start_index + len(value)),
                         time=np.arange(start_index, start_index + len(value)),
                     )
-                except PropertyNotImplementedError as err:
-                    if group_name is not None:
+                except (PropertyNotImplementedError, RuntimeError) as err:
+                    if group_names is not None:
                         # if the property was specifcally selected, raise the error
                         raise err
                     else:

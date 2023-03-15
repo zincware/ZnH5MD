@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "znh5md"
-version = "0.1.0"
+version = "0.1.1"
 description = "High Performance Interface for H5MD Trajectories"
 authors = ["zincwarecode <zincwarecode@gmail.com>"]
 license = "Apache-2.0"

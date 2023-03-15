@@ -111,17 +111,20 @@ class DaskDataSet:
 
 
 @dataclasses.dataclass
-class ASEH5MD:
+class H5MDBase:
     filename: PATHLIKE
+    format_handler: FormatHandler = FormatHandler
 
-    @functools.cached_property
-    def file(self) -> FormatHandler:
-        return FormatHandler(self.filename)
+    def __post_init__(self):
+        self.format_handler = self.format_handler(self.filename)
 
+
+@dataclasses.dataclass
+class ASEH5MD(H5MDBase):
     def __getattr__(self, item):
         return DaskDataSet.from_file(
-            item=getattr(self.file, item),
-            species=self.file.species,
+            item=getattr(self.format_handler, item),
+            species=self.format_handler.species,
             value_chunks="auto",
             time_chunks="auto",
         )
@@ -159,7 +162,7 @@ class ASEH5MD:
 
 
 @dataclasses.dataclass
-class DaskH5MD:
+class DaskH5MD(H5MDBase):
     """Dask interface for H5MD files.
 
     Attributes
@@ -170,20 +173,15 @@ class DaskH5MD:
 
     """
 
-    filename: PATHLIKE
     time_chunk_size: int = 10
     species_chunk_size: int = 10
     fixed_species_index: bool = False
 
-    @functools.cached_property
-    def file(self) -> FormatHandler:
-        return FormatHandler(self.filename)
-
     @property
     def position(self) -> DaskDataSet:
         return DaskDataSet.from_file(
-            item=self.file.position,
-            species=self.file.species,
+            item=self.format_handler.position,
+            species=self.format_handler.species,
             value_chunks=(self.time_chunk_size, self.species_chunk_size, 3),
             time_chunks=self.time_chunk_size,
         )
@@ -191,16 +189,16 @@ class DaskH5MD:
     @property
     def species(self) -> DaskDataSet:
         return DaskDataSet.from_file(
-            item=self.file.species,
-            species=self.file.species,
+            item=self.format_handler.species,
+            species=self.format_handler.species,
             value_chunks=(self.time_chunk_size, self.species_chunk_size),
             time_chunks=self.time_chunk_size,
         )
 
     def __getattr__(self, item):
         return DaskDataSet.from_file(
-            item=getattr(self.file, item),
-            species=self.file.species,
+            item=getattr(self.format_handler, item),
+            species=self.format_handler.species,
             value_chunks="auto",
             time_chunks="auto",
         )

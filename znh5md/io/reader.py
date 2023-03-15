@@ -3,6 +3,7 @@ import typing
 
 import ase
 import numpy as np
+import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
 
 from znh5md.io.base import DataReader, ExplicitStepTimeChunk
@@ -37,6 +38,10 @@ class AtomsReader(DataReader):
         start_index = 0
         stop_index = 0
 
+        pbar = tqdm.tqdm(
+            total=len(self.atoms), disable=len(self.atoms) // self.frames_per_chunk < 10
+        )
+
         while stop_index < len(self.atoms):
             stop_index = start_index + self.frames_per_chunk
             data = {}
@@ -67,6 +72,8 @@ class AtomsReader(DataReader):
                         raise err
                     else:
                         continue
-
             yield data
             start_index = stop_index
+            pbar.update(self.frames_per_chunk)
+
+        pbar.close()

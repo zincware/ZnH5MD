@@ -135,7 +135,7 @@ class ASEH5MD:
         """
         data = {}
         for key in ["species", "position", "velocity", "energy", "forces", "box"]:
-            with contextlib.suppress(AttributeError):
+            with contextlib.suppress(AttributeError, KeyError):
                 data[key] = getattr(self, key).value.compute()
 
         atoms = []

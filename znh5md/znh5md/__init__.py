@@ -129,7 +129,10 @@ class ASEH5MD(H5MDBase):
             time_chunks="auto",
         )
 
-    def get_atoms_list(self) -> typing.List[ase.Atoms]:
+    def __getitem__(self, item):
+        return self.get_atoms_list(item=item)
+
+    def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:
         """Get an 'ase.Atoms' list for all data.
 
         Notes
@@ -139,7 +142,10 @@ class ASEH5MD(H5MDBase):
         data = {}
         for key in ["species", "position", "velocity", "energy", "forces", "box"]:
             with contextlib.suppress(AttributeError, KeyError):
-                data[key] = getattr(self, key).value.compute()
+                if item is None:
+                    data[key] = getattr(self, key).value.compute()
+                else:
+                    data[key] = getattr(self, key).value[item].compute()
 
         atoms = []
         for idx in range(len(data["position"])):
@@ -148,6 +154,7 @@ class ASEH5MD(H5MDBase):
                 positions=data["position"][idx] if "position" in data else None,
                 velocities=data["velocity"][idx] if "velocity" in data else None,
                 cell=data["box"][idx] if "box" in data else None,
+                pbc=True,  # TODO: pbc should not always be true
             )
             if "forces" in data or "energy" in data:
                 obj.calc = SinglePointCalculator(

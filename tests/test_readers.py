@@ -1,11 +1,13 @@
 import os
 
 import numpy.testing as npt
+import pytest
 
 import znh5md
 
 
-def test_AtomsReader(tmp_path, atoms_list):
+@pytest.mark.parametrize("use_add", [True, False])
+def test_AtomsReader(tmp_path, atoms_list, use_add):
     os.chdir(tmp_path)
     print(tmp_path)
 
@@ -14,8 +16,11 @@ def test_AtomsReader(tmp_path, atoms_list):
 
     reader = znh5md.io.AtomsReader(atoms_list, frames_per_chunk=10)
 
-    for data in reader.yield_chunks():
-        db.add_chunk_data(**data)
+    if use_add:
+        db.add(reader)
+    else:
+        for data in reader.yield_chunks():
+            db.add_chunk_data(**data)
 
     data = znh5md.ASEH5MD("db.h5")
     atoms = data.get_atoms_list()

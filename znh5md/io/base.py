@@ -40,6 +40,27 @@ class ExplicitStepTimeChunk:
 CHUNK_DICT = typing.Dict[str, ExplicitStepTimeChunk]
 
 
+class DataReader(abc.ABC):
+    """Abstract base class for reading data and yielding chunks."""
+
+    @abc.abstractmethod
+    def yield_chunks(
+        self, *args, **kwargs
+    ) -> typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]:
+        """Yield chunks of data.
+
+        This method will yield chunks of data to be written to the HDF5 File.
+        It should implement a generator pattern that e.g. reads from files.
+
+        Returns
+        -------
+        typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]
+            A dictionary of chunks. The key is the name of the group.
+            Each chunk containing the data for one group.
+        """
+        raise NotImplementedError()
+
+
 def _create_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk):
     dataset_group.create_dataset(
         "value", maxshape=chunk_data.shape, data=chunk_data.value, chunks=True
@@ -149,23 +170,7 @@ class DataWriter:
             except KeyError:
                 self.create_particles_group_from_chunk_data(**{group_name: chunk_data})
 
-
-class DataReader(abc.ABC):
-    """Abstract base class for reading data and yielding chunks."""
-
-    @abc.abstractmethod
-    def yield_chunks(
-        self, *args, **kwargs
-    ) -> typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]:
-        """Yield chunks of data.
-
-        This method will yield chunks of data to be written to the HDF5 File.
-        It should implement a generator pattern that e.g. reads from files.
-
-        Returns
-        -------
-        typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]
-            A dictionary of chunks. The key is the name of the group.
-            Each chunk containing the data for one group.
-        """
-        raise NotImplementedError()
+    def add(self, reader: DataReader):
+        """Add data from a reader to the HDF5 file."""
+        for chunk in reader.yield_chunks():
+            self.add_chunk_data(**chunk)

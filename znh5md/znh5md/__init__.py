@@ -120,58 +120,6 @@ class H5MDBase:
 
 
 @dataclasses.dataclass
-class ASEH5MD(H5MDBase):
-    def __getattr__(self, item):
-        return DaskDataSet.from_file(
-            item=getattr(self.format_handler, item),
-            species=self.format_handler.species,
-            value_chunks="auto",
-            time_chunks="auto",
-        )
-
-    def __getitem__(self, item):
-        return self.get_atoms_list(item=item)
-
-    def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:
-        """Get an 'ase.Atoms' list for all data.
-
-        Notes
-        -----
-        This is not memory safe.
-        """
-        data = {}
-        single_item = isinstance(item, int)
-        if single_item:
-            item = [item]
-        for key in ["species", "position", "velocity", "energy", "forces", "box"]:
-            with contextlib.suppress(AttributeError, KeyError):
-                if item is None:
-                    data[key] = getattr(self, key).value.compute()
-                else:
-                    data[key] = getattr(self, key).value[item].compute()
-
-        atoms = []
-        for idx in range(len(data["position"])):
-            obj = ase.Atoms(
-                symbols=data["species"][idx] if "species" in data else None,
-                positions=data["position"][idx] if "position" in data else None,
-                velocities=data["velocity"][idx] if "velocity" in data else None,
-                cell=data["box"][idx] if "box" in data else None,
-                pbc=True,  # TODO: pbc should not always be true
-            )
-            if "forces" in data or "energy" in data:
-                obj.calc = SinglePointCalculator(
-                    obj,
-                    energy=data["energy"][idx] if "energy" in data else None,
-                    forces=data["forces"][idx] if "forces" in data else None,
-                )
-
-            atoms.append(obj)
-
-        return atoms[0] if single_item else atoms
-
-
-@dataclasses.dataclass
 class DaskH5MD(H5MDBase):
     """Dask interface for H5MD files.
 
@@ -212,3 +160,47 @@ class DaskH5MD(H5MDBase):
             value_chunks="auto",
             time_chunks="auto",
         )
+
+
+@dataclasses.dataclass
+class ASEH5MD(DaskH5MD):
+    def __getitem__(self, item):
+        return self.get_atoms_list(item=item)
+
+    def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:
+        """Get an 'ase.Atoms' list for all data.
+
+        Notes
+        -----
+        This is not memory safe.
+        """
+        data = {}
+        single_item = isinstance(item, int)
+        if single_item:
+            item = [item]
+        for key in ["species", "position", "velocity", "energy", "forces", "box"]:
+            with contextlib.suppress(AttributeError, KeyError):
+                if item is None:
+                    data[key] = getattr(self, key).value.compute()
+                else:
+                    data[key] = getattr(self, key).value[item].compute()
+
+        atoms = []
+        for idx in range(len(data["position"])):
+            obj = ase.Atoms(
+                symbols=data["species"][idx] if "species" in data else None,
+                positions=data["position"][idx] if "position" in data else None,
+                velocities=data["velocity"][idx] if "velocity" in data else None,
+                cell=data["box"][idx] if "box" in data else None,
+                pbc=True,  # TODO: pbc should not always be true
+            )
+            if "forces" in data or "energy" in data:
+                obj.calc = SinglePointCalculator(
+                    obj,
+                    energy=data["energy"][idx] if "energy" in data else None,
+                    forces=data["forces"][idx] if "forces" in data else None,
+                )
+
+            atoms.append(obj)
+
+        return atoms[0] if single_item else atoms

@@ -38,3 +38,5 @@ def test_get_slice(tmp_path, atoms_list):
     traj[0] == atoms_list[0]
     traj[-1] == atoms_list[-1]
     traj[1:2] == atoms_list[1:2]
+
+    assert len(traj.position) == 21

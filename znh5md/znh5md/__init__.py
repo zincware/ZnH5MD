@@ -163,28 +163,28 @@ class DaskH5MD(H5MDBase):
 
 
 @dataclasses.dataclass
-class ASEH5MD(DaskH5MD):
+class ASEH5MD(H5MDBase):
     def __getitem__(self, item):
         return self.get_atoms_list(item=item)
 
-    def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:
-        """Get an 'ase.Atoms' list for all data.
+    def __getattr__(self, item) -> h5py.Dataset:
+        """Get the h5py.Dataset for a given item.
 
-        Notes
-        -----
-        This is not memory safe.
+        We only return the value here, because the time and step
+        information is not used in the ASE interface.
         """
+        # not using dask here was 8x faster on a 32 MB h5 file
+        return getattr(self.format_handler, item)["value"]
+
+    def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:
+        """Get an 'ase.Atoms' list for all data."""
         data = {}
         single_item = isinstance(item, int)
         if single_item:
             item = [item]
         for key in ["species", "position", "velocity", "energy", "forces", "box"]:
             with contextlib.suppress(AttributeError, KeyError):
-                if item is None:
-                    data[key] = getattr(self, key).value.compute()
-                else:
-                    data[key] = getattr(self, key).value[item].compute()
-
+                data[key] = getattr(self, key)[item] if item else getattr(self, key)[:]
         atoms = []
         for idx in range(len(data["position"])):
             obj = ase.Atoms(

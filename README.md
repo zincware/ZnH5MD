@@ -35,6 +35,10 @@ for item in traj.position.batch(size=27, axis=0):
 ## ASE Atoms
 You can use ZnH5MD to store ASE Atoms objects in the H5MD format.
 
+> ZnH5MD does not support all features of ASE Atoms objects. It s important to note that unsupported parts are silently ignored and no error is raised.
+
+> The ASEH5MD interface will not provide any time and step information.
+
 ```python
 import znh5md
 import ase

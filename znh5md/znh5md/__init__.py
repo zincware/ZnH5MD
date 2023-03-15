@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import functools
 import os
@@ -9,6 +10,7 @@ import typing
 import ase
 import dask.array
 import h5py
+from ase.calculators.singlepoint import SinglePointCalculator
 
 from znh5md.format import FormatHandler
 
@@ -131,20 +133,28 @@ class ASEH5MD:
         -----
         This is not memory safe.
         """
-        species = self.species.value.compute()
-        box = self.box.value.compute()
-        position = self.position.value.compute()
-        velocity = self.velocity.value.compute()
+        data = {}
+        for key in ["species", "position", "velocity", "energy", "forces"]:
+            with contextlib.suppress(AttributeError):
+                data[key] = getattr(self, key).value.compute()
 
-        return [
-            ase.Atoms(
-                species[idx],
-                cell=box[idx],
-                positions=position[idx],
-                velocities=velocity[idx],
+        atoms = []
+        for idx in range(len(data["position"])):
+            obj = ase.Atoms(
+                symbols=data["species"][idx] if "species" in data else None,
+                positions=data["position"][idx] if "position" in data else None,
+                velocities=data["velocity"][idx] if "velocity" in data else None,
             )
-            for idx in range(len(self.position))
-        ]
+            if "forces" in data or "energy" in data:
+                obj.calc = SinglePointCalculator(
+                    obj,
+                    energy=data["energy"][idx] if "energy" in data else None,
+                    forces=data["forces"][idx] if "forces" in data else None,
+                )
+
+            atoms.append(obj)
+
+        return atoms
 
 
 @dataclasses.dataclass

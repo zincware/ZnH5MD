@@ -1,7 +1,7 @@
 import os
 
 import znh5md
-from znh5md.writing import DataWriter, MockAtomsReader
+from znh5md.io import DataWriter, MockAtomsReader
 
 
 def test_MockAtomsReader(atoms_list):

@@ -1,10 +1,10 @@
 import os
 
 import ase
+import pytest
 from ase.calculators.calculator import PropertyNotImplementedError
 
 import znh5md
-import pytest
 
 
 def test_shape(example_h5):
@@ -19,6 +19,7 @@ def test_get_atoms_list(example_h5):
     atoms = traj.get_atoms_list()
     assert len(atoms) == 100
     assert isinstance(atoms[0], ase.Atoms)
+
 
 @pytest.mark.parametrize("remove_calc", [True, False])
 def test_get_slice(tmp_path, atoms_list, remove_calc):
@@ -55,12 +56,16 @@ def test_request_missing_properties(tmp_path, atoms_list, remove_calc):
 
     db = znh5md.io.DataWriter(filename="db.h5")
     db.initialize_database_groups()
-    
+
     if remove_calc:
         with pytest.raises(RuntimeError):
-            for chunk in znh5md.io.AtomsReader(atoms_list).yield_chunks(group_names=["stress"]):
+            for chunk in znh5md.io.AtomsReader(atoms_list).yield_chunks(
+                group_names=["stress"]
+            ):
                 db.add_chunk_data(**chunk)
     else:
         with pytest.raises(PropertyNotImplementedError):
-            for chunk in znh5md.io.AtomsReader(atoms_list).yield_chunks(group_names=["stress"]):
+            for chunk in znh5md.io.AtomsReader(atoms_list).yield_chunks(
+                group_names=["stress"]
+            ):
                 db.add_chunk_data(**chunk)

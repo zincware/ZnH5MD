@@ -140,6 +140,9 @@ class ASEH5MD(H5MDBase):
         This is not memory safe.
         """
         data = {}
+        single_item = isinstance(item, int)
+        if single_item:
+            item = [item]
         for key in ["species", "position", "velocity", "energy", "forces", "box"]:
             with contextlib.suppress(AttributeError, KeyError):
                 if item is None:
@@ -165,7 +168,7 @@ class ASEH5MD(H5MDBase):
 
             atoms.append(obj)
 
-        return atoms
+        return atoms[0] if single_item else atoms
 
 
 @dataclasses.dataclass

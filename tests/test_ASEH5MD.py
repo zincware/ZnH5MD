@@ -34,3 +34,7 @@ def test_get_slice(tmp_path, atoms_list):
     assert atoms[0] == atoms_list[1]
     assert atoms[1] == atoms_list[3]
     assert atoms[2] == atoms_list[6]
+
+    traj[0] == atoms_list[0]
+    traj[-1] == atoms_list[-1]
+    traj[1:2] == atoms_list[1:2]

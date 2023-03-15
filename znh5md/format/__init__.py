@@ -9,6 +9,8 @@ import h5py
 class FormatHandler:
     filename: str
 
+    file_handle: typing.Callable = h5py.File
+
     def __post_init__(self):
         self.particle_key = None
         with self.file as file:
@@ -22,7 +24,7 @@ class FormatHandler:
     @property
     def file(self) -> h5py.File:
         """The 'h5py.File' from filename."""
-        return h5py.File(self.filename)
+        return self.file_handle(self.filename)
 
     @property
     def time_dependent_groups(self) -> typing.List[str]:

@@ -11,7 +11,14 @@ log = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
-class ChunkData:
+class ExplicitStepTimeChunk:
+    """Time-dependent data for a single group.
+    
+    References
+    ----------
+    https://h5md.nongnu.org/h5md.html#time-dependent-data
+    """
+
     value: np.ndarray
     step: np.ndarray
     time: np.ndarray
@@ -24,7 +31,7 @@ class ChunkData:
         return len(self.step)
 
 
-CHUNK_DICT = typing.Dict[str, ChunkData]
+CHUNK_DICT = typing.Dict[str, ExplicitStepTimeChunk]
 
 
 @dataclasses.dataclass
@@ -105,7 +112,7 @@ class MockAtomsReader:
 
     def yield_chunks(
         self, group_name: list = None
-    ) -> typing.Iterator[typing.Dict[str, ChunkData]]:
+    ) -> typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]:
         start_index = 0
         stop_index = 0
         if group_name is None:
@@ -128,7 +135,7 @@ class MockAtomsReader:
                     )
                 else:
                     raise ValueError(f"Value {name} not supported")
-                data[name] = ChunkData(
+                data[name] = ExplicitStepTimeChunk(
                     value=value,
                     step=np.arange(start_index, start_index + len(value)),
                     time=np.arange(start_index, start_index + len(value)),

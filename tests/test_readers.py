@@ -24,5 +24,6 @@ def test_AtomsReader(tmp_path, atoms_list):
     for a, b in zip(atoms, atoms_list):
         npt.assert_array_equal(a.get_positions(), b.get_positions())
         npt.assert_array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
-        assert a.get_potential_energy() == b.get_potential_energy()
         npt.assert_array_equal(a.get_forces(), b.get_forces())
+        npt.assert_array_equal(a.get_cell(), b.get_cell())
+        npt.assert_array_equal(a.get_potential_energy(), b.get_potential_energy())

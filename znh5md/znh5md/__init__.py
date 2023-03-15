@@ -134,7 +134,7 @@ class ASEH5MD:
         This is not memory safe.
         """
         data = {}
-        for key in ["species", "position", "velocity", "energy", "forces"]:
+        for key in ["species", "position", "velocity", "energy", "forces", "cell"]:
             with contextlib.suppress(AttributeError):
                 data[key] = getattr(self, key).value.compute()
 
@@ -144,6 +144,7 @@ class ASEH5MD:
                 symbols=data["species"][idx] if "species" in data else None,
                 positions=data["position"][idx] if "position" in data else None,
                 velocities=data["velocity"][idx] if "velocity" in data else None,
+                cell=data["cell"][idx] if "cell" in data else None,
             )
             if "forces" in data or "energy" in data:
                 obj.calc = SinglePointCalculator(

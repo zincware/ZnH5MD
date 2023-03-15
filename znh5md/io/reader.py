@@ -86,7 +86,7 @@ class AtomsReader(DataReader):
                 "species": self._get_species,
                 "forces": self._get_forces,
                 "stress": self._get_stress,
-                # "box": self._get_box,
+                "cell": self._get_box,  # TODO this should be saved as box/edges
             }
 
             for name in group_name or functions:

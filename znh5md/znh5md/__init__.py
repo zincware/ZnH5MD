@@ -3,8 +3,8 @@ from __future__ import annotations
 import dataclasses
 import functools
 import os
-import typing
 import pathlib
+import typing
 
 import ase
 import dask.array

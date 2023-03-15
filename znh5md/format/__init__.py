@@ -1,3 +1,4 @@
+"""Format handler for h5md files."""
 import dataclasses
 import typing
 

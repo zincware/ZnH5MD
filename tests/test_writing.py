@@ -1,7 +1,7 @@
 import os
 
 import znh5md
-from znh5md.writing import DatabaseWriter, MockAtomsReader
+from znh5md.writing import DataWriter, MockAtomsReader
 
 
 def test_MockAtomsReader(atoms_list):
@@ -9,10 +9,10 @@ def test_MockAtomsReader(atoms_list):
     assert len(list(reader.yield_chunks())) == 3
 
 
-def test_DatabaseWriter(tmp_path, atoms_list):
+def test_DataWriter(tmp_path, atoms_list):
     os.chdir(tmp_path)
 
-    db = DatabaseWriter(filename="db.h5")
+    db = DataWriter(filename="db.h5")
     db.initialize_database_groups()
 
     reader = MockAtomsReader(atoms_list, frames_per_chunk=10)

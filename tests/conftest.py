@@ -1,5 +1,8 @@
 import pathlib
+import random
 
+import ase.calculators.singlepoint
+import ase.io
 import h5py
 import numpy as np
 import pytest
@@ -38,3 +41,25 @@ def example_h5(tmp_path) -> pathlib.Path:
         species.create_dataset("step", data=np.arange(n_steps))
 
     return filename
+
+
+@pytest.fixture
+def atoms_list() -> list[ase.Atoms]:
+    """
+    Generate ase.Atoms objects with random positions and increasing energy
+    and random force values
+    """
+    random.seed(1234)
+    atoms = [
+        ase.Atoms(
+            "CO", positions=[(0, 0, 0), (0, 0, random.random())], cell=(1, 1, 1), pbc=True
+        )
+        for _ in range(21)
+    ]
+
+    for idx, atom in enumerate(atoms):
+        atom.calc = ase.calculators.singlepoint.SinglePointCalculator(
+            atoms=atom, energy=idx / 21, forces=np.random.rand(2, 3)
+        )
+
+    return atoms

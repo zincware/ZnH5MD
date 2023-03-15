@@ -31,3 +31,21 @@ for item in traj.position.batch(size=27, axis=0):
     for x in item.batch(size=17, axis=1):
         print(x.value.compute())
 ```
+
+## ASE Atoms
+You can use ZnH5MD to store ASE Atoms objects in the H5MD format.
+
+```python
+import znh5md
+import ase
+
+atoms: list[ase.Atoms]
+
+db = znh5md.io.DataWriter(filename="db.h5")
+db.initialize_database_groups()
+
+db.add(znh5md.io.AtomsReader(atoms))
+
+data = znh5md.ASEH5MD("db.h5")
+data.get_atoms_list() == atoms
+```

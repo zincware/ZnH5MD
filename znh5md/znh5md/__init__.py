@@ -1,15 +1,20 @@
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import functools
 import os
+import pathlib
 import typing
 
 import ase
 import dask.array
 import h5py
+from ase.calculators.singlepoint import SinglePointCalculator
 
 from znh5md.format import FormatHandler
+
+PATHLIKE = typing.Union[str, pathlib.Path, os.PathLike]
 
 
 @functools.singledispatch
@@ -107,7 +112,7 @@ class DaskDataSet:
 
 @dataclasses.dataclass
 class ASEH5MD:
-    filename: str
+    filename: PATHLIKE
 
     @functools.cached_property
     def file(self) -> FormatHandler:
@@ -128,25 +133,34 @@ class ASEH5MD:
         -----
         This is not memory safe.
         """
-        species = self.species.value.compute()
-        box = self.box.value.compute()
-        position = self.position.value.compute()
-        velocity = self.velocity.value.compute()
+        data = {}
+        for key in ["species", "position", "velocity", "energy", "forces", "box"]:
+            with contextlib.suppress(AttributeError, KeyError):
+                data[key] = getattr(self, key).value.compute()
 
-        return [
-            ase.Atoms(
-                species[idx],
-                cell=box[idx],
-                positions=position[idx],
-                velocities=velocity[idx],
+        atoms = []
+        for idx in range(len(data["position"])):
+            obj = ase.Atoms(
+                symbols=data["species"][idx] if "species" in data else None,
+                positions=data["position"][idx] if "position" in data else None,
+                velocities=data["velocity"][idx] if "velocity" in data else None,
+                cell=data["box"][idx] if "box" in data else None,
             )
-            for idx in range(len(self.position))
-        ]
+            if "forces" in data or "energy" in data:
+                obj.calc = SinglePointCalculator(
+                    obj,
+                    energy=data["energy"][idx] if "energy" in data else None,
+                    forces=data["forces"][idx] if "forces" in data else None,
+                )
+
+            atoms.append(obj)
+
+        return atoms
 
 
 @dataclasses.dataclass
 class DaskH5MD:
-    """
+    """Dask interface for H5MD files.
 
     Attributes
     ----------
@@ -156,7 +170,7 @@ class DaskH5MD:
 
     """
 
-    filename: os.PathLike
+    filename: PATHLIKE
     time_chunk_size: int = 10
     species_chunk_size: int = 10
     fixed_species_index: bool = False

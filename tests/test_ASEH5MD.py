@@ -1,6 +1,8 @@
 import os
 
 import ase
+import pytest
+from ase.calculators.calculator import PropertyNotImplementedError
 
 import znh5md
 
@@ -19,8 +21,12 @@ def test_get_atoms_list(example_h5):
     assert isinstance(atoms[0], ase.Atoms)
 
 
-def test_get_slice(tmp_path, atoms_list):
+@pytest.mark.parametrize("remove_calc", [True, False])
+def test_get_slice(tmp_path, atoms_list, remove_calc):
     os.chdir(tmp_path)
+    if remove_calc:
+        for atoms in atoms_list:
+            atoms.calc = None
 
     db = znh5md.io.DataWriter(filename="db.h5")
     db.initialize_database_groups()
@@ -39,3 +45,27 @@ def test_get_slice(tmp_path, atoms_list):
     traj[1:2] == atoms_list[1:2]
 
     assert len(traj.position) == 21
+
+
+@pytest.mark.parametrize("remove_calc", [True, False])
+def test_request_missing_properties(tmp_path, atoms_list, remove_calc):
+    os.chdir(tmp_path)
+    if remove_calc:
+        for atoms in atoms_list:
+            atoms.calc = None
+
+    db = znh5md.io.DataWriter(filename="db.h5")
+    db.initialize_database_groups()
+
+    if remove_calc:
+        with pytest.raises(RuntimeError):
+            for chunk in znh5md.io.AtomsReader(atoms_list).yield_chunks(
+                group_names=["stress"]
+            ):
+                db.add_chunk_data(**chunk)
+    else:
+        with pytest.raises(PropertyNotImplementedError):
+            for chunk in znh5md.io.AtomsReader(atoms_list).yield_chunks(
+                group_names=["stress"]
+            ):
+                db.add_chunk_data(**chunk)

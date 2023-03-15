@@ -40,6 +40,39 @@ class ExplicitStepTimeChunk:
 CHUNK_DICT = typing.Dict[str, ExplicitStepTimeChunk]
 
 
+def _create_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk):
+    dataset_group.create_dataset(
+        "value", maxshape=chunk_data.shape, data=chunk_data.value, chunks=True
+    )
+    dataset_group.create_dataset(
+        "time", maxshape=(None,), data=chunk_data.time, chunks=True
+    )
+    dataset_group.create_dataset(
+        "step", maxshape=(None,), data=chunk_data.step, chunks=True
+    )
+
+
+def _append_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk):
+    n_current_frames = dataset_group["value"].shape[0]
+    n_new_frames = len(chunk_data)
+
+    dataset_group["value"].resize(n_current_frames + n_new_frames, axis=0)
+    dataset_group["time"].resize(n_current_frames + n_new_frames, axis=0)
+    dataset_group["step"].resize(n_current_frames + n_new_frames, axis=0)
+    log.debug(f"Resizing from {n_current_frames} to {n_current_frames+n_new_frames}")
+
+    log.debug(f"appending to particle groups {dataset_group.name}")
+    dataset_group["value"][:] = np.concatenate(
+        [dataset_group["value"][:n_current_frames], chunk_data.value]
+    )
+    dataset_group["time"][:] = np.concatenate(
+        [dataset_group["time"][:n_current_frames], chunk_data.time]
+    )
+    dataset_group["step"][:] = np.concatenate(
+        [dataset_group["step"][:n_current_frames], chunk_data.step]
+    )
+
+
 @dataclasses.dataclass
 class DataWriter:
     filename: str
@@ -73,15 +106,9 @@ class DataWriter:
             with h5py.File(self.filename, "r+") as file:
                 atoms = file[self.atoms_path]
                 dataset_group = atoms.create_group(group_name)
-                dataset_group.create_dataset(
-                    "value", maxshape=chunk_data.shape, data=chunk_data.value, chunks=True
-                )
-                dataset_group.create_dataset(
-                    "time", maxshape=(None,), data=chunk_data.time, chunks=True
-                )
-                dataset_group.create_dataset(
-                    "step", maxshape=(None,), data=chunk_data.step, chunks=True
-                )
+                if group_name == "box":
+                    dataset_group = dataset_group.create_group("edges")
+                _create_dataset(dataset_group, chunk_data)
 
     def add_chunk_data_to_particles_group(self, **kwargs: CHUNK_DICT):
         """Add data to an existing group.
@@ -101,26 +128,9 @@ class DataWriter:
             with h5py.File(self.filename, "r+") as file:
                 atoms = file[self.atoms_path]
                 dataset_group = atoms[group_name]
-                n_current_frames = dataset_group["value"].shape[0]
-                n_new_frames = len(chunk_data)
-
-                dataset_group["value"].resize(n_current_frames + n_new_frames, axis=0)
-                dataset_group["time"].resize(n_current_frames + n_new_frames, axis=0)
-                dataset_group["step"].resize(n_current_frames + n_new_frames, axis=0)
-                log.debug(
-                    f"Resizing from {n_current_frames} to {n_current_frames+n_new_frames}"
-                )
-
-                log.debug(f"appending to particle groups {group_name}")
-                dataset_group["value"][:] = np.concatenate(
-                    [dataset_group["value"][:n_current_frames], chunk_data.value]
-                )
-                dataset_group["time"][:] = np.concatenate(
-                    [dataset_group["time"][:n_current_frames], chunk_data.time]
-                )
-                dataset_group["step"][:] = np.concatenate(
-                    [dataset_group["step"][:n_current_frames], chunk_data.step]
-                )
+                if group_name == "box":
+                    dataset_group = dataset_group["edges"]
+                _append_dataset(dataset_group, chunk_data)
 
     def add_chunk_data(self, **kwargs: CHUNK_DICT) -> None:
         """Write Chunks to the database.

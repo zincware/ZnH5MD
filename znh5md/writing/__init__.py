@@ -2,6 +2,7 @@ import dataclasses
 import os
 import typing
 import logging
+import abc
 
 import ase
 import h5py
@@ -13,7 +14,7 @@ log = logging.getLogger(__name__)
 @dataclasses.dataclass
 class ExplicitStepTimeChunk:
     """Time-dependent data for a single group.
-    
+
     References
     ----------
     https://h5md.nongnu.org/h5md.html#time-dependent-data
@@ -24,10 +25,16 @@ class ExplicitStepTimeChunk:
     time: np.ndarray
 
     @property
-    def shape(self):
+    def shape(self) -> tuple:
+        """The shape of the value array."""
         return tuple(None for _ in range(len(self.value.shape)))
 
     def __len__(self):
+        """The number of frames in the chunk.
+
+        The number of frames is the same as the length of the step / time array
+        or the first dimension of the value array.
+        """
         return len(self.step)
 
 
@@ -40,12 +47,28 @@ class DatabaseWriter:
     atoms_path: str = os.path.join("particles", "atoms")
 
     def initialize_database_groups(self):
-        """Create all groups that are required."""
+        """Create all groups that are required.
+
+        We create the following groups:
+        - particles/atoms
+        """
         with h5py.File(self.filename, "w") as file:
             particles = file.create_group("particles")
             _ = particles.create_group("atoms")
 
     def create_particles_group_from_chunk_data(self, **kwargs: CHUNK_DICT):
+        """Create a new group for the given elements.
+
+        This method will create the following datasets for each group in kwargs.
+        - particles/atoms/<group_name>/value
+        - particles/atoms/<group_name>/time
+        - particles/atoms/<group_name>/step
+
+        Parameters
+        ----------
+        kwargs: dict[str, ExplicitStepTimeChunk]
+            The chunk data to write to the database. The key is the name of the group.
+        """
         for group_name, chunk_data in kwargs.items():
             log.debug(f"creating particle groups {group_name}")
             with h5py.File(self.filename, "r+") as file:
@@ -62,6 +85,19 @@ class DatabaseWriter:
                 )
 
     def add_chunk_data_to_particles_group(self, **kwargs: CHUNK_DICT):
+        """Add data to an existing group.
+
+        For each group in kwargs, the following datasets are resized and appended to:
+        - particles/atoms/<group_name>/value
+        - particles/atoms/<group_name>/time
+        - particles/atoms/<group_name>/step
+
+        Parameters
+        ----------
+        kwargs: dict[str, ExplicitStepTimeChunk]
+            The chunk data to write to the database. The key is the name of the group.
+            The group must already exist.
+        """
         for group_name, chunk_data in kwargs.items():
             with h5py.File(self.filename, "r+") as file:
                 atoms = file[self.atoms_path]
@@ -95,7 +131,7 @@ class DatabaseWriter:
 
         Parameters
         ----------
-        kwargs: dict[str, ChunkData]
+        kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
         """
         for group_name, chunk_data in kwargs.items():
@@ -105,8 +141,29 @@ class DatabaseWriter:
                 self.create_particles_group_from_chunk_data(**{group_name: chunk_data})
 
 
+class DataReader(abc.ABC):
+    """Abstract base class for reading data and yielding chunks."""
+
+    @abc.abstractmethod
+    def yield_chunks(
+        self, *args, **kwargs
+    ) -> typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]:
+        """Yield chunks of data.
+
+        This method will yield chunks of data to be written to the HDF5 File.
+        It should implement a generator pattern that e.g. reads from files.
+        
+        Returns
+        -------
+        typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]
+            A dictionary of chunks. The key is the name of the group.
+            Each chunk containing the data for one group.
+        """
+        raise NotImplementedError()
+
+
 @dataclasses.dataclass
-class MockAtomsReader:
+class MockAtomsReader(DataReader):
     atoms: list[ase.Atoms]
     frames_per_chunk: int
 

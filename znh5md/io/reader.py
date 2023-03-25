@@ -7,12 +7,13 @@ import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
 
 from znh5md.io.base import DataReader, ExplicitStepTimeChunk
+from znh5md.format import H5MDGroups
 
 
 @dataclasses.dataclass
 class AtomsReader(DataReader):
     atoms: list[ase.Atoms]
-    frames_per_chunk: int = 100 # must be larger than 1
+    frames_per_chunk: int = 100  # must be larger than 1
 
     def _fill_with_nan(self, data: list) -> np.ndarray:
         max_n_particles = max(x.shape[0] for x in data)
@@ -71,13 +72,13 @@ class AtomsReader(DataReader):
             data = {}
 
             functions = {
-                "position": self._get_positions,
-                "energy": self._get_energy,
-                "species": self._get_species,
-                "forces": self._get_forces,
-                "stress": self._get_stress,
-                "edges": self._get_edges,
-                "boundary": self._get_boundary,
+                H5MDGroups.position: self._get_positions,
+                H5MDGroups.energy: self._get_energy,
+                H5MDGroups.species: self._get_species,
+                H5MDGroups.forces: self._get_forces,
+                H5MDGroups.stress: self._get_stress,
+                H5MDGroups.edges: self._get_edges,
+                H5MDGroups.boundary: self._get_boundary,
             }
 
             for name in group_names or functions:

@@ -12,7 +12,7 @@ from znh5md.io.base import DataReader, ExplicitStepTimeChunk
 @dataclasses.dataclass
 class AtomsReader(DataReader):
     atoms: list[ase.Atoms]
-    frames_per_chunk: int = 100
+    frames_per_chunk: int = 100 # must be larger than 1
 
     def _fill_with_nan(self, data: list) -> np.ndarray:
         max_n_particles = max(x.shape[0] for x in data)

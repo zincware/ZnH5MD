@@ -63,7 +63,7 @@ def atoms_list(request) -> list[ase.Atoms]:
             for _ in range(21)
         ]
     elif request.param == "vary_size":
-        atoms = [ase.build.molecule(x) for x in ase.collections.g2.names[:40]]
+        atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
     # create some variations in PBC
     atoms[0].pbc = np.array([True, True, False])
     atoms[1].pbc = np.array([True, False, True])

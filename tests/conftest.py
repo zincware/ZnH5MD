@@ -70,7 +70,7 @@ def atoms_list(request) -> list[ase.Atoms]:
 
     for idx, atom in enumerate(atoms):
         atom.calc = ase.calculators.singlepoint.SinglePointCalculator(
-            atoms=atom, energy=idx / 21, forces=np.random.rand(2, 3)
+            atoms=atom, energy=idx / 21, forces=np.random.rand(len(atom), 3)
         )
 
     return atoms

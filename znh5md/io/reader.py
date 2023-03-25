@@ -41,7 +41,11 @@ class AtomsReader(DataReader):
             return self._fill_with_nan(data)
 
     def _get_forces(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        return np.array([x.get_forces() for x in atoms])
+        data = [x.get_forces() for x in atoms]
+        try:
+            return np.array(data)
+        except ValueError:
+            return self._fill_with_nan(data)
 
     def _get_stress(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_stress() for x in atoms])

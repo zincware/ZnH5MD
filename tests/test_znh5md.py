@@ -5,7 +5,7 @@ import znh5md
 
 
 def test_version():
-    assert znh5md.__version__ == "0.1.1"
+    assert znh5md.__version__ == "0.1.2"
 
 
 def test_shape(example_h5):

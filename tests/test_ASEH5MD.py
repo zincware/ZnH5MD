@@ -47,6 +47,7 @@ def test_get_slice(tmp_path, atoms_list, remove_calc):
     assert len(traj.position) == 21
 
 
+@pytest.mark.parametrize("atoms_list", ["no_stress"], indirect=True)
 @pytest.mark.parametrize("remove_calc", [True, False])
 def test_request_missing_properties(tmp_path, atoms_list, remove_calc):
     os.chdir(tmp_path)

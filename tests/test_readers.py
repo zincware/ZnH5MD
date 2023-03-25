@@ -35,3 +35,4 @@ def test_AtomsReader(tmp_path, atoms_list, use_add):
         npt.assert_array_equal(a.get_cell(), b.get_cell())
         npt.assert_array_equal(a.get_potential_energy(), b.get_potential_energy())
         npt.assert_array_equal(a.get_pbc(), b.get_pbc())
+        npt.assert_array_equal(a.get_stress(), b.get_stress())

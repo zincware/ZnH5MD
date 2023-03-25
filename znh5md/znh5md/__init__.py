@@ -6,6 +6,7 @@ import functools
 import os
 import pathlib
 import typing
+import numpy as np
 
 import ase
 import dask.array
@@ -194,11 +195,19 @@ class ASEH5MD(H5MDBase):
             with contextlib.suppress(AttributeError, KeyError):
                 data[key] = getattr(self, key)[item] if item else getattr(self, key)[:]
         atoms = []
+
+        def rm_nan(x):
+            if not np.isnan(x).any():
+                return x
+            if len(x.shape) == 1:
+                return x[~np.isnan(x)]
+            return x[~np.isnan(x).any(axis=1)]
+
         for idx in range(len(data["position"])):
             obj = ase.Atoms(
-                symbols=data["species"][idx] if "species" in data else None,
-                positions=data["position"][idx] if "position" in data else None,
-                velocities=data["velocity"][idx] if "velocity" in data else None,
+                symbols=rm_nan(data["species"][idx]) if "species" in data else None,
+                positions=rm_nan(data["position"][idx]) if "position" in data else None,
+                velocities=rm_nan(data["velocity"][idx]) if "velocity" in data else None,
                 cell=data["edges"][idx] if "edges" in data else None,
                 pbc=data["boundary"][idx] if "boundary" in data else None,
             )
@@ -206,7 +215,7 @@ class ASEH5MD(H5MDBase):
                 obj.calc = SinglePointCalculator(
                     obj,
                     energy=data["energy"][idx] if "energy" in data else None,
-                    forces=data["forces"][idx] if "forces" in data else None,
+                    forces=rm_nan(data["forces"][idx]) if "forces" in data else None,
                 )
 
             atoms.append(obj)

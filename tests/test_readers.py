@@ -6,6 +6,7 @@ import pytest
 import znh5md
 
 
+@pytest.mark.parametrize("atoms_list", ["fix_size", "vary_size"], indirect=True)
 @pytest.mark.parametrize("use_add", [True, False])
 def test_AtomsReader(tmp_path, atoms_list, use_add):
     os.chdir(tmp_path)
@@ -14,7 +15,8 @@ def test_AtomsReader(tmp_path, atoms_list, use_add):
     db = znh5md.io.DataWriter(filename="db.h5")
     db.initialize_database_groups()
 
-    reader = znh5md.io.AtomsReader(atoms_list, frames_per_chunk=10)
+    reader = znh5md.io.AtomsReader(atoms_list, frames_per_chunk=3)
+    # we use a really small frames_per_chunk for testing purposes
 
     if use_add:
         db.add(reader)

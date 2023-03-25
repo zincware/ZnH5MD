@@ -12,19 +12,40 @@ from znh5md.io.base import DataReader, ExplicitStepTimeChunk
 @dataclasses.dataclass
 class AtomsReader(DataReader):
     atoms: list[ase.Atoms]
-    frames_per_chunk: int = 100
+    frames_per_chunk: int = 100 # must be larger than 1
+
+    def _fill_with_nan(self, data: list) -> np.ndarray:
+        max_n_particles = max(x.shape[0] for x in data)
+        dimensions = data[0].shape[1:]
+
+        result = np.full((len(data), max_n_particles, *dimensions), np.nan)
+        for i, x in enumerate(data):
+            result[i, : x.shape[0], ...] = x
+        return result
 
     def _get_positions(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        return np.array([x.get_positions() for x in atoms])
+        data = [x.get_positions() for x in atoms]
+        try:
+            return np.array(data)
+        except ValueError:
+            return self._fill_with_nan(data)
 
     def _get_energy(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_potential_energy() for x in atoms])
 
     def _get_species(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        return np.array([x.get_atomic_numbers() for x in atoms])
+        data = [x.get_atomic_numbers() for x in atoms]
+        try:
+            return np.array(data)
+        except ValueError:
+            return self._fill_with_nan(data)
 
     def _get_forces(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        return np.array([x.get_forces() for x in atoms])
+        data = [x.get_forces() for x in atoms]
+        try:
+            return np.array(data)
+        except ValueError:
+            return self._fill_with_nan(data)
 
     def _get_stress(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_stress() for x in atoms])

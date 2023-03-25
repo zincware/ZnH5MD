@@ -3,6 +3,8 @@ import random
 
 import ase.calculators.singlepoint
 import ase.io
+import ase.collections
+import ase.build
 import h5py
 import numpy as np
 import pytest
@@ -44,18 +46,24 @@ def example_h5(tmp_path) -> pathlib.Path:
 
 
 @pytest.fixture
-def atoms_list() -> list[ase.Atoms]:
+def atoms_list(request) -> list[ase.Atoms]:
     """
     Generate ase.Atoms objects with random positions and increasing energy
     and random force values
     """
-    random.seed(1234)
-    atoms = [
-        ase.Atoms(
-            "CO", positions=[(0, 0, 0), (0, 0, random.random())], cell=(1, 1, 1), pbc=True
-        )
-        for _ in range(21)
-    ]
+    if getattr(request, "param", None) in [None, "fix_size"]:
+        random.seed(1234)
+        atoms = [
+            ase.Atoms(
+                "CO",
+                positions=[(0, 0, 0), (0, 0, random.random())],
+                cell=(1, 1, 1),
+                pbc=True,
+            )
+            for _ in range(21)
+        ]
+    elif request.param == "vary_size":
+        atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
     # create some variations in PBC
     atoms[0].pbc = np.array([True, True, False])
     atoms[1].pbc = np.array([True, False, True])
@@ -63,7 +71,7 @@ def atoms_list() -> list[ase.Atoms]:
 
     for idx, atom in enumerate(atoms):
         atom.calc = ase.calculators.singlepoint.SinglePointCalculator(
-            atoms=atom, energy=idx / 21, forces=np.random.rand(2, 3)
+            atoms=atom, energy=idx / 21, forces=np.random.rand(len(atom), 3)
         )
 
     return atoms

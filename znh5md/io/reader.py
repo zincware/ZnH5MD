@@ -33,7 +33,7 @@ class AtomsReader(DataReader):
         return np.array([x.get_cell() for x in atoms])
 
     def _get_boundary(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        return np.array([x.get_pbc() for x in atoms])
+        return np.array([[x.get_pbc()] for x in atoms])
 
     def yield_chunks(
         self, group_names: list = None

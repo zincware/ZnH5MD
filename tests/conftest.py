@@ -45,18 +45,24 @@ def example_h5(tmp_path) -> pathlib.Path:
 
 
 @pytest.fixture
-def atoms_list() -> list[ase.Atoms]:
+def atoms_list(request) -> list[ase.Atoms]:
     """
     Generate ase.Atoms objects with random positions and increasing energy
     and random force values
     """
-    random.seed(1234)
-    atoms = [
-        ase.Atoms(
-            "CO", positions=[(0, 0, 0), (0, 0, random.random())], cell=(1, 1, 1), pbc=True
-        )
-        for _ in range(21)
-    ]
+    if getattr(request, "param", None) in [None, "fix_size"]:
+        random.seed(1234)
+        atoms = [
+            ase.Atoms(
+                "CO",
+                positions=[(0, 0, 0), (0, 0, random.random())],
+                cell=(1, 1, 1),
+                pbc=True,
+            )
+            for _ in range(21)
+        ]
+    elif request.param == "vary_size":
+        atoms = [ase.build.molecule(x) for x in ["CO", "H2O", "CH4", "CH3OH"]]
     # create some variations in PBC
     atoms[0].pbc = np.array([True, True, False])
     atoms[1].pbc = np.array([True, False, True])
@@ -68,10 +74,3 @@ def atoms_list() -> list[ase.Atoms]:
         )
 
     return atoms
-
-
-@pytest.fixture
-def diff_atoms_list() -> list[ase.Atoms]:
-    """Like atoms_list but with different number of atoms"""
-
-    return [ase.build.molecule(x) for x in ["CO", "H2O", "CH4", "CH3OH"]]

@@ -194,7 +194,7 @@ class ASEH5MD(H5MDBase):
         ]:
             with contextlib.suppress(AttributeError, KeyError):
                 data[key] = getattr(self, key)[item] if item else getattr(self, key)[:]
-                if key in ["position"]:
+                if key in ["position", "velocity", "forces"]:
                     data[key] = [x[~np.isnan(x).any(axis=1)] for x in data[key]]
                 if key in ["species"]:
                     data[key] = [x[~np.isnan(x)] for x in data[key]]

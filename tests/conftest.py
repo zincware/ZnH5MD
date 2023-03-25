@@ -3,6 +3,7 @@ import random
 
 import ase.calculators.singlepoint
 import ase.io
+import ase.build
 import h5py
 import numpy as np
 import pytest
@@ -67,3 +68,10 @@ def atoms_list() -> list[ase.Atoms]:
         )
 
     return atoms
+
+
+@pytest.fixture
+def diff_atoms_list() -> list[ase.Atoms]:
+    """Like atoms_list but with different number of atoms"""
+
+    return [ase.build.molecule(x) for x in ["CO", "H2O", "CH4", "CH3OH"]]

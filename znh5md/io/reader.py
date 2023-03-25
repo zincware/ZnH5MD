@@ -29,8 +29,11 @@ class AtomsReader(DataReader):
     def _get_stress(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_stress() for x in atoms])
 
-    def _get_box(self, atoms: list[ase.Atoms]) -> np.ndarray:
+    def _get_edges(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_cell() for x in atoms])
+
+    def _get_boundary(self, atoms: list[ase.Atoms]) -> np.ndarray:
+        return np.array([[x.get_pbc()] for x in atoms])
 
     def yield_chunks(
         self, group_names: list = None
@@ -52,7 +55,8 @@ class AtomsReader(DataReader):
                 "species": self._get_species,
                 "forces": self._get_forces,
                 "stress": self._get_stress,
-                "box": self._get_box,
+                "edges": self._get_edges,
+                "boundary": self._get_boundary,
             }
 
             for name in group_names or functions:
@@ -68,7 +72,7 @@ class AtomsReader(DataReader):
                     )
                 except (PropertyNotImplementedError, RuntimeError) as err:
                     if group_names is not None:
-                        # if the property was specifcally selected, raise the error
+                        # if the property was specifically selected, raise the error
                         raise err
                     else:
                         continue

@@ -182,7 +182,15 @@ class ASEH5MD(H5MDBase):
         single_item = isinstance(item, int)
         if single_item:
             item = [item]
-        for key in ["species", "position", "velocity", "energy", "forces", "box"]:
+        for key in [
+            "species",
+            "position",
+            "velocity",
+            "energy",
+            "forces",
+            "edges",
+            "boundary",
+        ]:
             with contextlib.suppress(AttributeError, KeyError):
                 data[key] = getattr(self, key)[item] if item else getattr(self, key)[:]
         atoms = []
@@ -191,8 +199,8 @@ class ASEH5MD(H5MDBase):
                 symbols=data["species"][idx] if "species" in data else None,
                 positions=data["position"][idx] if "position" in data else None,
                 velocities=data["velocity"][idx] if "velocity" in data else None,
-                cell=data["box"][idx] if "box" in data else None,
-                pbc=True,  # TODO: pbc should not always be true
+                cell=data["edges"][idx] if "edges" in data else None,
+                pbc=data["boundary"][idx] if "boundary" in data else None,
             )
             if "forces" in data or "energy" in data:
                 obj.calc = SinglePointCalculator(

@@ -47,6 +47,11 @@ class FormatHandler:
             ) from err
 
     @property
-    def box(self):
+    def edges(self):
         group = f"particles/{self.particle_key}/box/edges"
+        return self.file[group]
+
+    @property
+    def boundary(self):
+        group = f"particles/{self.particle_key}/box/boundary"
         return self.file[group]

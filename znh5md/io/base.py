@@ -109,6 +109,16 @@ class DataWriter:
             particles = file.create_group("particles")
             _ = particles.create_group("atoms")
 
+    def _handle_special_cases_group_names(self, groupname: str) -> str:
+        """Update group name in special cases.
+
+        Some groups, especially the box group, are nested differently.
+        """
+        if groupname in ["boundary", "edges"]:
+            return f"box/{groupname}"
+
+        return groupname
+
     def create_particles_group_from_chunk_data(self, **kwargs: CHUNK_DICT):
         """Create a new group for the given elements.
 
@@ -126,9 +136,8 @@ class DataWriter:
             log.debug(f"creating particle groups {group_name}")
             with h5py.File(self.filename, "r+") as file:
                 atoms = file[self.atoms_path]
+                group_name = self._handle_special_cases_group_names(group_name)
                 dataset_group = atoms.create_group(group_name)
-                if group_name == "box":
-                    dataset_group = dataset_group.create_group("edges")
                 _create_dataset(dataset_group, chunk_data)
 
     def add_chunk_data_to_particles_group(self, **kwargs: CHUNK_DICT):
@@ -148,9 +157,9 @@ class DataWriter:
         for group_name, chunk_data in kwargs.items():
             with h5py.File(self.filename, "r+") as file:
                 atoms = file[self.atoms_path]
+                group_name = self._handle_special_cases_group_names(group_name)
                 dataset_group = atoms[group_name]
-                if group_name == "box":
-                    dataset_group = dataset_group["edges"]
+
                 _append_dataset(dataset_group, chunk_data)
 
     def add_chunk_data(self, **kwargs: CHUNK_DICT) -> None:

@@ -7,7 +7,7 @@ import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
 
 from znh5md.io.base import DataReader, ExplicitStepTimeChunk
-from znh5md.format import H5MDGroups
+from znh5md.format import GRP
 
 
 @dataclasses.dataclass
@@ -72,13 +72,13 @@ class AtomsReader(DataReader):
             data = {}
 
             functions = {
-                H5MDGroups.position: self._get_positions,
-                H5MDGroups.energy: self._get_energy,
-                H5MDGroups.species: self._get_species,
-                H5MDGroups.forces: self._get_forces,
-                H5MDGroups.stress: self._get_stress,
-                H5MDGroups.edges: self._get_edges,
-                H5MDGroups.boundary: self._get_boundary,
+                GRP.position: self._get_positions,
+                GRP.energy: self._get_energy,
+                GRP.species: self._get_species,
+                GRP.forces: self._get_forces,
+                GRP.stress: self._get_stress,
+                GRP.edges: self._get_edges,
+                GRP.boundary: self._get_boundary,
             }
 
             for name in group_names or functions:

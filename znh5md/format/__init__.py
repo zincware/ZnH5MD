@@ -6,7 +6,9 @@ import h5py
 
 
 @dataclasses.dataclass
-class H5MDGroups:
+class GRP:
+    """Group names for h5md files."""
+
     edges: str = "edges"
     boundary: str = "boundary"
     position: str = "position"
@@ -60,10 +62,10 @@ class FormatHandler:
 
     @property
     def edges(self):
-        group = f"particles/{self.particle_key}/box/{H5MDGroups.edges}"
+        group = f"particles/{self.particle_key}/box/{GRP.edges}"
         return self.file[group]
 
     @property
     def boundary(self):
-        group = f"particles/{self.particle_key}/box/{H5MDGroups.boundary}"
+        group = f"particles/{self.particle_key}/box/{GRP.boundary}"
         return self.file[group]

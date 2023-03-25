@@ -1,6 +1,7 @@
 import os
 
 import numpy.testing as npt
+import numpy as np
 import pytest
 
 import znh5md
@@ -10,6 +11,7 @@ import znh5md
 def test_AtomsReader(tmp_path, atoms_list, use_add):
     os.chdir(tmp_path)
     print(tmp_path)
+    atoms_list[0].pbc = np.array([True, True, True])
 
     db = znh5md.io.DataWriter(filename="db.h5")
     db.initialize_database_groups()
@@ -32,3 +34,4 @@ def test_AtomsReader(tmp_path, atoms_list, use_add):
         npt.assert_array_equal(a.get_forces(), b.get_forces())
         npt.assert_array_equal(a.get_cell(), b.get_cell())
         npt.assert_array_equal(a.get_potential_energy(), b.get_potential_energy())
+        npt.assert_array_equal(a.get_pbc(), b.get_pbc())

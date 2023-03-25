@@ -114,8 +114,9 @@ class DataWriter:
 
         Some groups, especially the box group, are nested differently.
         """
-        if groupname == "edges":
-            return "box/edges"
+        if groupname in ["boundary", "edges"]:
+            return f"box/{groupname}"
+
         return groupname
 
     def create_particles_group_from_chunk_data(self, **kwargs: CHUNK_DICT):

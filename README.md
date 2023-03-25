@@ -16,7 +16,7 @@ import znh5md
 traj = znh5md.DaskH5MD("file.h5", time_chunk_size=500, species_chunk_size=100)
 
 print(traj.file.time_dependent_groups)
-# ['box', 'force', 'image', 'position', 'species', 'velocity']
+# ['edges', 'force', 'image', 'position', 'species', 'velocity']
 
 print(traj.force)
 # DaskDataSet(value=dask.array<array, shape=(201, 1000, 3), ...)

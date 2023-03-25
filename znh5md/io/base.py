@@ -126,9 +126,12 @@ class DataWriter:
             log.debug(f"creating particle groups {group_name}")
             with h5py.File(self.filename, "r+") as file:
                 atoms = file[self.atoms_path]
-                dataset_group = atoms.create_group(group_name)
-                if group_name == "box":
-                    dataset_group = dataset_group.create_group("edges")
+                if group_name == "edges":
+                    # special case for twice nested attributes: box/edges
+                    dataset_group = atoms.create_group("box")
+                    dataset_group = dataset_group.create_group(group_name)
+                else:
+                    dataset_group = atoms.create_group(group_name)
                 _create_dataset(dataset_group, chunk_data)
 
     def add_chunk_data_to_particles_group(self, **kwargs: CHUNK_DICT):
@@ -148,9 +151,12 @@ class DataWriter:
         for group_name, chunk_data in kwargs.items():
             with h5py.File(self.filename, "r+") as file:
                 atoms = file[self.atoms_path]
-                dataset_group = atoms[group_name]
-                if group_name == "box":
-                    dataset_group = dataset_group["edges"]
+                if group_name == "edges":
+                    dataset_group = atoms["box"]
+                    dataset_group = dataset_group[group_name]
+                else:
+                    dataset_group = atoms[group_name]
+
                 _append_dataset(dataset_group, chunk_data)
 
     def add_chunk_data(self, **kwargs: CHUNK_DICT) -> None:

@@ -29,7 +29,7 @@ class AtomsReader(DataReader):
     def _get_stress(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_stress() for x in atoms])
 
-    def _get_box(self, atoms: list[ase.Atoms]) -> np.ndarray:
+    def _get_edges(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_cell() for x in atoms])
 
     def yield_chunks(
@@ -52,7 +52,7 @@ class AtomsReader(DataReader):
                 "species": self._get_species,
                 "forces": self._get_forces,
                 "stress": self._get_stress,
-                "box": self._get_box,
+                "edges": self._get_edges,
             }
 
             for name in group_names or functions:

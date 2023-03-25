@@ -13,7 +13,7 @@ import dask.array
 import h5py
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from znh5md.format import FormatHandler
+from znh5md.format import FormatHandler, H5MDGroups
 
 PATHLIKE = typing.Union[str, pathlib.Path, os.PathLike]
 
@@ -184,13 +184,13 @@ class ASEH5MD(H5MDBase):
         if single_item:
             item = [item]
         for key in [
-            "species",
-            "position",
-            "velocity",
-            "energy",
-            "forces",
-            "edges",
-            "boundary",
+            H5MDGroups.species,
+            H5MDGroups.position,
+            H5MDGroups.velocity,
+            H5MDGroups.edges,
+            H5MDGroups.boundary,
+            H5MDGroups.energy,
+            H5MDGroups.forces,
         ]:
             with contextlib.suppress(AttributeError, KeyError):
                 data[key] = getattr(self, key)[item] if item else getattr(self, key)[:]
@@ -203,19 +203,43 @@ class ASEH5MD(H5MDBase):
                 return x[~np.isnan(x)]
             return x[~np.isnan(x).any(axis=1)]
 
-        for idx in range(len(data["position"])):
+        for idx in range(len(data[H5MDGroups.position])):
             obj = ase.Atoms(
-                symbols=rm_nan(data["species"][idx]) if "species" in data else None,
-                positions=rm_nan(data["position"][idx]) if "position" in data else None,
-                velocities=rm_nan(data["velocity"][idx]) if "velocity" in data else None,
-                cell=data["edges"][idx] if "edges" in data else None,
-                pbc=data["boundary"][idx] if "boundary" in data else None,
+                symbols=(
+                    rm_nan(data[H5MDGroups.species][idx])
+                    if H5MDGroups.species in data
+                    else None
+                ),
+                positions=(
+                    rm_nan(data[H5MDGroups.position][idx])
+                    if H5MDGroups.position in data
+                    else None
+                ),
+                velocities=(
+                    rm_nan(data[H5MDGroups.velocity][idx])
+                    if H5MDGroups.velocity in data
+                    else None
+                ),
+                cell=data[H5MDGroups.edges][idx] if H5MDGroups.edges in data else None,
+                pbc=(
+                    data[H5MDGroups.boundary][idx]
+                    if H5MDGroups.boundary in data
+                    else None
+                ),
             )
-            if "forces" in data or "energy" in data:
+            if H5MDGroups.forces in data or H5MDGroups.energy in data:
                 obj.calc = SinglePointCalculator(
                     obj,
-                    energy=data["energy"][idx] if "energy" in data else None,
-                    forces=rm_nan(data["forces"][idx]) if "forces" in data else None,
+                    energy=(
+                        data[H5MDGroups.energy][idx]
+                        if H5MDGroups.energy in data
+                        else None
+                    ),
+                    forces=(
+                        rm_nan(data[H5MDGroups.forces][idx])
+                        if H5MDGroups.forces in data
+                        else None
+                    ),
                 )
 
             atoms.append(obj)

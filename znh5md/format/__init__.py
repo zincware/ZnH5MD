@@ -14,6 +14,7 @@ class H5MDGroups:
     species: str = "species"
     forces: str = "forces"
     stress: str = "stress"
+    velocity: str = "velocity"
 
 
 @dataclasses.dataclass

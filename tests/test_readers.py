@@ -16,6 +16,7 @@ def test_AtomsReader(tmp_path, atoms_list, use_add):
     db.initialize_database_groups()
 
     reader = znh5md.io.AtomsReader(atoms_list, frames_per_chunk=10)
+    # we use a really small frames_per_chunk for testing purposes
 
     if use_add:
         db.add(reader)

@@ -81,6 +81,18 @@ def _append_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk
     dataset_group["time"].resize(n_current_frames + n_new_frames, axis=0)
     dataset_group["step"].resize(n_current_frames + n_new_frames, axis=0)
     log.debug(f"Resizing from {n_current_frames} to {n_current_frames+n_new_frames}")
+    # We also have to reshape value, if the the shape changed in axis=1 (e.g. number of atoms)
+    if chunk_data.value.shape[1:] > dataset_group["value"].shape[1:]:
+        # We add NaN if smaller
+        # we resize the group
+        dataset_group["value"].resize(chunk_data.value.shape, axis=1)
+    elif chunk_data.value.shape[1:] < dataset_group["value"].shape[1:]:
+        # we add Nan to the chunk data, because it is smaller than the group
+        fill_shape = list(chunk_data.value.shape)
+        fill_shape[1] = dataset_group["value"].shape[1] - chunk_data.value.shape[1]
+        chunk_data.value = np.concatenate(
+            [chunk_data.value, np.full(fill_shape, np.nan)], axis=1
+        )
 
     log.debug(f"appending to particle groups {dataset_group.name}")
     dataset_group["value"][:] = np.concatenate(

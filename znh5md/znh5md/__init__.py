@@ -191,6 +191,7 @@ class ASEH5MD(H5MDBase):
             GRP.boundary,
             GRP.energy,
             GRP.forces,
+            GRP.stress,
         ]:
             with contextlib.suppress(AttributeError, KeyError):
                 data[key] = getattr(self, key)[item] if item else getattr(self, key)[:]
@@ -215,13 +216,14 @@ class ASEH5MD(H5MDBase):
                 cell=data[GRP.edges][idx] if GRP.edges in data else None,
                 pbc=(data[GRP.boundary][idx] if GRP.boundary in data else None),
             )
-            if GRP.forces in data or GRP.energy in data:
+            if GRP.forces in data or GRP.energy in data or GRP.stress in data:
                 obj.calc = SinglePointCalculator(
                     obj,
-                    energy=(data[GRP.energy][idx] if GRP.energy in data else None),
+                    energy=data[GRP.energy][idx] if GRP.energy in data else None,
                     forces=(
                         rm_nan(data[GRP.forces][idx]) if GRP.forces in data else None
                     ),
+                    stress=data[GRP.stress][idx] if GRP.stress in data else None,
                 )
 
             atoms.append(obj)

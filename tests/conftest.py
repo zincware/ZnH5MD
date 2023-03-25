@@ -51,7 +51,9 @@ def atoms_list(request) -> list[ase.Atoms]:
     Generate ase.Atoms objects with random positions and increasing energy
     and random force values
     """
-    if getattr(request, "param", None) in [None, "fix_size"]:
+    if getattr(request, "param", None) == "vary_size":
+        atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
+    else:
         random.seed(1234)
         atoms = [
             ase.Atoms(
@@ -62,16 +64,20 @@ def atoms_list(request) -> list[ase.Atoms]:
             )
             for _ in range(21)
         ]
-    elif request.param == "vary_size":
-        atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
     # create some variations in PBC
     atoms[0].pbc = np.array([True, True, False])
     atoms[1].pbc = np.array([True, False, True])
     atoms[2].pbc = False
 
     for idx, atom in enumerate(atoms):
+        stress = (
+            np.random.rand(6) if getattr(request, "param", None) != "no_stress" else None
+        )
         atom.calc = ase.calculators.singlepoint.SinglePointCalculator(
-            atoms=atom, energy=idx / 21, forces=np.random.rand(len(atom), 3)
+            atoms=atom,
+            energy=idx / 21,
+            forces=np.random.rand(len(atom), 3),
+            stress=stress,
         )
 
     return atoms

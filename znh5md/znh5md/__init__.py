@@ -13,7 +13,7 @@ import dask.array
 import h5py
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from znh5md.format import FormatHandler
+from znh5md.format import FormatHandler, GRP
 
 PATHLIKE = typing.Union[str, pathlib.Path, os.PathLike]
 
@@ -184,13 +184,13 @@ class ASEH5MD(H5MDBase):
         if single_item:
             item = [item]
         for key in [
-            "species",
-            "position",
-            "velocity",
-            "energy",
-            "forces",
-            "edges",
-            "boundary",
+            GRP.species,
+            GRP.position,
+            GRP.velocity,
+            GRP.edges,
+            GRP.boundary,
+            GRP.energy,
+            GRP.forces,
         ]:
             with contextlib.suppress(AttributeError, KeyError):
                 data[key] = getattr(self, key)[item] if item else getattr(self, key)[:]
@@ -203,19 +203,25 @@ class ASEH5MD(H5MDBase):
                 return x[~np.isnan(x)]
             return x[~np.isnan(x).any(axis=1)]
 
-        for idx in range(len(data["position"])):
+        for idx in range(len(data[GRP.position])):
             obj = ase.Atoms(
-                symbols=rm_nan(data["species"][idx]) if "species" in data else None,
-                positions=rm_nan(data["position"][idx]) if "position" in data else None,
-                velocities=rm_nan(data["velocity"][idx]) if "velocity" in data else None,
-                cell=data["edges"][idx] if "edges" in data else None,
-                pbc=data["boundary"][idx] if "boundary" in data else None,
+                symbols=(rm_nan(data[GRP.species][idx]) if GRP.species in data else None),
+                positions=(
+                    rm_nan(data[GRP.position][idx]) if GRP.position in data else None
+                ),
+                velocities=(
+                    rm_nan(data[GRP.velocity][idx]) if GRP.velocity in data else None
+                ),
+                cell=data[GRP.edges][idx] if GRP.edges in data else None,
+                pbc=(data[GRP.boundary][idx] if GRP.boundary in data else None),
             )
-            if "forces" in data or "energy" in data:
+            if GRP.forces in data or GRP.energy in data:
                 obj.calc = SinglePointCalculator(
                     obj,
-                    energy=data["energy"][idx] if "energy" in data else None,
-                    forces=rm_nan(data["forces"][idx]) if "forces" in data else None,
+                    energy=(data[GRP.energy][idx] if GRP.energy in data else None),
+                    forces=(
+                        rm_nan(data[GRP.forces][idx]) if GRP.forces in data else None
+                    ),
                 )
 
             atoms.append(obj)

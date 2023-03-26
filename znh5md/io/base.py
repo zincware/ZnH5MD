@@ -41,10 +41,26 @@ class StepTimeChunk:
         """Get the number of frames in the chunk."""
         return len(self.value)
 
+    def create_dataset(self, dataset_group: h5py.Group):
+        """Create the datasets for the chunk."""
+        raise NotImplementedError()
+
 
 @dataclasses.dataclass
 class ExplicitStepTimeChunk(StepTimeChunk):
     """Same as StepTimeChunk, but with explicit step and time."""
+
+    def create_dataset(self, dataset_group: h5py.Group):
+        """Create the datasets for the chunk."""
+        dataset_group.create_dataset(
+            "value", maxshape=self.shape, data=self.value, chunks=True
+        )
+        dataset_group.create_dataset(
+            "time", maxshape=(None,), data=self.time, chunks=True
+        )
+        dataset_group.create_dataset(
+            "step", maxshape=(None,), data=self.step, chunks=True
+        )
 
 
 @dataclasses.dataclass
@@ -53,6 +69,14 @@ class FixedStepTimeChunk(StepTimeChunk):
 
     step: int
     time: float
+
+    def create_dataset(self, dataset_group: h5py.Group):
+        """Create the datasets for the chunk."""
+        dataset_group.create_dataset(
+            "value", maxshape=self.shape, data=self.value, chunks=True
+        )
+        dataset_group.create_dataset("time", data=self.time)
+        dataset_group.create_dataset("step", data=self.step)
 
 
 CHUNK_DICT = typing.Dict[str, ExplicitStepTimeChunk]
@@ -77,27 +101,6 @@ class DataReader(abc.ABC):
             Each chunk containing the data for one group.
         """
         raise NotImplementedError()
-
-
-def _create_dataset(dataset_group: h5py.Group, chunk_data: StepTimeChunk):
-    dataset_group.create_dataset(
-        "value", maxshape=chunk_data.shape, data=chunk_data.value, chunks=True
-    )
-    if isinstance(chunk_data, ExplicitStepTimeChunk):
-        dataset_group.create_dataset(
-            "time", maxshape=(None,), data=chunk_data.time, chunks=True
-        )
-        dataset_group.create_dataset(
-            "step", maxshape=(None,), data=chunk_data.step, chunks=True
-        )
-    elif isinstance(chunk_data, FixedStepTimeChunk):
-        dataset_group.create_dataset("time", data=chunk_data.time)
-        dataset_group.create_dataset("step", data=chunk_data.step)
-    else:
-        raise TypeError(
-            f"Unknown chunk type {type(chunk_data)}. "
-            "Must be either ExplicitStepTimeChunk or FixedStepTimeChunk"
-        )
 
 
 def _append_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk):
@@ -198,7 +201,7 @@ class DataWriter:
                 atoms = file[self.atoms_path]
                 group_name = self._handle_special_cases_group_names(group_name)
                 dataset_group = atoms.create_group(group_name)
-                _create_dataset(dataset_group, chunk_data)
+                chunk_data.create_dataset(dataset_group)
 
     def add_chunk_data_to_particles_group(self, **kwargs: CHUNK_DICT):
         """Add data to an existing group.

@@ -6,7 +6,6 @@ import functools
 import os
 import pathlib
 import typing
-import numpy as np
 
 import ase
 import dask.array
@@ -45,9 +44,12 @@ class DaskDataSet:
         time = dask.array.from_array(item["time"], chunks=time_chunks)
         step = dask.array.from_array(item["step"], chunks=time_chunks)
         species = dask.array.from_array(species["value"], chunks=time_chunks)
-        # assert species.step == item.step
-        # assert time_chunks == value_chunks[0] if not "auto"
-        # TODO remove NaNs in value and species
+
+        if time.shape == ():
+            time = dask.array.arange(0, len(value) * time, time)
+
+        if step.shape == ():
+            step = dask.array.arange(0, len(value) * step, step)
 
         return cls(value=value, time=time, step=step, species=species)
 

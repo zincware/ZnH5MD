@@ -16,7 +16,7 @@ def test_AtomsReader(tmp_path, atoms_list, use_add):
     db = znh5md.io.DataWriter(filename="db.h5")
     db.initialize_database_groups()
 
-    reader = znh5md.io.AtomsReader(atoms_list, frames_per_chunk=3)
+    reader = znh5md.io.AtomsReader(atoms_list, frames_per_chunk=3, step=1, time=0.1)
     # we use a really small frames_per_chunk for testing purposes
 
     if use_add:
@@ -41,12 +41,13 @@ def test_AtomsReader(tmp_path, atoms_list, use_add):
     # now test with Dask
     traj = znh5md.DaskH5MD("db.h5")
     positions = traj.position.value.compute()
+    time = traj.position.time.compute()
+    step = traj.position.step.compute()
+    species = traj.position.species.compute()
     for idx, atoms in enumerate(atoms_list):
         npt.assert_array_equal(znh5md.utils.rm_nan(positions[idx]), atoms.get_positions())
-
-    # npt.assert_array_equal(traj.position.time.compute(), np.linspace(0, 1, 100))
-    # npt.assert_array_equal(traj.position.step.compute(), np.arange(100))
-    # npt.assert_array_equal(
-    #     traj.position.species.compute(),
-    #     np.concatenate([np.ones((100, 5)), 2 * np.ones((100, 5))], axis=1),
-    # )
+        npt.assert_array_almost_equal(time[idx], idx / 10)
+        npt.assert_array_equal(step[idx], idx)
+        npt.assert_array_equal(
+            znh5md.utils.rm_nan(species[idx]), atoms.get_atomic_numbers()
+        )

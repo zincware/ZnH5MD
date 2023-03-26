@@ -12,8 +12,24 @@ from znh5md.format import GRP
 
 @dataclasses.dataclass
 class AtomsReader(DataReader):
+    """Yield ase.Atoms objects from a list of Atoms Objects.
+
+    Parameters
+    ----------
+    atoms : list[ase.Atoms]
+        List of ase.Atoms objects.
+    frames_per_chunk : int, optional
+        Number of frames to read at once, by default 100
+    step : int, optional
+        Step size, by default 1
+    time : float, optional
+        Time step, by default 1
+    """
+
     atoms: list[ase.Atoms]
     frames_per_chunk: int = 100  # must be larger than 1
+    step: int = 1
+    time: float = 1
 
     def _fill_with_nan(self, data: list) -> np.ndarray:
         max_n_particles = max(x.shape[0] for x in data)
@@ -90,8 +106,8 @@ class AtomsReader(DataReader):
                     value = functions[name](self.atoms[start_index:stop_index])
                     data[name] = FixedStepTimeChunk(
                         value=value,
-                        step=1,
-                        time=1,
+                        step=self.step,
+                        time=self.time,
                     )
                 except (PropertyNotImplementedError, RuntimeError) as err:
                     if group_names is not None:

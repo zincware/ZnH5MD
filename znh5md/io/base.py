@@ -49,7 +49,9 @@ class StepTimeChunk:
         """Append the data to the dataset."""
         raise NotImplementedError
 
-    def resize_particle_count_in_dataset(self, dataset_group: h5py.Group):
+    def resize_particle_count_in_dataset(
+        self, dataset_group: h5py.Group, fill_value=np.nan
+    ):
         # We also have to reshape value, if the the shape
         #  changed in axis=1 (e.g. number of atoms)
         if len(self.value.shape) > 1:
@@ -58,14 +60,14 @@ class StepTimeChunk:
                 # we fill the new values with Nan
                 old_size = dataset_group["value"].shape[1]
                 dataset_group["value"].resize(self.value.shape[1], axis=1)
-                dataset_group["value"][:, old_size:] = np.nan
+                dataset_group["value"][:, old_size:] = fill_value
             elif self.value.shape[1] < dataset_group["value"].shape[1]:
                 # we add Nan to the chunk data, because it is smaller than the group
                 n_new_particles = dataset_group["value"].shape[1] - self.value.shape[1]
                 fill_shape = list(self.value.shape)
                 fill_shape[1] = n_new_particles
                 self.value = np.concatenate(
-                    [self.value, np.full(fill_shape, np.nan)], axis=1
+                    [self.value, np.full(fill_shape, fill_value)], axis=1
                 )
 
 

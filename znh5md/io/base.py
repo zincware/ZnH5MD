@@ -88,21 +88,12 @@ class ExplicitStepTimeChunk(StepTimeChunk):
     def append_to_dataset(self, dataset_group: h5py.Group):
         n_current_frames = dataset_group["value"].shape[0]
 
+        self.resize_particle_count_in_dataset(dataset_group)
         for key in ("value", "time", "step"):
             dataset_group[key].resize(n_current_frames + len(self), axis=0)
-
-        log.debug(f"Resizing from {n_current_frames} to {n_current_frames+len(self)}")
-        self.resize_particle_count_in_dataset(dataset_group)
-        log.debug(f"appending to particle groups {dataset_group.name}")
-        dataset_group["value"][:] = np.concatenate(
-            [dataset_group["value"][:n_current_frames], self.value]
-        )
-        dataset_group["time"][:] = np.concatenate(
-            [dataset_group["time"][:n_current_frames], self.time]
-        )
-        dataset_group["step"][:] = np.concatenate(
-            [dataset_group["step"][:n_current_frames], self.step]
-        )
+            dataset_group[key][:] = np.concatenate(
+                [dataset_group[key][:n_current_frames], self.value]
+            )
 
 
 @dataclasses.dataclass
@@ -123,11 +114,8 @@ class FixedStepTimeChunk(StepTimeChunk):
     def append_to_dataset(self, dataset_group: h5py.Group):
         n_current_frames = dataset_group["value"].shape[0]
 
-        dataset_group["value"].resize(n_current_frames + len(self), axis=0)
-
-        log.debug(f"Resizing from {n_current_frames} to {n_current_frames+len(self)}")
         self.resize_particle_count_in_dataset(dataset_group)
-        log.debug(f"appending to particle groups {dataset_group.name}")
+        dataset_group["value"].resize(n_current_frames + len(self), axis=0)
         dataset_group["value"][:] = np.concatenate(
             [dataset_group["value"][:n_current_frames], self.value]
         )

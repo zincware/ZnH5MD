@@ -1,6 +1,7 @@
 import os
 
 import numpy.testing as npt
+import numpy as np
 import pytest
 
 import znh5md
@@ -36,3 +37,16 @@ def test_AtomsReader(tmp_path, atoms_list, use_add):
         npt.assert_array_equal(a.get_potential_energy(), b.get_potential_energy())
         npt.assert_array_equal(a.get_pbc(), b.get_pbc())
         npt.assert_array_equal(a.get_stress(), b.get_stress())
+
+    # now test with Dask
+    traj = znh5md.DaskH5MD("db.h5")
+    positions = traj.position.value.compute()
+    for idx, atoms in enumerate(atoms_list):
+        npt.assert_array_equal(znh5md.utils.rm_nan(positions[idx]), atoms.get_positions())
+
+    # npt.assert_array_equal(traj.position.time.compute(), np.linspace(0, 1, 100))
+    # npt.assert_array_equal(traj.position.step.compute(), np.arange(100))
+    # npt.assert_array_equal(
+    #     traj.position.species.compute(),
+    #     np.concatenate([np.ones((100, 5)), 2 * np.ones((100, 5))], axis=1),
+    # )

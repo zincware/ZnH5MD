@@ -14,6 +14,7 @@ import h5py
 from ase.calculators.singlepoint import SinglePointCalculator
 
 from znh5md.format import FormatHandler, GRP
+from znh5md.utils import rm_nan
 
 PATHLIKE = typing.Union[str, pathlib.Path, os.PathLike]
 
@@ -46,6 +47,7 @@ class DaskDataSet:
         species = dask.array.from_array(species["value"], chunks=time_chunks)
         # assert species.step == item.step
         # assert time_chunks == value_chunks[0] if not "auto"
+        # TODO remove NaNs in value and species
 
         return cls(value=value, time=time, step=step, species=species)
 
@@ -196,13 +198,6 @@ class ASEH5MD(H5MDBase):
             with contextlib.suppress(AttributeError, KeyError):
                 data[key] = getattr(self, key)[item] if item else getattr(self, key)[:]
         atoms = []
-
-        def rm_nan(x):
-            if not np.isnan(x).any():
-                return x
-            if len(x.shape) == 1:
-                return x[~np.isnan(x)]
-            return x[~np.isnan(x).any(axis=1)]
 
         for idx in range(len(data[GRP.position])):
             obj = ase.Atoms(

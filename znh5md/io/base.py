@@ -43,7 +43,30 @@ class StepTimeChunk:
 
     def create_dataset(self, dataset_group: h5py.Group):
         """Create the datasets for the chunk."""
-        raise NotImplementedError()
+        raise NotImplementedError
+
+    def append_to_dataset(self, dataset_group: h5py.Group):
+        """Append the data to the dataset."""
+        raise NotImplementedError
+
+    def resize_particle_count_in_dataset(self, dataset_group: h5py.Group):
+        # We also have to reshape value, if the the shape
+        #  changed in axis=1 (e.g. number of atoms)
+        if len(self.value.shape) > 1:
+            if self.value.shape[1] > dataset_group["value"].shape[1]:
+                # we resize the group
+                # we fill the new values with Nan
+                old_size = dataset_group["value"].shape[1]
+                dataset_group["value"].resize(self.value.shape[1], axis=1)
+                dataset_group["value"][:, old_size:] = np.nan
+            elif self.value.shape[1] < dataset_group["value"].shape[1]:
+                # we add Nan to the chunk data, because it is smaller than the group
+                n_new_particles = dataset_group["value"].shape[1] - self.value.shape[1]
+                fill_shape = list(self.value.shape)
+                fill_shape[1] = n_new_particles
+                self.value = np.concatenate(
+                    [self.value, np.full(fill_shape, np.nan)], axis=1
+                )
 
 
 @dataclasses.dataclass
@@ -62,6 +85,25 @@ class ExplicitStepTimeChunk(StepTimeChunk):
             "step", maxshape=(None,), data=self.step, chunks=True
         )
 
+    def append_to_dataset(self, dataset_group: h5py.Group):
+        n_current_frames = dataset_group["value"].shape[0]
+
+        for key in ("value", "time", "step"):
+            dataset_group[key].resize(n_current_frames + len(self), axis=0)
+
+        log.debug(f"Resizing from {n_current_frames} to {n_current_frames+len(self)}")
+        self.resize_particle_count_in_dataset(dataset_group)
+        log.debug(f"appending to particle groups {dataset_group.name}")
+        dataset_group["value"][:] = np.concatenate(
+            [dataset_group["value"][:n_current_frames], self.value]
+        )
+        dataset_group["time"][:] = np.concatenate(
+            [dataset_group["time"][:n_current_frames], self.time]
+        )
+        dataset_group["step"][:] = np.concatenate(
+            [dataset_group["step"][:n_current_frames], self.step]
+        )
+
 
 @dataclasses.dataclass
 class FixedStepTimeChunk(StepTimeChunk):
@@ -77,6 +119,18 @@ class FixedStepTimeChunk(StepTimeChunk):
         )
         dataset_group.create_dataset("time", data=self.time)
         dataset_group.create_dataset("step", data=self.step)
+
+    def append_to_dataset(self, dataset_group: h5py.Group):
+        n_current_frames = dataset_group["value"].shape[0]
+
+        dataset_group["value"].resize(n_current_frames + len(self), axis=0)
+
+        log.debug(f"Resizing from {n_current_frames} to {n_current_frames+len(self)}")
+        self.resize_particle_count_in_dataset(dataset_group)
+        log.debug(f"appending to particle groups {dataset_group.name}")
+        dataset_group["value"][:] = np.concatenate(
+            [dataset_group["value"][:n_current_frames], self.value]
+        )
 
 
 CHUNK_DICT = typing.Dict[str, ExplicitStepTimeChunk]
@@ -101,60 +155,6 @@ class DataReader(abc.ABC):
             Each chunk containing the data for one group.
         """
         raise NotImplementedError()
-
-
-def _append_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk):
-    n_current_frames = dataset_group["value"].shape[0]
-    n_new_frames = len(chunk_data)
-
-    dataset_group["value"].resize(n_current_frames + n_new_frames, axis=0)
-    if isinstance(chunk_data, ExplicitStepTimeChunk):
-        dataset_group["time"].resize(n_current_frames + n_new_frames, axis=0)
-        dataset_group["step"].resize(n_current_frames + n_new_frames, axis=0)
-    elif isinstance(chunk_data, FixedStepTimeChunk):
-        pass
-    else:
-        raise TypeError(
-            f"Unknown chunk type {type(chunk_data)}. "
-            "Must be either ExplicitStepTimeChunk or FixedStepTimeChunk"
-        )
-    log.debug(f"Resizing from {n_current_frames} to {n_current_frames+n_new_frames}")
-    # We also have to reshape value, if the the shape
-    #  changed in axis=1 (e.g. number of atoms)
-    if len(chunk_data.value.shape) > 1:
-        if chunk_data.value.shape[1] > dataset_group["value"].shape[1]:
-            # we resize the group
-            # we fill the new values with Nan
-            old_size = dataset_group["value"].shape[1]
-            dataset_group["value"].resize(chunk_data.value.shape[1], axis=1)
-            dataset_group["value"][:, old_size:] = np.nan
-        elif chunk_data.value.shape[1] < dataset_group["value"].shape[1]:
-            # we add Nan to the chunk data, because it is smaller than the group
-            n_new_particles = dataset_group["value"].shape[1] - chunk_data.value.shape[1]
-            fill_shape = list(chunk_data.value.shape)
-            fill_shape[1] = n_new_particles
-            chunk_data.value = np.concatenate(
-                [chunk_data.value, np.full(fill_shape, np.nan)], axis=1
-            )
-
-    log.debug(f"appending to particle groups {dataset_group.name}")
-    dataset_group["value"][:] = np.concatenate(
-        [dataset_group["value"][:n_current_frames], chunk_data.value]
-    )
-    if isinstance(chunk_data, ExplicitStepTimeChunk):
-        dataset_group["time"][:] = np.concatenate(
-            [dataset_group["time"][:n_current_frames], chunk_data.time]
-        )
-        dataset_group["step"][:] = np.concatenate(
-            [dataset_group["step"][:n_current_frames], chunk_data.step]
-        )
-    elif isinstance(chunk_data, FixedStepTimeChunk):
-        pass
-    else:
-        raise TypeError(
-            f"Unknown chunk type {type(chunk_data)}. "
-            "Must be either ExplicitStepTimeChunk or FixedStepTimeChunk"
-        )
 
 
 @dataclasses.dataclass
@@ -222,8 +222,7 @@ class DataWriter:
                 atoms = file[self.atoms_path]
                 group_name = self._handle_special_cases_group_names(group_name)
                 dataset_group = atoms[group_name]
-
-                _append_dataset(dataset_group, chunk_data)
+                chunk_data.append_to_dataset(dataset_group)
 
     def add_chunk_data(self, **kwargs: CHUNK_DICT) -> None:
         """Write Chunks to the database.

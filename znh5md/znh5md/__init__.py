@@ -12,7 +12,7 @@ import dask.array
 import h5py
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from znh5md.format import FormatHandler, GRP
+from znh5md.format import GRP, FormatHandler
 from znh5md.utils import rm_nan
 
 PATHLIKE = typing.Union[str, pathlib.Path, os.PathLike]

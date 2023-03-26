@@ -1,10 +1,10 @@
 import pathlib
 import random
 
-import ase.calculators.singlepoint
-import ase.io
-import ase.collections
 import ase.build
+import ase.calculators.singlepoint
+import ase.collections
+import ase.io
 import h5py
 import numpy as np
 import pytest

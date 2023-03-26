@@ -14,14 +14,25 @@ log = logging.getLogger(__name__)
 class ExplicitStepTimeChunk:
     """Time-dependent data for a single group.
 
+    Parameters
+    ----------
+    value : np.ndarray
+        The value, to be stored in the value dataset.
+    step : np.ndarray, optional
+        The step, to be stored in the step dataset.
+        If not given, a fixed step size must be stored in the datafile.
+    time : np.ndarray, optional
+        The time, to be stored in the time dataset.
+        If not given, a fixed time step size must be stored in the datafile.
+
     References
     ----------
     https://h5md.nongnu.org/h5md.html#time-dependent-data
     """
 
     value: np.ndarray
-    step: np.ndarray
-    time: np.ndarray
+    step: np.ndarray = None
+    time: np.ndarray = None
 
     @property
     def shape(self) -> tuple:
@@ -29,12 +40,8 @@ class ExplicitStepTimeChunk:
         return tuple(None for _ in range(len(self.value.shape)))
 
     def __len__(self):
-        """Get the number of frames in the chunk.
-
-        The number of frames is the same as the length of the step / time array
-        or the first dimension of the value array.
-        """
-        return len(self.step)
+        """Get the number of frames in the chunk."""
+        return len(self.value)
 
 
 CHUNK_DICT = typing.Dict[str, ExplicitStepTimeChunk]

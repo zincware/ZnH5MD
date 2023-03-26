@@ -50,6 +50,14 @@ def atoms_list(request) -> list[ase.Atoms]:
     """
     Generate ase.Atoms objects with random positions and increasing energy
     and random force values
+
+    Parameters
+    ----------
+    request
+        pytest request object. Possible values for the "param" attribute are:
+        - None: use default values
+        - "vary_size": use ase.collections.g2
+        - "no_stress": do not set stress
     """
     if getattr(request, "param", None) == "vary_size":
         atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]

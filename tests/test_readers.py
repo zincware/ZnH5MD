@@ -62,3 +62,25 @@ def test_AtomsReader(tmp_path, reader, atoms_list, use_add):
         npt.assert_array_equal(
             znh5md.utils.rm_nan(species[idx]), atoms.get_atomic_numbers()
         )
+
+
+@pytest.mark.parametrize("frames_per_chunk", [5000, 50000])
+def test_ChemfilesReader(tmp_path, atoms_list, frames_per_chunk):
+    os.chdir(tmp_path)
+    print(tmp_path)
+
+    db = znh5md.io.DataWriter(filename="db.h5")
+    db.initialize_database_groups()
+
+    inputs = "traj.xyz"
+    ase.io.write(inputs, atoms_list)
+
+    reader = znh5md.io.ChemfilesReader(inputs, frames_per_chunk=frames_per_chunk)
+    db.add(reader)
+
+    data = znh5md.ASEH5MD("db.h5")
+    atoms = data.get_atoms_list()
+
+    assert len(atoms) == len(atoms_list)
+    for a, b in zip(atoms, atoms_list):
+        npt.assert_array_almost_equal(a.get_positions(), b.get_positions())

@@ -64,7 +64,7 @@ class DataReader(abc.ABC):
     @abc.abstractmethod
     def yield_chunks(
         self, *args, **kwargs
-    ) -> typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]:
+    ) -> typing.Iterator[typing.Dict[str, StepTimeChunk]]:
         """Yield chunks of data.
 
         This method will yield chunks of data to be written to the HDF5 File.
@@ -79,16 +79,25 @@ class DataReader(abc.ABC):
         raise NotImplementedError()
 
 
-def _create_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk):
+def _create_dataset(dataset_group: h5py.Group, chunk_data: StepTimeChunk):
     dataset_group.create_dataset(
         "value", maxshape=chunk_data.shape, data=chunk_data.value, chunks=True
     )
-    dataset_group.create_dataset(
-        "time", maxshape=(None,), data=chunk_data.time, chunks=True
-    )
-    dataset_group.create_dataset(
-        "step", maxshape=(None,), data=chunk_data.step, chunks=True
-    )
+    if isinstance(chunk_data, ExplicitStepTimeChunk):
+        dataset_group.create_dataset(
+            "time", maxshape=(None,), data=chunk_data.time, chunks=True
+        )
+        dataset_group.create_dataset(
+            "step", maxshape=(None,), data=chunk_data.step, chunks=True
+        )
+    elif isinstance(chunk_data, FixedStepTimeChunk):
+        dataset_group.create_dataset("time", data=chunk_data.time)
+        dataset_group.create_dataset("step", data=chunk_data.step)
+    else:
+        raise TypeError(
+            f"Unknown chunk type {type(chunk_data)}. "
+            "Must be either ExplicitStepTimeChunk or FixedStepTimeChunk"
+        )
 
 
 def _append_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk):
@@ -96,10 +105,19 @@ def _append_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk
     n_new_frames = len(chunk_data)
 
     dataset_group["value"].resize(n_current_frames + n_new_frames, axis=0)
-    dataset_group["time"].resize(n_current_frames + n_new_frames, axis=0)
-    dataset_group["step"].resize(n_current_frames + n_new_frames, axis=0)
+    if isinstance(chunk_data, ExplicitStepTimeChunk):
+        dataset_group["time"].resize(n_current_frames + n_new_frames, axis=0)
+        dataset_group["step"].resize(n_current_frames + n_new_frames, axis=0)
+    elif isinstance(chunk_data, FixedStepTimeChunk):
+        pass
+    else:
+        raise TypeError(
+            f"Unknown chunk type {type(chunk_data)}. "
+            "Must be either ExplicitStepTimeChunk or FixedStepTimeChunk"
+        )
     log.debug(f"Resizing from {n_current_frames} to {n_current_frames+n_new_frames}")
-    # We also have to reshape value, if the the shape changed in axis=1 (e.g. number of atoms)
+    # We also have to reshape value, if the the shape
+    #  changed in axis=1 (e.g. number of atoms)
     if len(chunk_data.value.shape) > 1:
         if chunk_data.value.shape[1] > dataset_group["value"].shape[1]:
             # we resize the group
@@ -120,12 +138,20 @@ def _append_dataset(dataset_group: h5py.Group, chunk_data: ExplicitStepTimeChunk
     dataset_group["value"][:] = np.concatenate(
         [dataset_group["value"][:n_current_frames], chunk_data.value]
     )
-    dataset_group["time"][:] = np.concatenate(
-        [dataset_group["time"][:n_current_frames], chunk_data.time]
-    )
-    dataset_group["step"][:] = np.concatenate(
-        [dataset_group["step"][:n_current_frames], chunk_data.step]
-    )
+    if isinstance(chunk_data, ExplicitStepTimeChunk):
+        dataset_group["time"][:] = np.concatenate(
+            [dataset_group["time"][:n_current_frames], chunk_data.time]
+        )
+        dataset_group["step"][:] = np.concatenate(
+            [dataset_group["step"][:n_current_frames], chunk_data.step]
+        )
+    elif isinstance(chunk_data, FixedStepTimeChunk):
+        pass
+    else:
+        raise TypeError(
+            f"Unknown chunk type {type(chunk_data)}. "
+            "Must be either ExplicitStepTimeChunk or FixedStepTimeChunk"
+        )
 
 
 @dataclasses.dataclass

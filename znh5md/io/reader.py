@@ -6,7 +6,7 @@ import numpy as np
 import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
 
-from znh5md.io.base import DataReader, ExplicitStepTimeChunk
+from znh5md.io.base import DataReader, FixedStepTimeChunk
 from znh5md.format import GRP
 
 
@@ -60,7 +60,7 @@ class AtomsReader(DataReader):
 
     def yield_chunks(
         self, group_names: list = None
-    ) -> typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]:
+    ) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
         start_index = 0
         stop_index = 0
 
@@ -88,10 +88,10 @@ class AtomsReader(DataReader):
 
                 try:
                     value = functions[name](self.atoms[start_index:stop_index])
-                    data[name] = ExplicitStepTimeChunk(
+                    data[name] = FixedStepTimeChunk(
                         value=value,
-                        step=np.arange(start_index, start_index + len(value)),
-                        time=np.arange(start_index, start_index + len(value)),
+                        step=1,
+                        time=1,
                     )
                 except (PropertyNotImplementedError, RuntimeError) as err:
                     if group_names is not None:

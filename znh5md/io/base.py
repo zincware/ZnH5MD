@@ -49,26 +49,31 @@ class StepTimeChunk:
         """Append the data to the dataset."""
         raise NotImplementedError
 
-    def resize_particle_count_in_dataset(
-        self, dataset_group: h5py.Group, fill_value=np.nan
-    ):
+    def _resize_dataset_group(self, dataset_group: h5py.Group, fill_value):
+        """Resize the dataset_group."""
+        old_size = dataset_group["value"].shape[1]
+        dataset_group["value"].resize(self.value.shape[1], axis=1)
+        dataset_group["value"][:, old_size:] = fill_value
+
+    def _resize_value(self, n_new_particles: int, fill_value):
+        """Resize the value array."""
+        fill_shape = list(self.value.shape)
+        fill_shape[1] = n_new_particles
+        self.value = np.concatenate([self.value, np.full(fill_shape, fill_value)], axis=1)
+
+    def resize_by_particle_count(self, dataset_group: h5py.Group, fill_value=np.nan):
         # We also have to reshape value, if the the shape
         #  changed in axis=1 (e.g. number of atoms)
         if len(self.value.shape) > 1:
             if self.value.shape[1] > dataset_group["value"].shape[1]:
                 # we resize the group
                 # we fill the new values with Nan
-                old_size = dataset_group["value"].shape[1]
-                dataset_group["value"].resize(self.value.shape[1], axis=1)
-                dataset_group["value"][:, old_size:] = fill_value
+                self._resize_dataset_group(dataset_group, fill_value)
+
             elif self.value.shape[1] < dataset_group["value"].shape[1]:
                 # we add Nan to the chunk data, because it is smaller than the group
                 n_new_particles = dataset_group["value"].shape[1] - self.value.shape[1]
-                fill_shape = list(self.value.shape)
-                fill_shape[1] = n_new_particles
-                self.value = np.concatenate(
-                    [self.value, np.full(fill_shape, fill_value)], axis=1
-                )
+                self._resize_value(n_new_particles, fill_value)
 
 
 @dataclasses.dataclass
@@ -90,7 +95,7 @@ class ExplicitStepTimeChunk(StepTimeChunk):
     def append_to_dataset(self, dataset_group: h5py.Group):
         n_current_frames = dataset_group["value"].shape[0]
 
-        self.resize_particle_count_in_dataset(dataset_group)
+        self.resize_by_particle_count(dataset_group)
         for key in ("value", "time", "step"):
             dataset_group[key].resize(n_current_frames + len(self), axis=0)
             dataset_group[key][:] = np.concatenate(
@@ -116,7 +121,7 @@ class FixedStepTimeChunk(StepTimeChunk):
     def append_to_dataset(self, dataset_group: h5py.Group):
         n_current_frames = dataset_group["value"].shape[0]
 
-        self.resize_particle_count_in_dataset(dataset_group)
+        self.resize_by_particle_count(dataset_group)
         dataset_group["value"].resize(n_current_frames + len(self), axis=0)
         dataset_group["value"][:] = np.concatenate(
             [dataset_group["value"][:n_current_frames], self.value]

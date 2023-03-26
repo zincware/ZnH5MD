@@ -27,35 +27,36 @@ class AtomsReader(DataReader):
     def _get_positions(self, atoms: list[ase.Atoms]) -> np.ndarray:
         data = [x.get_positions() for x in atoms]
         try:
-            return np.array(data)
+            return np.array(data).astype(float)
         except ValueError:
-            return self._fill_with_nan(data)
+            return self._fill_with_nan(data).astype(float)
 
     def _get_energy(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        return np.array([x.get_potential_energy() for x in atoms])
+        return np.array([x.get_potential_energy() for x in atoms]).astype(float)
 
     def _get_species(self, atoms: list[ase.Atoms]) -> np.ndarray:
         data = [x.get_atomic_numbers() for x in atoms]
         try:
-            return np.array(data)
+            return np.array(data).astype(float)
+        # NaN is only supported for float, not int
         except ValueError:
-            return self._fill_with_nan(data)
+            return self._fill_with_nan(data).astype(float)
 
     def _get_forces(self, atoms: list[ase.Atoms]) -> np.ndarray:
         data = [x.get_forces() for x in atoms]
         try:
-            return np.array(data)
+            return np.array(data).astype(float)
         except ValueError:
-            return self._fill_with_nan(data)
+            return self._fill_with_nan(data).astype(float)
 
     def _get_stress(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        return np.array([x.get_stress() for x in atoms])
+        return np.array([x.get_stress() for x in atoms]).astype(float)
 
     def _get_edges(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        return np.array([x.get_cell() for x in atoms])
+        return np.array([x.get_cell() for x in atoms]).astype(float)
 
     def _get_boundary(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        return np.array([[x.get_pbc()] for x in atoms])
+        return np.array([[x.get_pbc()] for x in atoms]).astype(bool)
 
     def yield_chunks(
         self, group_names: list = None

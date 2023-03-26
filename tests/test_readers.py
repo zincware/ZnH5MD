@@ -19,11 +19,12 @@ def test_AtomsReader(tmp_path, reader, atoms_list, use_add):
     db.initialize_database_groups()
 
     if reader == znh5md.io.AtomsReader:
-        reader = znh5md.io.AtomsReader(atoms_list, frames_per_chunk=3, step=1, time=0.1)
+        inputs = atoms_list
     elif reader == znh5md.io.ASEFileReader:
-        file = "traj.xyz"
-        ase.io.write(file, atoms_list)
-        reader = znh5md.io.ASEFileReader(file, frames_per_chunk=3, step=1, time=0.1)
+        inputs = "traj.xyz"
+        ase.io.write(inputs, atoms_list)
+
+    reader = reader(inputs, frames_per_chunk=3, step=1, time=0.1)
 
     # we use a really small frames_per_chunk for testing purposes
 

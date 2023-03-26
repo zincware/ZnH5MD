@@ -11,19 +11,17 @@ log = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
-class ExplicitStepTimeChunk:
-    """Time-dependent data for a single group.
+class StepTimeChunk:
+    """Abstract class for time-dependent data for a single group.
 
     Parameters
     ----------
     value : np.ndarray
         The value, to be stored in the value dataset.
-    step : np.ndarray, optional
+    step : np.ndarray
         The step, to be stored in the step dataset.
-        If not given, a fixed step size must be stored in the datafile.
-    time : np.ndarray, optional
+    time : np.ndarray
         The time, to be stored in the time dataset.
-        If not given, a fixed time step size must be stored in the datafile.
 
     References
     ----------
@@ -31,8 +29,8 @@ class ExplicitStepTimeChunk:
     """
 
     value: np.ndarray
-    step: np.ndarray = None
-    time: np.ndarray = None
+    step: np.ndarray
+    time: np.ndarray
 
     @property
     def shape(self) -> tuple:
@@ -42,6 +40,19 @@ class ExplicitStepTimeChunk:
     def __len__(self):
         """Get the number of frames in the chunk."""
         return len(self.value)
+
+
+@dataclasses.dataclass
+class ExplicitStepTimeChunk(StepTimeChunk):
+    """Same as StepTimeChunk, but with explicit step and time."""
+
+
+@dataclasses.dataclass
+class FixedStepTimeChunk(StepTimeChunk):
+    """Same as StepTimeChunk, but with fixed step and time."""
+
+    step: int
+    time: float
 
 
 CHUNK_DICT = typing.Dict[str, ExplicitStepTimeChunk]

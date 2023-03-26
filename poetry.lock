@@ -487,6 +487,24 @@ files = [
 ]
 
 [[package]]
+name = "chemfiles"
+version = "0.10.3"
+description = "Read and write computational chemistry files"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "chemfiles-0.10.3-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:e7fb689886244264597eb5d5b658738648288cb6960d09db4d2082b9f0170035"},
+    {file = "chemfiles-0.10.3-py2.py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e0679f37183d26a4249bb018df76b6d3739835265441d386ba80b2864012fcf2"},
+    {file = "chemfiles-0.10.3-py2.py3-none-win32.whl", hash = "sha256:7b5957e55c83115fca810d7ed9707e5e191833aff9cbbc81f428b50306895eb7"},
+    {file = "chemfiles-0.10.3-py2.py3-none-win_amd64.whl", hash = "sha256:ffcf09675cfe0b9091a01a898df0c20e128bc68d4a01840d6552b6f663cfca79"},
+    {file = "chemfiles-0.10.3.tar.gz", hash = "sha256:4bbb8b116492a57dbf6ddb4c84aad0133cd782e0cc0e53e4b957f2d93e6806ea"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[[package]]
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
@@ -3204,4 +3222,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "c03aaf60f4dd2f388ffcf333af5b88d98c26363803c34f9f8b711c915109392c"
+content-hash = "5a1b6aa62ebaede67ecbf8724ea1a8eccdfff47c2fccfeb28d703840050a5597"

@@ -12,6 +12,7 @@ h5py = "^3.7.0"
 dask = {extras = ["array"], version = "^2022.11.1"}
 ase = "^3.22.1"
 tqdm = "^4.65.0"
+chemfiles = "^0.10.3"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"

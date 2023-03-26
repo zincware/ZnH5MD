@@ -1,8 +1,9 @@
 import dataclasses
 import typing
 
-import ase
+import ase.io
 import numpy as np
+import chemfiles
 import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
 
@@ -120,3 +121,76 @@ class AtomsReader(DataReader):
             pbar.update(self.frames_per_chunk)
 
         pbar.close()
+
+
+@dataclasses.dataclass
+class ASEFileReader(DataReader):
+    filename: str
+    frames_per_chunk: int = 5000
+
+    def yield_chunks(
+        self, *args, **kwargs
+    ) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
+        atoms_list = []
+        for atoms in tqdm.tqdm(ase.io.iread(self.filename)):
+            atoms_list.append(atoms)
+            if len(atoms_list) == self.frames_per_chunk:
+                yield from AtomsReader(
+                    atoms_list, frames_per_chunk=self.frames_per_chunk
+                ).yield_chunks()
+                atoms_list = []
+        if len(atoms_list) > 0:
+            yield from AtomsReader(
+                atoms_list, frames_per_chunk=self.frames_per_chunk
+            ).yield_chunks()
+
+
+@dataclasses.dataclass
+class ChemfilesReader(DataReader):
+    filename: str
+    format: str = ""
+    frames_per_chunk: int = 5000
+    step: int = 1
+    time: float = 1
+
+    def yield_chunks(self) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
+        with chemfiles.Trajectory(self.filename, format=self.format) as trajectory:
+            positions = []
+            species = []
+            for frame in tqdm.tqdm(trajectory, total=trajectory.nsteps):
+                positions.append(frame.positions)
+                species.append([atom.atomic_number for atom in frame.atoms])
+
+                if len(positions) == self.frames_per_chunk:
+                    positions = np.stack(positions)
+                    species = np.stack(species)
+                    assert (
+                        positions.shape == species.shape
+                    ), f"{positions.shape} != {species.shape}"
+                    yield {
+                        GRP.position: FixedStepTimeChunk(
+                            value=positions,
+                            step=self.step,
+                            time=self.time,
+                        ),
+                        GRP.species: FixedStepTimeChunk(
+                            value=species,
+                            step=self.step,
+                            time=self.time,
+                        ),
+                    }
+                    positions = []
+                    species = []
+            if len(positions) > 0:
+                yield {
+                    GRP.position: FixedStepTimeChunk(
+                        value=np.stack(positions),
+                        step=self.step,
+                        time=self.time,
+                    ),
+                    GRP.species: FixedStepTimeChunk(
+                        value=np.stack(species),
+                        step=self.step,
+                        time=self.time,
+                    ),
+                }

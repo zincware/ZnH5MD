@@ -1,7 +1,7 @@
 import dataclasses
 import typing
 
-import ase
+import ase.io
 import numpy as np
 import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
@@ -120,3 +120,31 @@ class AtomsReader(DataReader):
             pbar.update(self.frames_per_chunk)
 
         pbar.close()
+
+
+@dataclasses.dataclass
+class ASEFileReader(DataReader):
+    filename: str
+    frames_per_chunk: int = 5000
+    time: float = 1
+    step: int = 1
+
+    def yield_chunks(self) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
+        atoms_list = []
+        for atoms in tqdm.tqdm(ase.io.iread(self.filename)):
+            atoms_list.append(atoms)
+            if len(atoms_list) == self.frames_per_chunk:
+                yield from AtomsReader(
+                    atoms_list,
+                    frames_per_chunk=self.frames_per_chunk,
+                    time=self.time,
+                    step=self.step,
+                ).yield_chunks()
+                atoms_list = []
+        if len(atoms_list) > 0:
+            yield from AtomsReader(
+                atoms_list,
+                frames_per_chunk=self.frames_per_chunk,
+                time=self.time,
+                step=self.step,
+            ).yield_chunks()

@@ -7,8 +7,8 @@ import chemfiles
 import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
 
-from znh5md.io.base import DataReader, FixedStepTimeChunk
 from znh5md.format import GRP
+from znh5md.io.base import DataReader, FixedStepTimeChunk
 
 
 @dataclasses.dataclass
@@ -125,24 +125,44 @@ class AtomsReader(DataReader):
 
 @dataclasses.dataclass
 class ASEFileReader(DataReader):
+    """Use ASE to read files.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file. Any format supported by ASE is supported.
+    frames_per_chunk : int, optional
+        Number of frames to read at once
+    time : float, optional
+        Time step
+    step : int, optional
+        Step size
+    """
+
     filename: str
     frames_per_chunk: int = 5000
+    time: float = 1
+    step: int = 1
 
-    def yield_chunks(
-        self, *args, **kwargs
-    ) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
+    def yield_chunks(self) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
+        """Yield chunks using AtomsReader."""
         atoms_list = []
+        reader = AtomsReader(
+            None,  # we set atoms in the reading loop
+            frames_per_chunk=self.frames_per_chunk,
+            time=self.time,
+            step=self.step,
+        )
+
         for atoms in tqdm.tqdm(ase.io.iread(self.filename)):
             atoms_list.append(atoms)
             if len(atoms_list) == self.frames_per_chunk:
-                yield from AtomsReader(
-                    atoms_list, frames_per_chunk=self.frames_per_chunk
-                ).yield_chunks()
+                reader.atoms = atoms_list
+                yield from reader.yield_chunks()
                 atoms_list = []
         if len(atoms_list) > 0:
-            yield from AtomsReader(
-                atoms_list, frames_per_chunk=self.frames_per_chunk
-            ).yield_chunks()
+            reader.atoms = atoms_list
+            yield from reader.yield_chunks()
 
 
 @dataclasses.dataclass

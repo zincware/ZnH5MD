@@ -64,7 +64,7 @@ def test_AtomsReader(tmp_path, reader, atoms_list, use_add):
         )
 
 
-@pytest.mark.parametrize("frames_per_chunk", [5000, 50000])
+@pytest.mark.parametrize("frames_per_chunk", [3, 50000])
 def test_ChemfilesReader(tmp_path, atoms_list, frames_per_chunk):
     os.chdir(tmp_path)
     print(tmp_path)

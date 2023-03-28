@@ -40,6 +40,8 @@ You can use ZnH5MD to store ASE Atoms objects in the H5MD format.
 
 > The ASEH5MD interface will not provide any time and step information.
 
+> If you have a list of Atoms with different PBC values, you can use `znh5md.io.AtomsReader(atoms, use_pbc_group=True)`. This will create a `pbc` group in `box/` that also contains `step` and `time`. This is not an official H5MD specification so it can cause issues with other tools. If you don't specify this, the pbc of the first atoms in the list will be applied.
+
 ```python
 import znh5md
 import ase

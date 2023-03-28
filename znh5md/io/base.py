@@ -192,15 +192,13 @@ class DataWriter:
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
         """
-        for group_name, chunk_data in kwargs.items():
-            log.debug(f"creating particle groups {group_name}")
-            with h5py.File(self.filename, "r+") as file:  # TODO opening the file is slow
+        with h5py.File(self.filename, "r+") as file:
+            for group_name, chunk_data in kwargs.items():
+                log.debug(f"creating particle groups {group_name}")
                 atoms = file[self.atoms_path]
                 if group_name == GRP.boundary:
                     # we create the box group
-                    atoms.create_dataset(
-                        f"box/{GRP.boundary}", data=chunk_data.value
-                    )
+                    atoms.create_dataset(f"box/{GRP.boundary}", data=chunk_data.value)
                     # TODO add dimension
                     continue
                 group_name = self._handle_special_cases_group_names(group_name)
@@ -221,8 +219,8 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
             The group must already exist.
         """
-        for group_name, chunk_data in kwargs.items():
-            with h5py.File(self.filename, "r+") as file:  # TODO opening the file is slow
+        with h5py.File(self.filename, "r+") as file:
+            for group_name, chunk_data in kwargs.items():
                 if group_name == GRP.boundary:
                     if group_name not in file[f"{self.atoms_path}/box"]:
                         raise KeyError(f"Group {group_name} does not exist.")

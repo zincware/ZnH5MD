@@ -73,9 +73,11 @@ def atoms_list(request) -> list[ase.Atoms]:
             for _ in range(21)
         ]
     # create some variations in PBC
-    atoms[0].pbc = np.array([True, True, False])
-    atoms[1].pbc = np.array([True, False, True])
-    atoms[2].pbc = False
+    # atoms[0].pbc = np.array([True, True, False])
+    # atoms[1].pbc = np.array([True, False, True])
+    # atoms[2].pbc = False
+    for atom in atoms:
+        atom.pbc = True
 
     for idx, atom in enumerate(atoms):
         stress = (

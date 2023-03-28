@@ -3,6 +3,7 @@ import dataclasses
 import typing
 
 import h5py
+import numpy as np
 
 
 @dataclasses.dataclass
@@ -26,6 +27,19 @@ class GRP:
     stress: str = "stress"
     velocity: str = "velocity"
     pbc: str = "pbc"
+
+    @staticmethod
+    def encode_pbc(value) -> np.ndarray:
+        if value is None:  # TODO is this really required?
+            return None
+        return np.array(["periodic".encode() if x else "none".encode() for x in value])
+
+    @staticmethod
+    def decode_pbc(value) -> np.ndarray:  # TODO rename decode_boundary
+        if value is None:  # TODO is this really required?
+            return None
+        pbc = np.array([x == "periodic".encode() for x in value]).astype(bool)
+        return pbc
 
 
 @dataclasses.dataclass

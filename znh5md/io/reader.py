@@ -40,13 +40,6 @@ class AtomsReader(DataReader):
     time: float = 1
     use_pbc_group: bool = False
 
-    def __post_init__(self):
-        if self.use_pbc_group:
-            log.warning(
-                "Using the 'pbc' group is not part of H5MD. This might cause issues with"
-                " other software."
-            )
-
     def _fill_with_nan(self, data: list) -> np.ndarray:
         max_n_particles = max(x.shape[0] for x in data)
         dimensions = data[0].shape[1:]
@@ -91,9 +84,8 @@ class AtomsReader(DataReader):
         return np.array([[x.get_pbc()] for x in atoms]).astype(bool)
 
     def _get_boundary(self, atoms: list[ase.Atoms]) -> np.ndarray:
-        data = atoms[
-            0
-        ].get_pbc()  # boundary is constant and should be the same for all atoms
+        data = atoms[0].get_pbc()
+        # boundary is constant and should be the same for all atoms
         return GRP.encode_boundary(data)
 
     def yield_chunks(

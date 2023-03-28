@@ -174,7 +174,7 @@ class DataWriter:
 
         Some groups, especially the box group, are nested differently.
         """
-        if groupname in ["edges", "pbc"]:
+        if groupname in [GRP.boundary, GRP.edges, GRP.pbc]:
             return f"box/{groupname}"
 
         return groupname

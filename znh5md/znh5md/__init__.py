@@ -219,7 +219,7 @@ class ASEH5MD(H5MDBase):
                 ),
                 cell=data[GRP.edges][idx] if GRP.edges in data else None,
                 pbc=(
-                    GRP.decode_pbc(data[GRP.boundary]) if GRP.boundary in data else None
+                    GRP.decode_boundary(data[GRP.boundary]) if GRP.boundary in data else None
                 ),
             )
             if GRP.forces in data or GRP.energy in data or GRP.stress in data:

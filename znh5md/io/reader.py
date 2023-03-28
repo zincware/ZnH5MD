@@ -94,7 +94,7 @@ class AtomsReader(DataReader):
         data = atoms[
             0
         ].get_pbc()  # boundary is constant and should be the same for all atoms
-        return GRP.encode_pbc(data)
+        return GRP.encode_boundary(data)
 
     def yield_chunks(
         self, group_names: list = None

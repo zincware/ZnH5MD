@@ -29,15 +29,11 @@ class GRP:
     pbc: str = "pbc"
 
     @staticmethod
-    def encode_pbc(value) -> np.ndarray:
-        if value is None:  # TODO is this really required?
-            return None
+    def encode_boundary(value) -> np.ndarray:
         return np.array(["periodic".encode() if x else "none".encode() for x in value])
 
     @staticmethod
-    def decode_pbc(value) -> np.ndarray:  # TODO rename decode_boundary
-        if value is None:  # TODO is this really required?
-            return None
+    def decode_boundary(value) -> np.ndarray:
         pbc = np.array([x == "periodic".encode() for x in value]).astype(bool)
         return pbc
 

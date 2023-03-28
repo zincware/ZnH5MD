@@ -199,7 +199,10 @@ class DataWriter:
                 if group_name == GRP.boundary:
                     # we create the box group
                     atoms.create_dataset(f"box/{GRP.boundary}", data=chunk_data.value)
-                    # TODO add dimension
+                    # dimension group is required by H5MD
+                    atoms.create_dataset(
+                        f"box/{GRP.dimension}", data=len(chunk_data.value)
+                    )
                     continue
                 group_name = self._handle_special_cases_group_names(group_name)
                 dataset_group = atoms.create_group(group_name)

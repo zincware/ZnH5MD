@@ -27,6 +27,7 @@ class GRP:
     stress: str = "stress"
     velocity: str = "velocity"
     pbc: str = "pbc"
+    dimension: str = "dimension"
 
     @staticmethod
     def encode_boundary(value) -> np.ndarray:

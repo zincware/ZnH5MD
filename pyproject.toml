@@ -12,6 +12,7 @@ h5py = "^3.7.0"
 dask = {extras = ["array"], version = "^2022.11.1"}
 ase = "^3.22.1"
 tqdm = "^4.65.0"
+typer = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
@@ -25,6 +26,8 @@ coverage = "^7.1.0"
 [tool.poetry.group.notebook.dependencies]
 jupyterlab = "^3.5.0"
 
+[tool.poetry.scripts]
+znh5md = 'znh5md.cli:app'
 
 [build-system]
 requires = ["poetry-core"]

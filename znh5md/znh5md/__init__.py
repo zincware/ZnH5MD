@@ -192,7 +192,7 @@ class ASEH5MD(H5MDBase):
             GRP.position,
             GRP.velocity,
             GRP.edges,
-            GRP.boundary,
+            GRP.pbc,
             GRP.energy,
             GRP.forces,
             GRP.stress,
@@ -211,7 +211,7 @@ class ASEH5MD(H5MDBase):
                     rm_nan(data[GRP.velocity][idx]) if GRP.velocity in data else None
                 ),
                 cell=data[GRP.edges][idx] if GRP.edges in data else None,
-                pbc=(data[GRP.boundary][idx] if GRP.boundary in data else None),
+                pbc=(data[GRP.pbc][idx] if GRP.pbc in data else None),
             )
             if GRP.forces in data or GRP.energy in data or GRP.stress in data:
                 obj.calc = SinglePointCalculator(

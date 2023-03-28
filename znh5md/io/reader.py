@@ -71,7 +71,7 @@ class AtomsReader(DataReader):
     def _get_edges(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_cell() for x in atoms]).astype(float)
 
-    def _get_boundary(self, atoms: list[ase.Atoms]) -> np.ndarray:
+    def _get_pbc(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([[x.get_pbc()] for x in atoms]).astype(bool)
 
     def yield_chunks(
@@ -95,7 +95,7 @@ class AtomsReader(DataReader):
                 GRP.forces: self._get_forces,
                 GRP.stress: self._get_stress,
                 GRP.edges: self._get_edges,
-                GRP.boundary: self._get_boundary,
+                GRP.pbc: self._get_pbc,
             }
 
             for name in group_names or functions:

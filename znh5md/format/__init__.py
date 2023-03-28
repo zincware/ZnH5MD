@@ -31,11 +31,22 @@ class GRP:
 
     @staticmethod
     def encode_boundary(value) -> np.ndarray:
-        return np.array(["periodic".encode() if x else "none".encode() for x in value])
+        return np.array(
+            [
+                (
+                    "periodic".encode(encoding="utf-8")
+                    if x
+                    else "none".encode(encoding="utf-8")
+                )
+                for x in value
+            ]
+        )
 
     @staticmethod
     def decode_boundary(value) -> np.ndarray:
-        pbc = np.array([x == "periodic".encode() for x in value]).astype(bool)
+        pbc = np.array([x == "periodic".encode(encoding="utf-8") for x in value]).astype(
+            bool
+        )
         return pbc
 
 

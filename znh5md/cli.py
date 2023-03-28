@@ -1,33 +1,52 @@
 import typer
-import tempfile
 import importlib.metadata
-import subprocess
 import ase.io
+import ase.visualize
+import tqdm
+import pathlib
 
 app = typer.Typer()
+
 
 @app.command()
 def view(file: str):
     """Use ASE GUI to view a H5MD Trajectory."""
     import znh5md
 
-    with tempfile.NamedTemporaryFile(suffix=".xyz") as tmp:
-        typer.echo(f"Writing file {file} to temporary file {tmp.name}")
-        data = znh5md.ASEH5MD(file)
-        ase.io.write(tmp.name, data.get_atoms_list())
+    typer.echo(f"Loading atoms from {file}")
+
+    data = znh5md.ASEH5MD(file)
+    ase.visualize.view(data.get_atoms_list())
+
 
 @app.command()
-def export(file: str, output:str):
-    """export a H5MD File into the output file"""
+def export(file: str, output: str):
+    """export a H5MD File into the output file."""
     import znh5md
+
     data = znh5md.ASEH5MD(file)
-    ase.io.write(output, data.get_atoms_list())
+    for atom in tqdm.tqdm(data.get_atoms_list(), ncols=120):
+        ase.io.write(output, atom, append=True)
+
+
+@app.command()
+def convert(file: str, db_file: str):
+    """Save a trajectory as H5MD File."""
+    import znh5md
+
+    db = znh5md.io.DataWriter(db_file)
+    if not pathlib.Path(db_file).exists():
+        db.initialize_database_groups()
+
+    db.add(znh5md.io.ASEFileReader(file))
+
 
 def version_callback(value: bool) -> None:
     """Get the installed dask4dvc version."""
     if value:
         typer.echo(f"znh5md {importlib.metadata.version('znh5md')}")
         raise typer.Exit()
+
 
 @app.callback()
 def main(

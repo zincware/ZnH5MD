@@ -56,3 +56,10 @@ db.add(znh5md.io.AtomsReader(atoms))
 data = znh5md.ASEH5MD("db.h5")
 data.get_atoms_list() == atoms
 ```
+
+## CLI
+ZnH5MD provides a small set of CLI tools:
+
+- `znh5md view <file.h5>` to view the File using `ase.visualize`
+- `znh5md export <file.h5> <file.xyz>` to export the file to `.xyz` or any other supported file format
+- `znh5md convert <file.xyz> <file.h5>` to save a `file.xyz` as `file.h5` in the H5MD standard.

@@ -166,6 +166,7 @@ class ASEFileReader(DataReader):
     frames_per_chunk: int = 5000
     time: float = 1
     step: int = 1
+    use_pbc_group: bool = False
 
     def yield_chunks(self) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
         """Yield chunks using AtomsReader."""
@@ -175,6 +176,7 @@ class ASEFileReader(DataReader):
             frames_per_chunk=self.frames_per_chunk,
             time=self.time,
             step=self.step,
+            use_pbc_group=self.use_pbc_group,
         )
 
         for atoms in tqdm.tqdm(ase.io.iread(self.filename)):

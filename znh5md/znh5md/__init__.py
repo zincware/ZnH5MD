@@ -7,6 +7,7 @@ import os
 import pathlib
 import typing
 
+import numpy as np
 import ase
 import dask.array
 import h5py
@@ -179,6 +180,8 @@ class ASEH5MD(H5MDBase):
         information is not used in the ASE interface.
         """
         # not using dask here was 8x faster on a 32 MB h5 file
+        if item == GRP.boundary:
+            return getattr(self.format_handler, item)
         return getattr(self.format_handler, item)["value"]
 
     def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:
@@ -196,10 +199,21 @@ class ASEH5MD(H5MDBase):
             GRP.energy,
             GRP.forces,
             GRP.stress,
+            GRP.pbc,
         ]:
             with contextlib.suppress(AttributeError, KeyError):
-                data[key] = getattr(self, key)[item] if item else getattr(self, key)[:]
+                if key == GRP.boundary:
+                    data[key] = getattr(self, key)[:]
+                else:
+                    data[key] = (
+                        getattr(self, key)[item] if item else getattr(self, key)[:]
+                    )
         atoms = []
+
+        if GRP.boundary in data and GRP.pbc not in data:
+            data[GRP.pbc] = np.repeat(
+                [GRP.decode_boundary(data[GRP.boundary])], len(data[GRP.position]), axis=0
+            )
 
         for idx in range(len(data[GRP.position])):
             obj = ase.Atoms(
@@ -211,7 +225,7 @@ class ASEH5MD(H5MDBase):
                     rm_nan(data[GRP.velocity][idx]) if GRP.velocity in data else None
                 ),
                 cell=data[GRP.edges][idx] if GRP.edges in data else None,
-                pbc=(data[GRP.boundary][idx] if GRP.boundary in data else None),
+                pbc=data[GRP.pbc][idx] if GRP.edges in data else None,
             )
             if GRP.forces in data or GRP.energy in data or GRP.stress in data:
                 obj.calc = SinglePointCalculator(

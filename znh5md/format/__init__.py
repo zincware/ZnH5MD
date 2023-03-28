@@ -3,11 +3,20 @@ import dataclasses
 import typing
 
 import h5py
+import numpy as np
 
 
 @dataclasses.dataclass
 class GRP:
-    """Group names for h5md files."""
+    """Group names for h5md files.
+
+    Attributes
+    ----------
+    pbc:
+        This group is not a H5MD group that supports time-dependent pbc.
+        It can be used to store data from different trajectories in one group,
+        that don't share pbc.
+    """
 
     edges: str = "edges"
     boundary: str = "boundary"
@@ -17,6 +26,17 @@ class GRP:
     forces: str = "forces"
     stress: str = "stress"
     velocity: str = "velocity"
+    pbc: str = "pbc"
+    dimension: str = "dimension"
+
+    @staticmethod
+    def encode_boundary(value) -> np.ndarray:
+        return np.array(["periodic".encode() if x else "none".encode() for x in value])
+
+    @staticmethod
+    def decode_boundary(value) -> np.ndarray:
+        pbc = np.array([x == "periodic".encode() for x in value]).astype(bool)
+        return pbc
 
 
 @dataclasses.dataclass
@@ -68,4 +88,9 @@ class FormatHandler:
     @property
     def boundary(self):
         group = f"particles/{self.particle_key}/box/{GRP.boundary}"
+        return self.file[group]
+
+    @property
+    def pbc(self):
+        group = f"particles/{self.particle_key}/box/{GRP.pbc}"
         return self.file[group]

@@ -1,5 +1,6 @@
 import dataclasses
 import typing
+import logging
 
 import ase.io
 import numpy as np
@@ -8,6 +9,8 @@ from ase.calculators.calculator import PropertyNotImplementedError
 
 from znh5md.format import GRP
 from znh5md.io.base import DataReader, FixedStepTimeChunk
+
+log = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -24,12 +27,18 @@ class AtomsReader(DataReader):
         Step size, by default 1
     time : float, optional
         Time step, by default 1
+    use_pbc_group : bool, optional
+        In addition to the 'boundary' group also
+        use the 'pbc' group. This will allow time dependent
+        periodic boundary conditions. This is not part of H5MD
+        and might cause issues with other software!
     """
 
     atoms: list[ase.Atoms]
     frames_per_chunk: int = 100  # must be larger than 1
     step: int = 1
     time: float = 1
+    use_pbc_group: bool = False
 
     def _fill_with_nan(self, data: list) -> np.ndarray:
         max_n_particles = max(x.shape[0] for x in data)
@@ -71,8 +80,13 @@ class AtomsReader(DataReader):
     def _get_edges(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_cell() for x in atoms]).astype(float)
 
-    def _get_boundary(self, atoms: list[ase.Atoms]) -> np.ndarray:
+    def _get_pbc(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([[x.get_pbc()] for x in atoms]).astype(bool)
+
+    def _get_boundary(self, atoms: list[ase.Atoms]) -> np.ndarray:
+        data = atoms[0].get_pbc()
+        # boundary is constant and should be the same for all atoms
+        return GRP.encode_boundary(data)
 
     def yield_chunks(
         self, group_names: list = None
@@ -97,6 +111,8 @@ class AtomsReader(DataReader):
                 GRP.edges: self._get_edges,
                 GRP.boundary: self._get_boundary,
             }
+            if self.use_pbc_group:
+                functions[GRP.pbc] = self._get_pbc
 
             for name in group_names or functions:
                 if name not in functions:
@@ -114,7 +130,7 @@ class AtomsReader(DataReader):
                         # if the property was specifically selected, raise the error
                         raise err
                     else:
-                        continue
+                        log.warning(f"Skipping {name} because {err}")
             yield data
             start_index = stop_index
             pbar.update(self.frames_per_chunk)
@@ -142,6 +158,7 @@ class ASEFileReader(DataReader):
     frames_per_chunk: int = 5000
     time: float = 1
     step: int = 1
+    use_pbc_group: bool = False
 
     def yield_chunks(self) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
         """Yield chunks using AtomsReader."""
@@ -151,6 +168,7 @@ class ASEFileReader(DataReader):
             frames_per_chunk=self.frames_per_chunk,
             time=self.time,
             step=self.step,
+            use_pbc_group=self.use_pbc_group,
         )
 
         for atoms in tqdm.tqdm(ase.io.iread(self.filename)):

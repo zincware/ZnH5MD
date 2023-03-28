@@ -130,7 +130,7 @@ class AtomsReader(DataReader):
                         # if the property was specifically selected, raise the error
                         raise err
                     else:
-                        log.warning(f"Skipping {name} because {err}")
+                        log.debug(f"Skipping {name} because {err}")
             yield data
             start_index = stop_index
             pbar.update(self.frames_per_chunk)

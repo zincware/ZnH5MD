@@ -1,7 +1,6 @@
 import abc
 import dataclasses
 import logging
-import os
 import typing
 
 import h5py
@@ -157,7 +156,7 @@ class DataReader(abc.ABC):
 @dataclasses.dataclass
 class DataWriter:
     filename: str
-    atoms_path: str = os.path.join("particles", "atoms")
+    atoms_path: str = "particles/atoms"
 
     def initialize_database_groups(self):
         """Create all groups that are required.

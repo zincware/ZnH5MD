@@ -168,6 +168,9 @@ class DataWriter:
             particles = file.create_group("particles")
             _ = particles.create_group("atoms")
 
+            observables = file.create_group("observables")
+            _ = observables.create_group("atoms")
+
     def _handle_special_cases_group_names(self, groupname: str) -> str:
         """Update group name in special cases.
 

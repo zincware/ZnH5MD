@@ -182,7 +182,7 @@ class DataWriter:
 
         return groupname
 
-    def create_particles_group_from_chunk_data(self, atoms, group_name, chunk_data):
+    def create_group(self, atoms, group_name, chunk_data):
         """Create a new group for the given elements.
 
         This method will create the following datasets for each group in kwargs.
@@ -199,7 +199,7 @@ class DataWriter:
         dataset_group = atoms.create_group(group_name)
         chunk_data.create_dataset(dataset_group)
 
-    def add_chunk_data_to_particles_group(self, atoms, group_name, chunk_data):
+    def add_data_to_group(self, atoms, group_name, chunk_data):
         """Add data to an existing group.
 
         For each group in kwargs, the following datasets are resized and appended to:
@@ -242,21 +242,17 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
         """
         with h5py.File(self.filename, "r+") as file:
-            atoms = file[self.particles_path]
+            group_path = file[self.particles_path]
             for group_name, chunk_data in kwargs.items():
                 if group_name == GRP.boundary:
                     self.handle_boundary(file, chunk_data)
                 else:
                     try:
-                        self.add_chunk_data_to_particles_group(
-                            atoms, group_name, chunk_data
-                        )
+                        self.add_data_to_group(group_path, group_name, chunk_data)
                     except KeyError:
                         log.debug(f"creating particle groups {group_name}")
 
-                        self.create_particles_group_from_chunk_data(
-                            atoms, group_name, chunk_data
-                        )
+                        self.create_group(group_path, group_name, chunk_data)
 
     def add(self, reader: DataReader):
         """Add data from a reader to the HDF5 file."""

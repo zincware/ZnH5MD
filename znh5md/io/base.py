@@ -8,7 +8,7 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
-from znh5md.format import GRP
+from znh5md.format import GRP, PARTICLES_GRP
 
 
 @dataclasses.dataclass
@@ -242,11 +242,15 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
         """
         with h5py.File(self.filename, "r+") as file:
-            group_path = file[self.particles_path]
             for group_name, chunk_data in kwargs.items():
                 if group_name == GRP.boundary:
                     self.handle_boundary(file, chunk_data)
                 else:
+                    if group_name in PARTICLES_GRP:
+                        group_path = file[self.particles_path]
+                    else:
+                        group_path = file[self.observables_path]
+
                     try:
                         self.add_data_to_group(group_path, group_name, chunk_data)
                     except KeyError:

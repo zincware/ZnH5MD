@@ -1,4 +1,5 @@
 """Format handler for h5md files."""
+import contextlib
 import dataclasses
 import typing
 
@@ -95,13 +96,15 @@ class FormatHandler:
         return list(self.file[f"particles/{self.particle_key}"])
 
     def __getattr__(self, item):
-        group = f"particles/{self.particle_key}/{item}"
-        try:
-            return self.file[group]
-        except KeyError as err:
-            raise AttributeError(
-                f"Could not load group '{group}' from '{self.filename}'"
-            ) from err
+        for path in ["particles", "observables"]:
+            # we look for the item in particles first and then in observables
+            #  TODO: this is mostly legacy and should be removed eventually
+            #    because PARTICLES_GRP defines where to look for the item
+            group = f"{path}/{self.particle_key}/{item}"
+            with contextlib.suppress(KeyError):
+                return self.file[group]
+
+        raise AttributeError(f"Could not load group '{group}' from '{self.filename}'")
 
     @property
     def edges(self):

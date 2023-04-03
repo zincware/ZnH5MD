@@ -231,17 +231,20 @@ class ASEH5MD(H5MDBase):
         observables = {}
 
         if self.load_all_observables:
-            groups = self.format_handler.observables_groups
+            # TODO this can be removed in future versions
+            groups = list(set(self.format_handler.observables_groups + OBSERVABLES_GRP))
         else:
             groups = OBSERVABLES_GRP
 
         for group_name in groups:
             if group_name not in particles_data:
-                observables[group_name] = (
-                    getattr(self, group_name)[item]
-                    if item
-                    else getattr(self, group_name)[:]
-                )
+                with contextlib.suppress(AttributeError, KeyError):
+                    # TODO this can be removed in future versions
+                    observables[group_name] = (
+                        getattr(self, group_name)[item]
+                        if item
+                        else getattr(self, group_name)[:]
+                    )
         return observables
 
     def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:

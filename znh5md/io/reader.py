@@ -32,6 +32,8 @@ class AtomsReader(DataReader):
         use the 'pbc' group. This will allow time dependent
         periodic boundary conditions. This is not part of H5MD
         and might cause issues with other software!
+    save_atoms_results : bool, optional
+        Save 'atoms.calc.results' which can contain custom keys.
     """
 
     atoms: list[ase.Atoms]
@@ -39,6 +41,7 @@ class AtomsReader(DataReader):
     step: int = 1
     time: float = 1
     use_pbc_group: bool = False
+    save_atoms_results: bool = True
 
     def _fill_with_nan(self, data: list) -> np.ndarray:
         max_n_particles = max(x.shape[0] for x in data)
@@ -131,6 +134,22 @@ class AtomsReader(DataReader):
                         raise err
                     else:
                         log.debug(f"Skipping {name} because {err}")
+
+            if self.atoms[0].calc is not None and self.save_atoms_results:
+                # we only gather the keys that are present in the first Atoms object.
+                # We assume they occur in all the others as well.
+                for key in self.atoms[0].calc.results:
+                    if key not in functions:
+                        value = [x.calc.results[key] for x in self.atoms]
+                        try:
+                            value = np.array(value).astype(float)
+                        except ValueError:
+                            value = self._fill_with_nan(value).astype(float)
+                        data[key] = FixedStepTimeChunk(
+                            value=value,
+                            step=self.step,
+                            time=self.time,
+                        )
             yield data
             start_index = stop_index
             pbar.update(self.frames_per_chunk)

@@ -13,7 +13,7 @@ import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from znh5md.format import GRP, FormatHandler
+from znh5md.format import GRP, FormatHandler, PARTICLES_GRP, OBSERVABLES_GRP
 from znh5md.utils import rm_nan
 
 PATHLIKE = typing.Union[str, pathlib.Path, os.PathLike]
@@ -30,6 +30,18 @@ def _(species: list, data):
     for x in species[1:]:
         mask += get_mask(x, data)
     return mask
+
+
+def _gather_value(particles_data, key, idx):
+    """Helper to gather the value for a given key and index.
+
+    Returns None if the key is not present in the data.
+    """
+    if key in particles_data:
+        if key in [GRP.species, GRP.position, GRP.velocity, GRP.forces]:
+            return rm_nan(particles_data[key][idx])
+        return particles_data[key][idx]
+    return None
 
 
 @dataclasses.dataclass
@@ -195,23 +207,10 @@ class ASEH5MD(H5MDBase):
             return getattr(self.format_handler, item)
         return getattr(self.format_handler, item)["value"]
 
-    def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:
-        """Get an 'ase.Atoms' list for all data."""
+    def _get_particles_dict(self, item) -> dict:
+        """Get particles group data."""
         data = {}
-        single_item = isinstance(item, int)
-        if single_item:
-            item = [item]
-        for key in [
-            GRP.species,
-            GRP.position,
-            GRP.velocity,
-            GRP.edges,
-            GRP.boundary,
-            GRP.energy,
-            GRP.forces,
-            GRP.stress,
-            GRP.pbc,
-        ]:
+        for key in PARTICLES_GRP:
             with contextlib.suppress(AttributeError, KeyError):
                 if key == GRP.boundary:
                     data[key] = getattr(self, key)[:]
@@ -219,45 +218,59 @@ class ASEH5MD(H5MDBase):
                     data[key] = (
                         getattr(self, key)[item] if item else getattr(self, key)[:]
                     )
-        calc_results = {}
-        if self.load_all_observables:
-            for group_name in self.format_handler.observables_groups:
-                if group_name not in data:
-                    calc_results[group_name] = (
-                        getattr(self, group_name)[item]
-                        if item
-                        else getattr(self, group_name)[:]
-                    )
-        atoms = []
 
         if GRP.boundary in data and GRP.pbc not in data:
             data[GRP.pbc] = np.repeat(
                 [GRP.decode_boundary(data[GRP.boundary])], len(data[GRP.position]), axis=0
             )
 
-        for idx in range(len(data[GRP.position])):
-            obj = ase.Atoms(
-                symbols=(rm_nan(data[GRP.species][idx]) if GRP.species in data else None),
-                positions=(
-                    rm_nan(data[GRP.position][idx]) if GRP.position in data else None
-                ),
-                velocities=(
-                    rm_nan(data[GRP.velocity][idx]) if GRP.velocity in data else None
-                ),
-                cell=data[GRP.edges][idx] if GRP.edges in data else None,
-                pbc=data[GRP.pbc][idx] if GRP.edges in data else None,
-            )
-            if GRP.forces in data or GRP.energy in data or GRP.stress in data:
-                obj.calc = SinglePointCalculator(
-                    obj,
-                    energy=data[GRP.energy][idx] if GRP.energy in data else None,
-                    forces=(
-                        rm_nan(data[GRP.forces][idx]) if GRP.forces in data else None
-                    ),
-                    stress=data[GRP.stress][idx] if GRP.stress in data else None,
+        return data
+
+    def _get_observables_dict(self, item, particles_data: dict) -> dict:
+        """Get observables group data."""
+        observables = {}
+
+        if self.load_all_observables:
+            groups = self.format_handler.observables_groups
+        else:
+            groups = OBSERVABLES_GRP
+
+        for group_name in groups:
+            if group_name not in particles_data:
+                observables[group_name] = (
+                    getattr(self, group_name)[item]
+                    if item
+                    else getattr(self, group_name)[:]
                 )
-                for key in calc_results:
-                    obj.calc.results[key] = calc_results[key][idx]
+        return observables
+
+    def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:
+        """Get an 'ase.Atoms' list for all data."""
+        single_item = isinstance(item, int)
+        if single_item:
+            item = [item]
+
+        particles_data = self._get_particles_dict(item=item)
+        observables_data = self._get_observables_dict(
+            item=item, particles_data=particles_data
+        )
+
+        atoms = []
+
+        for idx in range(len(particles_data[GRP.position])):
+            obj = ase.Atoms(
+                symbols=_gather_value(particles_data, GRP.species, idx),
+                positions=_gather_value(particles_data, GRP.position, idx),
+                velocities=_gather_value(particles_data, GRP.velocity, idx),
+                cell=_gather_value(particles_data, GRP.edges, idx),
+                pbc=_gather_value(particles_data, GRP.pbc, idx),
+            )
+            if GRP.forces in particles_data or len(observables_data):
+                obj.calc = SinglePointCalculator(
+                    obj, forces=_gather_value(particles_data, GRP.forces, idx)
+                )
+                for key in observables_data:
+                    obj.calc.results[key] = observables_data[key][idx]
 
             atoms.append(obj)
 

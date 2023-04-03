@@ -156,7 +156,8 @@ class DataReader(abc.ABC):
 @dataclasses.dataclass
 class DataWriter:
     filename: str
-    atoms_path: str = "particles/atoms"
+    particles_path: str = "particles/atoms"
+    observables_path: str = "observables/atoms"
 
     def initialize_database_groups(self):
         """Create all groups that are required.
@@ -197,7 +198,7 @@ class DataWriter:
         with h5py.File(self.filename, "r+") as file:
             for group_name, chunk_data in kwargs.items():
                 log.debug(f"creating particle groups {group_name}")
-                atoms = file[self.atoms_path]
+                atoms = file[self.particles_path]
                 if group_name == GRP.boundary:
                     # we create the box group
                     atoms.create_dataset(f"box/{GRP.boundary}", data=chunk_data.value)
@@ -227,10 +228,10 @@ class DataWriter:
         with h5py.File(self.filename, "r+") as file:
             for group_name, chunk_data in kwargs.items():
                 if group_name == GRP.boundary:
-                    if group_name not in file[f"{self.atoms_path}/box"]:
+                    if group_name not in file[f"{self.particles_path}/box"]:
                         raise KeyError(f"Group {group_name} does not exist.")
                     continue
-                atoms = file[self.atoms_path]
+                atoms = file[self.particles_path]
                 group_name = self._handle_special_cases_group_names(group_name)
                 dataset_group = atoms[group_name]
                 chunk_data.append_to_dataset(dataset_group)

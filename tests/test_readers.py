@@ -112,3 +112,37 @@ def test_AtomsReader_with_pbc_group(tmp_path, reader, atoms_list):
         npt.assert_array_equal(
             znh5md.utils.rm_nan(species[idx]), atoms.get_atomic_numbers()
         )
+
+
+@pytest.mark.parametrize("save_atoms_results", [True, False])
+def test_AtomsReader_observables(tmp_path, atoms_list, save_atoms_results):
+    os.chdir(tmp_path)
+
+    db = znh5md.io.DataWriter(filename="db.h5")
+    db.initialize_database_groups()
+    db.add(znh5md.io.AtomsReader(atoms_list, save_atoms_results=True))
+
+    data = znh5md.ASEH5MD("db.h5", load_all_observables=save_atoms_results)
+    atoms = data.get_atoms_list()
+
+    if save_atoms_results:
+        assert len(atoms) == len(atoms_list)
+        for a, b in zip(atoms, atoms_list):
+            for key in b.calc.results:
+                npt.assert_array_almost_equal(a.calc.results[key], b.calc.results[key])
+    else:
+        assert "predicted_energy" not in atoms[0].calc.results
+        assert "predicted_forces" not in atoms[0].calc.results
+
+    data = znh5md.ASEH5MD("db.h5", load_all_observables=False)
+    atoms = data.get_atoms_list()
+    assert "predicted_energy" not in atoms[0].calc.results
+    assert "predicted_forces" not in atoms[0].calc.results
+
+    assert "energy" in atoms[0].calc.results
+    assert "forces" in atoms[0].calc.results
+    assert "stress" in atoms[0].calc.results
+
+    for a, b in zip(atoms, atoms_list):
+        for key in a.calc.results:
+            npt.assert_array_almost_equal(a.calc.results[key], b.calc.results[key])

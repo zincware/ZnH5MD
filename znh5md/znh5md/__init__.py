@@ -7,10 +7,10 @@ import os
 import pathlib
 import typing
 
-import numpy as np
 import ase
 import dask.array
 import h5py
+import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 
 from znh5md.format import GRP, FormatHandler

@@ -1,6 +1,6 @@
 import dataclasses
-import typing
 import logging
+import typing
 
 import ase.io
 import numpy as np

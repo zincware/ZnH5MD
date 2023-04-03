@@ -1,9 +1,10 @@
-import typer
 import importlib.metadata
+import pathlib
+
 import ase.io
 import ase.visualize
 import tqdm
-import pathlib
+import typer
 
 app = typer.Typer()
 

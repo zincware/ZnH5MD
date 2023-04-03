@@ -50,6 +50,18 @@ class GRP:
         return pbc
 
 
+PARTICLES_GRP = [
+    GRP.position,
+    GRP.species,
+    GRP.forces,
+    GRP.velocity,
+    GRP.pbc,
+    GRP.dimension,
+    GRP.edges,
+    GRP.boundary,
+]
+
+
 @dataclasses.dataclass
 class FormatHandler:
     filename: str

@@ -22,6 +22,8 @@ pytest = "^7.2.0"
 graphviz = "^0.20.1"
 pre-commit = "^2.20.0"
 coverage = "^7.1.0"
+pytest-profiling = "^1.7.0"
+pytest-benchmark = "^4.0.0"
 
 [tool.poetry.group.notebook.dependencies]
 jupyterlab = "^3.5.0"

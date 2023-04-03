@@ -95,6 +95,14 @@ class FormatHandler:
         """
         return list(self.file[f"particles/{self.particle_key}"])
 
+    @property
+    def observables_groups(self) -> typing.List[str]:
+        """All observables."""
+        try:
+            return list(self.file[f"observables/{self.particle_key}"])
+        except KeyError:
+            return []
+
     def __getattr__(self, item):
         for path in ["particles", "observables"]:
             # we look for the item in particles first and then in observables

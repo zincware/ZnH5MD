@@ -221,10 +221,6 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
             The group must already exist.
         """
-        if group_name == GRP.boundary:
-            if group_name not in file[f"{self.particles_path}/box"]:
-                raise KeyError(f"Group {group_name} does not exist.")
-            return
         atoms = file[self.particles_path]
         group_name = self._handle_special_cases_group_names(group_name)
         dataset_group = atoms[group_name]
@@ -244,16 +240,16 @@ class DataWriter:
         with h5py.File(self.filename, "r+") as file:
             for group_name, chunk_data in kwargs.items():
                 try:
-                    try:
-                        self.add_chunk_data_to_particles_group(
-                            file, group_name, chunk_data
-                        )
-                    except KeyError:
-                        self.create_particles_group_from_chunk_data(
-                            file, group_name, chunk_data
-                        )
-                except ValueError as err:
-                    raise ValueError(f"Group {group_name} caused ValueError.") from err
+                    if group_name == GRP.boundary:
+                        if group_name not in file[f"{self.particles_path}/box"]:
+                            raise KeyError(f"Group {group_name} does not exist.")
+                        continue
+
+                    self.add_chunk_data_to_particles_group(file, group_name, chunk_data)
+                except KeyError:
+                    self.create_particles_group_from_chunk_data(
+                        file, group_name, chunk_data
+                    )
 
     def add(self, reader: DataReader):
         """Add data from a reader to the HDF5 file."""

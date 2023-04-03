@@ -62,6 +62,8 @@ PARTICLES_GRP = [
     GRP.boundary,
 ]
 
+OBSERVABLES_GRP = [GRP.energy, GRP.stress]
+
 
 @dataclasses.dataclass
 class FormatHandler:

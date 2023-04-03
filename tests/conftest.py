@@ -88,5 +88,7 @@ def atoms_list(request) -> list[ase.Atoms]:
             forces=np.random.rand(len(atom), 3),
             stress=stress,
         )
+        atom.calc.results["predicted_forces"] = np.random.rand(len(atom), 3)
+        atom.calc.results["predicted_energy"] = idx / 21 + 0.5
 
     return atoms

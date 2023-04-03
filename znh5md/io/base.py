@@ -8,7 +8,7 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
-from znh5md.format import GRP
+from znh5md.format import GRP, PARTICLES_GRP
 
 
 @dataclasses.dataclass
@@ -156,7 +156,8 @@ class DataReader(abc.ABC):
 @dataclasses.dataclass
 class DataWriter:
     filename: str
-    atoms_path: str = "particles/atoms"
+    particles_path: str = "particles/atoms"
+    observables_path: str = "observables/atoms"
 
     def initialize_database_groups(self):
         """Create all groups that are required.
@@ -168,6 +169,9 @@ class DataWriter:
             particles = file.create_group("particles")
             _ = particles.create_group("atoms")
 
+            observables = file.create_group("observables")
+            _ = observables.create_group("atoms")
+
     def _handle_special_cases_group_names(self, groupname: str) -> str:
         """Update group name in special cases.
 
@@ -178,42 +182,30 @@ class DataWriter:
 
         return groupname
 
-    def create_particles_group_from_chunk_data(self, **kwargs: CHUNK_DICT):
+    def create_group(self, db_path, group_name, chunk_data):
         """Create a new group for the given elements.
 
         This method will create the following datasets for each group in kwargs.
-        - particles/atoms/<group_name>/value
-        - particles/atoms/<group_name>/time
-        - particles/atoms/<group_name>/step
+        - <db_path>/<group_name>/value
+        - <db_path>/<group_name>/time
+        - <db_path>/<group_name>/step
 
         Parameters
         ----------
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
         """
-        with h5py.File(self.filename, "r+") as file:
-            for group_name, chunk_data in kwargs.items():
-                log.debug(f"creating particle groups {group_name}")
-                atoms = file[self.atoms_path]
-                if group_name == GRP.boundary:
-                    # we create the box group
-                    atoms.create_dataset(f"box/{GRP.boundary}", data=chunk_data.value)
-                    # dimension group is required by H5MD
-                    atoms.create_dataset(
-                        f"box/{GRP.dimension}", data=len(chunk_data.value)
-                    )
-                    continue
-                group_name = self._handle_special_cases_group_names(group_name)
-                dataset_group = atoms.create_group(group_name)
-                chunk_data.create_dataset(dataset_group)
+        group_name = self._handle_special_cases_group_names(group_name)
+        dataset_group = db_path.create_group(group_name)
+        chunk_data.create_dataset(dataset_group)
 
-    def add_chunk_data_to_particles_group(self, **kwargs: CHUNK_DICT):
+    def add_data_to_group(self, db_path, group_name, chunk_data):
         """Add data to an existing group.
 
         For each group in kwargs, the following datasets are resized and appended to:
-        - particles/atoms/<group_name>/value
-        - particles/atoms/<group_name>/time
-        - particles/atoms/<group_name>/step
+        - <db_path>/<group_name>/value
+        - <db_path>/<group_name>/time
+        - <db_path>/<group_name>/step
 
         Parameters
         ----------
@@ -221,16 +213,22 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
             The group must already exist.
         """
-        with h5py.File(self.filename, "r+") as file:
-            for group_name, chunk_data in kwargs.items():
-                if group_name == GRP.boundary:
-                    if group_name not in file[f"{self.atoms_path}/box"]:
-                        raise KeyError(f"Group {group_name} does not exist.")
-                    continue
-                atoms = file[self.atoms_path]
-                group_name = self._handle_special_cases_group_names(group_name)
-                dataset_group = atoms[group_name]
-                chunk_data.append_to_dataset(dataset_group)
+        group_name = self._handle_special_cases_group_names(group_name)
+        dataset_group = db_path[group_name]
+        chunk_data.append_to_dataset(dataset_group)
+
+    def handle_boundary(self, file, chunk_data):
+        """Special case for the box boundary.
+
+        This requires a special case, because the boundary is inside
+        the box group.
+        """
+        if GRP.boundary not in file[f"{self.particles_path}/box"]:
+            atoms = file[self.particles_path]
+            # we create the box group
+            atoms.create_dataset(f"box/{GRP.boundary}", data=chunk_data.value)
+            # dimension group is required by H5MD
+            atoms.create_dataset(f"box/{GRP.dimension}", data=len(chunk_data.value))
 
     def add_chunk_data(self, **kwargs: CHUNK_DICT) -> None:
         """Write Chunks to the database.
@@ -243,11 +241,22 @@ class DataWriter:
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
         """
-        for group_name, chunk_data in kwargs.items():
-            try:
-                self.add_chunk_data_to_particles_group(**{group_name: chunk_data})
-            except KeyError:
-                self.create_particles_group_from_chunk_data(**{group_name: chunk_data})
+        with h5py.File(self.filename, "r+") as file:
+            for group_name, chunk_data in kwargs.items():
+                if group_name == GRP.boundary:
+                    self.handle_boundary(file, chunk_data)
+                else:
+                    if group_name in PARTICLES_GRP:
+                        group_path = file[self.particles_path]
+                    else:
+                        group_path = file[self.observables_path]
+
+                    try:
+                        self.add_data_to_group(group_path, group_name, chunk_data)
+                    except KeyError:
+                        log.debug(f"creating particle groups {group_name}")
+
+                        self.create_group(group_path, group_name, chunk_data)
 
     def add(self, reader: DataReader):
         """Add data from a reader to the HDF5 file."""

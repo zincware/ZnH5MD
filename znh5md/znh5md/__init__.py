@@ -170,6 +170,17 @@ class DaskH5MD(H5MDBase):
 
 @dataclasses.dataclass
 class ASEH5MD(H5MDBase):
+    """ASE interface for H5MD files.
+
+    Attributes
+    ----------
+    load_all_observables: bool, default=True
+        if True, all observables are loaded into 'atoms.calc.results'.
+        Otherwise, only the standard ASE observables are loaded.
+    """
+
+    load_all_observables: bool = True
+
     def __getitem__(self, item):
         return self.get_atoms_list(item=item)
 
@@ -208,6 +219,15 @@ class ASEH5MD(H5MDBase):
                     data[key] = (
                         getattr(self, key)[item] if item else getattr(self, key)[:]
                     )
+        calc_results = {}
+        if self.load_all_observables:
+            for group_name in self.format_handler.observables_groups:
+                if group_name not in data:
+                    calc_results[group_name] = (
+                        getattr(self, group_name)[item]
+                        if item
+                        else getattr(self, group_name)[:]
+                    )
         atoms = []
 
         if GRP.boundary in data and GRP.pbc not in data:
@@ -236,6 +256,8 @@ class ASEH5MD(H5MDBase):
                     ),
                     stress=data[GRP.stress][idx] if GRP.stress in data else None,
                 )
+                for key in calc_results:
+                    obj.calc.results[key] = calc_results[key][idx]
 
             atoms.append(obj)
 

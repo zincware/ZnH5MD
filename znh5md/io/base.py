@@ -182,7 +182,7 @@ class DataWriter:
 
         return groupname
 
-    def create_particles_group_from_chunk_data(self, file, group_name, chunk_data):
+    def create_particles_group_from_chunk_data(self, atoms, group_name, chunk_data):
         """Create a new group for the given elements.
 
         This method will create the following datasets for each group in kwargs.
@@ -195,13 +195,11 @@ class DataWriter:
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
         """
-        log.debug(f"creating particle groups {group_name}")
-        atoms = file[self.particles_path]
         group_name = self._handle_special_cases_group_names(group_name)
         dataset_group = atoms.create_group(group_name)
         chunk_data.create_dataset(dataset_group)
 
-    def add_chunk_data_to_particles_group(self, file, group_name, chunk_data):
+    def add_chunk_data_to_particles_group(self, atoms, group_name, chunk_data):
         """Add data to an existing group.
 
         For each group in kwargs, the following datasets are resized and appended to:
@@ -215,7 +213,6 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
             The group must already exist.
         """
-        atoms = file[self.particles_path]
         group_name = self._handle_special_cases_group_names(group_name)
         dataset_group = atoms[group_name]
         chunk_data.append_to_dataset(dataset_group)
@@ -245,17 +242,20 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
         """
         with h5py.File(self.filename, "r+") as file:
+            atoms = file[self.particles_path]
             for group_name, chunk_data in kwargs.items():
                 if group_name == GRP.boundary:
                     self.handle_boundary(file, chunk_data)
                 else:
                     try:
                         self.add_chunk_data_to_particles_group(
-                            file, group_name, chunk_data
+                            atoms, group_name, chunk_data
                         )
                     except KeyError:
+                        log.debug(f"creating particle groups {group_name}")
+
                         self.create_particles_group_from_chunk_data(
-                            file, group_name, chunk_data
+                            atoms, group_name, chunk_data
                         )
 
     def add(self, reader: DataReader):

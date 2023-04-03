@@ -197,12 +197,6 @@ class DataWriter:
         """
         log.debug(f"creating particle groups {group_name}")
         atoms = file[self.particles_path]
-        if group_name == GRP.boundary:
-            # we create the box group
-            atoms.create_dataset(f"box/{GRP.boundary}", data=chunk_data.value)
-            # dimension group is required by H5MD
-            atoms.create_dataset(f"box/{GRP.dimension}", data=len(chunk_data.value))
-            return
         group_name = self._handle_special_cases_group_names(group_name)
         dataset_group = atoms.create_group(group_name)
         chunk_data.create_dataset(dataset_group)
@@ -226,6 +220,19 @@ class DataWriter:
         dataset_group = atoms[group_name]
         chunk_data.append_to_dataset(dataset_group)
 
+    def handle_boundary(self, file, chunk_data):
+        """Special case for the box boundary.
+
+        This requires a special case, because the boundary is inside
+        the box group.
+        """
+        if GRP.boundary not in file[f"{self.particles_path}/box"]:
+            atoms = file[self.particles_path]
+            # we create the box group
+            atoms.create_dataset(f"box/{GRP.boundary}", data=chunk_data.value)
+            # dimension group is required by H5MD
+            atoms.create_dataset(f"box/{GRP.dimension}", data=len(chunk_data.value))
+
     def add_chunk_data(self, **kwargs: CHUNK_DICT) -> None:
         """Write Chunks to the database.
 
@@ -239,17 +246,17 @@ class DataWriter:
         """
         with h5py.File(self.filename, "r+") as file:
             for group_name, chunk_data in kwargs.items():
-                try:
-                    if group_name == GRP.boundary:
-                        if group_name not in file[f"{self.particles_path}/box"]:
-                            raise KeyError(f"Group {group_name} does not exist.")
-                        continue
-
-                    self.add_chunk_data_to_particles_group(file, group_name, chunk_data)
-                except KeyError:
-                    self.create_particles_group_from_chunk_data(
-                        file, group_name, chunk_data
-                    )
+                if group_name == GRP.boundary:
+                    self.handle_boundary(file, chunk_data)
+                else:
+                    try:
+                        self.add_chunk_data_to_particles_group(
+                            file, group_name, chunk_data
+                        )
+                    except KeyError:
+                        self.create_particles_group_from_chunk_data(
+                            file, group_name, chunk_data
+                        )
 
     def add(self, reader: DataReader):
         """Add data from a reader to the HDF5 file."""

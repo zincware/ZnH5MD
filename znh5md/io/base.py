@@ -182,7 +182,7 @@ class DataWriter:
 
         return groupname
 
-    def create_particles_group_from_chunk_data(self, **kwargs: CHUNK_DICT):
+    def create_particles_group_from_chunk_data(self, file, **kwargs: CHUNK_DICT):
         """Create a new group for the given elements.
 
         This method will create the following datasets for each group in kwargs.
@@ -195,23 +195,20 @@ class DataWriter:
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
         """
-        with h5py.File(self.filename, "r+") as file:
-            for group_name, chunk_data in kwargs.items():
-                log.debug(f"creating particle groups {group_name}")
-                atoms = file[self.particles_path]
-                if group_name == GRP.boundary:
-                    # we create the box group
-                    atoms.create_dataset(f"box/{GRP.boundary}", data=chunk_data.value)
-                    # dimension group is required by H5MD
-                    atoms.create_dataset(
-                        f"box/{GRP.dimension}", data=len(chunk_data.value)
-                    )
-                    continue
-                group_name = self._handle_special_cases_group_names(group_name)
-                dataset_group = atoms.create_group(group_name)
-                chunk_data.create_dataset(dataset_group)
+        for group_name, chunk_data in kwargs.items():
+            log.debug(f"creating particle groups {group_name}")
+            atoms = file[self.particles_path]
+            if group_name == GRP.boundary:
+                # we create the box group
+                atoms.create_dataset(f"box/{GRP.boundary}", data=chunk_data.value)
+                # dimension group is required by H5MD
+                atoms.create_dataset(f"box/{GRP.dimension}", data=len(chunk_data.value))
+                continue
+            group_name = self._handle_special_cases_group_names(group_name)
+            dataset_group = atoms.create_group(group_name)
+            chunk_data.create_dataset(dataset_group)
 
-    def add_chunk_data_to_particles_group(self, **kwargs: CHUNK_DICT):
+    def add_chunk_data_to_particles_group(self, file, **kwargs: CHUNK_DICT):
         """Add data to an existing group.
 
         For each group in kwargs, the following datasets are resized and appended to:
@@ -225,16 +222,15 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
             The group must already exist.
         """
-        with h5py.File(self.filename, "r+") as file:
-            for group_name, chunk_data in kwargs.items():
-                if group_name == GRP.boundary:
-                    if group_name not in file[f"{self.particles_path}/box"]:
-                        raise KeyError(f"Group {group_name} does not exist.")
-                    continue
-                atoms = file[self.particles_path]
-                group_name = self._handle_special_cases_group_names(group_name)
-                dataset_group = atoms[group_name]
-                chunk_data.append_to_dataset(dataset_group)
+        for group_name, chunk_data in kwargs.items():
+            if group_name == GRP.boundary:
+                if group_name not in file[f"{self.particles_path}/box"]:
+                    raise KeyError(f"Group {group_name} does not exist.")
+                continue
+            atoms = file[self.particles_path]
+            group_name = self._handle_special_cases_group_names(group_name)
+            dataset_group = atoms[group_name]
+            chunk_data.append_to_dataset(dataset_group)
 
     def add_chunk_data(self, **kwargs: CHUNK_DICT) -> None:
         """Write Chunks to the database.
@@ -247,11 +243,16 @@ class DataWriter:
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
         """
-        for group_name, chunk_data in kwargs.items():
-            try:
-                self.add_chunk_data_to_particles_group(**{group_name: chunk_data})
-            except KeyError:
-                self.create_particles_group_from_chunk_data(**{group_name: chunk_data})
+        with h5py.File(self.filename, "r+") as file:
+            for group_name, chunk_data in kwargs.items():
+                try:
+                    self.add_chunk_data_to_particles_group(
+                        file, **{group_name: chunk_data}
+                    )
+                except KeyError:
+                    self.create_particles_group_from_chunk_data(
+                        file, **{group_name: chunk_data}
+                    )
 
     def add(self, reader: DataReader):
         """Add data from a reader to the HDF5 file."""

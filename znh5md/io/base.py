@@ -182,13 +182,13 @@ class DataWriter:
 
         return groupname
 
-    def create_group(self, atoms, group_name, chunk_data):
+    def create_group(self, db_path, group_name, chunk_data):
         """Create a new group for the given elements.
 
         This method will create the following datasets for each group in kwargs.
-        - particles/atoms/<group_name>/value
-        - particles/atoms/<group_name>/time
-        - particles/atoms/<group_name>/step
+        - <db_path>/<group_name>/value
+        - <db_path>/<group_name>/time
+        - <db_path>/<group_name>/step
 
         Parameters
         ----------
@@ -196,16 +196,16 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
         """
         group_name = self._handle_special_cases_group_names(group_name)
-        dataset_group = atoms.create_group(group_name)
+        dataset_group = db_path.create_group(group_name)
         chunk_data.create_dataset(dataset_group)
 
-    def add_data_to_group(self, atoms, group_name, chunk_data):
+    def add_data_to_group(self, db_path, group_name, chunk_data):
         """Add data to an existing group.
 
         For each group in kwargs, the following datasets are resized and appended to:
-        - particles/atoms/<group_name>/value
-        - particles/atoms/<group_name>/time
-        - particles/atoms/<group_name>/step
+        - <db_path>/<group_name>/value
+        - <db_path>/<group_name>/time
+        - <db_path>/<group_name>/step
 
         Parameters
         ----------
@@ -214,7 +214,7 @@ class DataWriter:
             The group must already exist.
         """
         group_name = self._handle_special_cases_group_names(group_name)
-        dataset_group = atoms[group_name]
+        dataset_group = db_path[group_name]
         chunk_data.append_to_dataset(dataset_group)
 
     def handle_boundary(self, file, chunk_data):

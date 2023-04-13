@@ -6,6 +6,10 @@
 # ZnH5MD - High Performance Interface for H5MD Trajectories
 
 ZnH5MD allows easy access to simulation results from H5MD trajectories.
+It provides a Python interface and can convert existing data to H5MD files as well as export to other formats.
+```
+pip install znh5md
+```
 
 ## Example
 In the following example we investigate an H5MD dump from LAMMPS with 1000 atoms and 201 configurations:
@@ -63,3 +67,6 @@ ZnH5MD provides a small set of CLI tools:
 - `znh5md view <file.h5>` to view the File using `ase.visualize`
 - `znh5md export <file.h5> <file.xyz>` to export the file to `.xyz` or any other supported file format
 - `znh5md convert <file.xyz> <file.h5>` to save a `file.xyz` as `file.h5` in the H5MD standard.
+
+## More examples
+A complete documentation is still work in progress. In the meantime, I can recommend looking at the tests, especially `test_znh5md.py` to learn more about slicing and batching.

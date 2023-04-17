@@ -8,7 +8,7 @@
 ZnH5MD allows easy access to simulation results from H5MD trajectories.
 It provides a Python interface and can convert existing data to H5MD files as well as export to other formats.
 ```
-pip install znh5md
+pip install znh5md["daskk"]
 ```
 
 ## Example

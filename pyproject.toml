@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "znh5md"
-version = "0.1.6a0"
+version = "0.1.6"
 description = "High Performance Interface for H5MD Trajectories"
 authors = ["zincwarecode <zincwarecode@gmail.com>"]
 license = "Apache-2.0"
@@ -9,10 +9,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.9"
 h5py = "^3.7.0"
-dask = {extras = ["array"], version = "^2022.11.1"}
+dask = {extras = ["array"], version = "^2022.11.1", optional = true}
 ase = "^3.22.1"
 tqdm = "^4.65.0"
-typer = "^0.7.0"
+typer = {extras = ["all"], version = "^0.7.0"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
@@ -30,6 +30,9 @@ jupyterlab = "^3.5.0"
 
 [tool.poetry.scripts]
 znh5md = 'znh5md.cli:app'
+
+[tool.poetry.extras]
+dask = ["dask"]
 
 [build-system]
 requires = ["poetry-core"]

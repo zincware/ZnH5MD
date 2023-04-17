@@ -27,6 +27,7 @@ class GRP:
     forces: str = "forces"
     stress: str = "stress"
     velocity: str = "velocity"
+    momentum: str = "momentum"
     pbc: str = "pbc"
     dimension: str = "dimension"
 
@@ -56,6 +57,7 @@ PARTICLES_GRP = [
     GRP.species,
     GRP.forces,
     GRP.velocity,
+    GRP.momentum,
     GRP.pbc,
     GRP.dimension,
     GRP.edges,

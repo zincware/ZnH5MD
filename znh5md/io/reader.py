@@ -77,6 +77,13 @@ class AtomsReader(DataReader):
         except ValueError:
             return self._fill_with_nan(data).astype(float)
 
+    def _get_momenta(self, atoms: list[ase.Atoms]) -> np.ndarray:
+        data = [x.arrays["momenta"] for x in atoms]
+        try:
+            return np.array(data).astype(float)
+        except ValueError:
+            return self._fill_with_nan(data).astype(float)
+
     def _get_stress(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_stress() for x in atoms]).astype(float)
 
@@ -113,6 +120,7 @@ class AtomsReader(DataReader):
                 GRP.stress: self._get_stress,
                 GRP.edges: self._get_edges,
                 GRP.boundary: self._get_boundary,
+                GRP.momentum: self._get_momenta,
             }
             if self.use_pbc_group:
                 functions[GRP.pbc] = self._get_pbc
@@ -128,7 +136,7 @@ class AtomsReader(DataReader):
                         step=self.step,
                         time=self.time,
                     )
-                except (PropertyNotImplementedError, RuntimeError) as err:
+                except (PropertyNotImplementedError, RuntimeError, KeyError) as err:
                     if group_names is not None:
                         # if the property was specifically selected, raise the error
                         raise err

@@ -18,7 +18,8 @@ def _gather_value(particles_data, key, idx):
     Returns None if the key is not present in the data.
     """
     if key in particles_data:
-        if key in [GRP.species, GRP.position, GRP.velocity, GRP.forces]:
+        if key in [GRP.species, GRP.position, GRP.velocity, GRP.forces, GRP.momentum]:
+            # use PARTICLES_GRP
             return rm_nan(particles_data[key][idx])
         return particles_data[key][idx]
     return None
@@ -108,7 +109,7 @@ class ASEH5MD(H5MDBase):
             obj = ase.Atoms(
                 symbols=_gather_value(particles_data, GRP.species, idx),
                 positions=_gather_value(particles_data, GRP.position, idx),
-                velocities=_gather_value(particles_data, GRP.velocity, idx),
+                momenta=_gather_value(particles_data, GRP.momentum, idx),
                 cell=_gather_value(particles_data, GRP.edges, idx),
                 pbc=_gather_value(particles_data, GRP.pbc, idx),
             )

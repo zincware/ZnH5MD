@@ -62,6 +62,9 @@ def atoms_list(request) -> list[ase.Atoms]:
     """
     if getattr(request, "param", "").startswith("vary_size"):
         atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
+        for atom in atoms:
+            atom.set_velocities(np.random.rand(len(atom), 3))
+
     else:
         random.seed(1234)
         atoms = [

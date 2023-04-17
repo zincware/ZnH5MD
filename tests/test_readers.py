@@ -64,6 +64,25 @@ def test_AtomsReader(tmp_path, reader, atoms_list, use_add):
         )
 
 
+@pytest.mark.parametrize("atoms_list", ["vary_size"], indirect=True)
+def test_momenta(tmp_path, atoms_list):
+    os.chdir(tmp_path)
+    print(tmp_path)
+
+    db = znh5md.io.DataWriter(filename="db.h5")
+    db.initialize_database_groups()
+    db.add(znh5md.io.AtomsReader(atoms_list))
+
+    data = znh5md.ASEH5MD("db.h5")
+    assert "momenta" in data[0].arrays
+
+    with pytest.raises(AssertionError):
+        # Assert array not equal zero array
+        npt.assert_array_equal(
+            data[0].get_velocities, np.zeros_like(data[0].get_positions())
+        )
+
+
 @pytest.mark.parametrize("reader", [znh5md.io.ASEFileReader, znh5md.io.AtomsReader])
 @pytest.mark.parametrize("atoms_list", ["vary_size", "vary_pbc_vary_pbc"], indirect=True)
 def test_AtomsReader_with_pbc_group(tmp_path, reader, atoms_list):
@@ -96,6 +115,7 @@ def test_AtomsReader_with_pbc_group(tmp_path, reader, atoms_list):
         npt.assert_array_almost_equal(a.get_potential_energy(), b.get_potential_energy())
         npt.assert_array_equal(a.get_pbc(), b.get_pbc())
         npt.assert_array_almost_equal(a.get_stress(), b.get_stress())
+        npt.assert_array_almost_equal(a.get_velocities(), b.get_velocities())
 
     # now test with Dask
     traj = znh5md.DaskH5MD("db.h5")
@@ -130,6 +150,8 @@ def test_AtomsReader_observables(tmp_path, atoms_list, save_atoms_results):
         for a, b in zip(atoms, atoms_list):
             for key in b.calc.results:
                 npt.assert_array_almost_equal(a.calc.results[key], b.calc.results[key])
+            assert "momenta" not in a.arrays
+            assert "momenta" not in b.arrays
     else:
         assert "predicted_energy" not in atoms[0].calc.results
         assert "predicted_forces" not in atoms[0].calc.results

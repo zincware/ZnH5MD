@@ -96,6 +96,7 @@ def test_AtomsReader_with_pbc_group(tmp_path, reader, atoms_list):
         npt.assert_array_almost_equal(a.get_potential_energy(), b.get_potential_energy())
         npt.assert_array_equal(a.get_pbc(), b.get_pbc())
         npt.assert_array_almost_equal(a.get_stress(), b.get_stress())
+        npt.assert_array_almost_equal(a.get_velocities(), b.get_velocities())
 
     # now test with Dask
     traj = znh5md.DaskH5MD("db.h5")

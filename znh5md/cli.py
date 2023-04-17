@@ -22,7 +22,7 @@ def view(file: str):
 
 @app.command()
 def export(file: str, output: str):
-    """export a H5MD File into the output file."""
+    """Export a H5MD File into the output file."""
     import znh5md
 
     data = znh5md.ASEH5MD(file)

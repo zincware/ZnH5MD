@@ -65,6 +65,7 @@ def test_AtomsReader(tmp_path, reader, atoms_list, use_add):
         )
 
 
+@pytest.mark.parametrize("atoms_list", ["fix_size", "vary_size"], indirect=True)
 @pytest.mark.parametrize("frames_per_chunk", [3, 50000])
 def test_ChemfilesReader(tmp_path, atoms_list, frames_per_chunk):
     os.chdir(tmp_path)
@@ -90,3 +91,4 @@ def test_ChemfilesReader(tmp_path, atoms_list, frames_per_chunk):
         # npt.assert_array_almost_equal(a.get_forces(), b.get_forces())
         npt.assert_array_almost_equal(a.get_cell(), b.get_cell())
         npt.assert_array_almost_equal(a.get_potential_energy(), b.get_potential_energy())
+        npt.assert_array_equal(a.get_pbc(), b.get_pbc())

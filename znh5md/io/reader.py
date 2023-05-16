@@ -44,15 +44,6 @@ class AtomsReader(DataReader):
     use_pbc_group: bool = False
     save_atoms_results: bool = True
 
-    def _fill_with_nan(self, data: list) -> np.ndarray:
-        max_n_particles = max(x.shape[0] for x in data)
-        dimensions = data[0].shape[1:]
-
-        result = np.full((len(data), max_n_particles, *dimensions), np.nan)
-        for i, x in enumerate(data):
-            result[i, : x.shape[0], ...] = x
-        return result
-
     def _get_positions(self, atoms: list[ase.Atoms]) -> np.ndarray:
         data = [x.get_positions() for x in atoms]
         try:
@@ -224,6 +215,7 @@ class ChemfilesReader(DataReader):
             species = []
             energy = []
             cell = []
+            pbc = []
             for frame in tqdm.tqdm(trajectory, total=trajectory.nsteps):
                 positions.append(np.copy(frame.positions))
                 species.append(np.copy([atom.atomic_number for atom in frame.atoms]))
@@ -231,12 +223,14 @@ class ChemfilesReader(DataReader):
 
                 if "energy" in frame.list_properties():
                     energy.append(np.copy(frame["energy"]).astype(float))
-
-                assert len(positions) == len(species)
+                if "pbc" in frame.list_properties():
+                    pbc.append(
+                        [True if x == "T" else False for x in frame["pbc"].split()]
+                    )
 
                 if len(positions) == self.frames_per_chunk:
-                    positions = np.stack(positions)
-                    species = np.stack(species)
+                    positions = self._fill_with_nan(positions).astype(float)
+                    species = self._fill_with_nan(species).astype(float)
 
                     data = {
                         GRP.position: FixedStepTimeChunk(
@@ -261,6 +255,12 @@ class ChemfilesReader(DataReader):
                             step=self.step,
                             time=self.time,
                         )
+                    if len(pbc) > 0:
+                        data[GRP.pbc] = FixedStepTimeChunk(
+                            value=np.stack(pbc),
+                            step=self.step,
+                            time=self.time,
+                        )
 
                     yield data
 
@@ -268,15 +268,19 @@ class ChemfilesReader(DataReader):
                     species = []
                     energy = []
                     cell = []
+                    pbc = []
             if len(positions) > 0:
+                positions = self._fill_with_nan(positions).astype(float)
+                species = self._fill_with_nan(species).astype(float)
+
                 data = {
                     GRP.position: FixedStepTimeChunk(
-                        value=np.stack(positions),
+                        value=positions,
                         step=self.step,
                         time=self.time,
                     ),
                     GRP.species: FixedStepTimeChunk(
-                        value=np.stack(species),
+                        value=species,
                         step=self.step,
                         time=self.time,
                     ),
@@ -289,6 +293,12 @@ class ChemfilesReader(DataReader):
                 if len(energy) > 0:
                     data[GRP.energy] = FixedStepTimeChunk(
                         value=np.stack(energy),
+                        step=self.step,
+                        time=self.time,
+                    )
+                if len(pbc) > 0:
+                    data[GRP.pbc] = FixedStepTimeChunk(
+                        value=np.stack(pbc),
                         step=self.step,
                         time=self.time,
                     )

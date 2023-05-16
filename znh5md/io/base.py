@@ -152,6 +152,15 @@ class DataReader(abc.ABC):
         """
         raise NotImplementedError()
 
+    def _fill_with_nan(self, data: list) -> np.ndarray:
+        max_n_particles = max(x.shape[0] for x in data)
+        dimensions = data[0].shape[1:]
+
+        result = np.full((len(data), max_n_particles, *dimensions), np.nan)
+        for i, x in enumerate(data):
+            result[i, : x.shape[0], ...] = x
+        return result
+
 
 @dataclasses.dataclass
 class DataWriter:

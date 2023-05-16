@@ -223,9 +223,12 @@ class ChemfilesReader(DataReader):
             positions = []
             species = []
             energy = []
+            cell = []
             for frame in tqdm.tqdm(trajectory, total=trajectory.nsteps):
                 positions.append(np.copy(frame.positions))
                 species.append(np.copy([atom.atomic_number for atom in frame.atoms]))
+                cell.append(np.copy(frame.cell.lengths))
+
                 if "energy" in frame.list_properties():
                     energy.append(np.copy(frame["energy"]).astype(float))
 
@@ -235,7 +238,7 @@ class ChemfilesReader(DataReader):
                     positions = np.stack(positions)
                     species = np.stack(species)
 
-                    data =  {
+                    data = {
                         GRP.position: FixedStepTimeChunk(
                             value=positions,
                             step=self.step,
@@ -243,6 +246,11 @@ class ChemfilesReader(DataReader):
                         ),
                         GRP.species: FixedStepTimeChunk(
                             value=species,
+                            step=self.step,
+                            time=self.time,
+                        ),
+                        GRP.edges: FixedStepTimeChunk(
+                            value=np.stack(cell),
                             step=self.step,
                             time=self.time,
                         ),
@@ -259,6 +267,7 @@ class ChemfilesReader(DataReader):
                     positions = []
                     species = []
                     energy = []
+                    cell = []
             if len(positions) > 0:
                 data = {
                     GRP.position: FixedStepTimeChunk(
@@ -268,6 +277,11 @@ class ChemfilesReader(DataReader):
                     ),
                     GRP.species: FixedStepTimeChunk(
                         value=np.stack(species),
+                        step=self.step,
+                        time=self.time,
+                    ),
+                    GRP.edges: FixedStepTimeChunk(
+                        value=np.stack(cell),
                         step=self.step,
                         time=self.time,
                     ),

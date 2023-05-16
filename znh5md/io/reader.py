@@ -3,6 +3,7 @@ import logging
 import typing
 
 import ase.io
+import chemfiles
 import numpy as np
 import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
@@ -42,15 +43,6 @@ class AtomsReader(DataReader):
     time: float = 1
     use_pbc_group: bool = False
     save_atoms_results: bool = True
-
-    def _fill_with_nan(self, data: list) -> np.ndarray:
-        max_n_particles = max(x.shape[0] for x in data)
-        dimensions = data[0].shape[1:]
-
-        result = np.full((len(data), max_n_particles, *dimensions), np.nan)
-        for i, x in enumerate(data):
-            result[i, : x.shape[0], ...] = x
-        return result
 
     def _get_positions(self, atoms: list[ase.Atoms]) -> np.ndarray:
         data = [x.get_positions() for x in atoms]
@@ -207,3 +199,107 @@ class ASEFileReader(DataReader):
         if len(atoms_list) > 0:
             reader.atoms = atoms_list
             yield from reader.yield_chunks()
+
+
+@dataclasses.dataclass
+class ChemfilesReader(DataReader):
+    filename: str
+    format: str = ""
+    frames_per_chunk: int = 5000
+    step: int = 1
+    time: float = 1
+
+    def yield_chunks(self) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
+        with chemfiles.Trajectory(self.filename, format=self.format) as trajectory:
+            positions = []
+            species = []
+            energy = []
+            cell = []
+            pbc = []
+            for frame in tqdm.tqdm(trajectory, total=trajectory.nsteps):
+                positions.append(np.copy(frame.positions))
+                species.append(np.copy([atom.atomic_number for atom in frame.atoms]))
+                cell.append(np.copy(frame.cell.lengths))
+
+                if "energy" in frame.list_properties():
+                    energy.append(np.copy(frame["energy"]).astype(float))
+                if "pbc" in frame.list_properties():
+                    pbc.append(
+                        [True if x == "T" else False for x in frame["pbc"].split()]
+                    )
+
+                if len(positions) == self.frames_per_chunk:
+                    positions = self._fill_with_nan(positions).astype(float)
+                    species = self._fill_with_nan(species).astype(float)
+
+                    data = {
+                        GRP.position: FixedStepTimeChunk(
+                            value=positions,
+                            step=self.step,
+                            time=self.time,
+                        ),
+                        GRP.species: FixedStepTimeChunk(
+                            value=species,
+                            step=self.step,
+                            time=self.time,
+                        ),
+                        GRP.edges: FixedStepTimeChunk(
+                            value=np.stack(cell),
+                            step=self.step,
+                            time=self.time,
+                        ),
+                    }
+                    if len(energy) > 0:
+                        data[GRP.energy] = FixedStepTimeChunk(
+                            value=np.stack(energy),
+                            step=self.step,
+                            time=self.time,
+                        )
+                    if len(pbc) > 0:
+                        data[GRP.pbc] = FixedStepTimeChunk(
+                            value=np.stack(pbc),
+                            step=self.step,
+                            time=self.time,
+                        )
+
+                    yield data
+
+                    positions = []
+                    species = []
+                    energy = []
+                    cell = []
+                    pbc = []
+            if len(positions) > 0:
+                positions = self._fill_with_nan(positions).astype(float)
+                species = self._fill_with_nan(species).astype(float)
+
+                data = {
+                    GRP.position: FixedStepTimeChunk(
+                        value=positions,
+                        step=self.step,
+                        time=self.time,
+                    ),
+                    GRP.species: FixedStepTimeChunk(
+                        value=species,
+                        step=self.step,
+                        time=self.time,
+                    ),
+                    GRP.edges: FixedStepTimeChunk(
+                        value=np.stack(cell),
+                        step=self.step,
+                        time=self.time,
+                    ),
+                }
+                if len(energy) > 0:
+                    data[GRP.energy] = FixedStepTimeChunk(
+                        value=np.stack(energy),
+                        step=self.step,
+                        time=self.time,
+                    )
+                if len(pbc) > 0:
+                    data[GRP.pbc] = FixedStepTimeChunk(
+                        value=np.stack(pbc),
+                        step=self.step,
+                        time=self.time,
+                    )
+                yield data

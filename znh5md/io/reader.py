@@ -3,8 +3,8 @@ import logging
 import typing
 
 import ase.io
-import numpy as np
 import chemfiles
+import numpy as np
 import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
 

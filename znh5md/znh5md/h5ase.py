@@ -1,15 +1,15 @@
-from znh5md.format import GRP, PARTICLES_GRP, OBSERVABLES_GRP
-import h5py
-import dataclasses
-from znh5md.znh5md.base import H5MDBase
 import contextlib
-import numpy as np
-import ase
+import dataclasses
 import typing
 
-from znh5md.utils import rm_nan
-from znh5md.format import GRP
+import ase
+import h5py
+import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
+
+from znh5md.format import GRP, OBSERVABLES_GRP, PARTICLES_GRP
+from znh5md.utils import rm_nan
+from znh5md.znh5md.base import H5MDBase
 
 
 def _gather_value(particles_data, key, idx):

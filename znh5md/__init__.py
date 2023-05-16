@@ -1,10 +1,10 @@
 """ZnH5MD: High Performance Interface for H5MD Trajectories."""
+import contextlib
 import importlib.metadata
 
-import contextlib
 from znh5md import io, utils
-from znh5md.znh5md import ASEH5MD
 from znh5md.format import FormatHandler
+from znh5md.znh5md import ASEH5MD
 
 __all__ = ["DaskH5MD", "ASEH5MD", "io", "FormatHandler", "utils"]
 

@@ -1,10 +1,9 @@
-import typing
 import dataclasses
-import pathlib
 import os
+import pathlib
+import typing
 
 from znh5md.format import FormatHandler
-
 
 PATHLIKE = typing.Union[str, pathlib.Path, os.PathLike]
 

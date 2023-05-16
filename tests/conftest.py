@@ -58,9 +58,15 @@ def atoms_list(request) -> list[ase.Atoms]:
         - None: use default values
         - "vary_size": use ase.collections.g2
         - "no_stress": do not set stress
+        - "vary_size_vary_pbc": use ase.collections.g2 and vary pbc
     """
-    if getattr(request, "param", None) == "vary_size":
+    np.random.seed(1234)
+
+    if getattr(request, "param", "").startswith("vary_size"):
         atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
+        for atom in atoms:
+            atom.set_velocities(np.random.rand(len(atom), 3))
+
     else:
         random.seed(1234)
         atoms = [
@@ -72,10 +78,10 @@ def atoms_list(request) -> list[ase.Atoms]:
             )
             for _ in range(21)
         ]
-    # create some variations in PBC
-    atoms[0].pbc = np.array([True, True, False])
-    atoms[1].pbc = np.array([True, False, True])
-    atoms[2].pbc = False
+    if getattr(request, "param", "").endswith("vary_pbc"):
+        atoms[0].pbc = np.array([True, True, False])
+        atoms[1].pbc = np.array([True, False, True])
+        atoms[2].pbc = False
 
     for idx, atom in enumerate(atoms):
         stress = (
@@ -87,5 +93,7 @@ def atoms_list(request) -> list[ase.Atoms]:
             forces=np.random.rand(len(atom), 3),
             stress=stress,
         )
+        atom.calc.results["predicted_forces"] = np.random.rand(len(atom), 3)
+        atom.calc.results["predicted_energy"] = idx / 21 + 0.5
 
     return atoms

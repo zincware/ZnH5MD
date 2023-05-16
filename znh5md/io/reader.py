@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 import typing
 
 import ase.io
@@ -9,6 +10,8 @@ from ase.calculators.calculator import PropertyNotImplementedError
 
 from znh5md.format import GRP
 from znh5md.io.base import DataReader, FixedStepTimeChunk
+
+log = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -25,12 +28,21 @@ class AtomsReader(DataReader):
         Step size, by default 1
     time : float, optional
         Time step, by default 1
+    use_pbc_group : bool, optional
+        In addition to the 'boundary' group also
+        use the 'pbc' group. This will allow time dependent
+        periodic boundary conditions. This is not part of H5MD
+        and might cause issues with other software!
+    save_atoms_results : bool, optional
+        Save 'atoms.calc.results' which can contain custom keys.
     """
 
     atoms: list[ase.Atoms]
     frames_per_chunk: int = 100  # must be larger than 1
     step: int = 1
     time: float = 1
+    use_pbc_group: bool = False
+    save_atoms_results: bool = True
 
     def _fill_with_nan(self, data: list) -> np.ndarray:
         max_n_particles = max(x.shape[0] for x in data)
@@ -66,14 +78,26 @@ class AtomsReader(DataReader):
         except ValueError:
             return self._fill_with_nan(data).astype(float)
 
+    def _get_momenta(self, atoms: list[ase.Atoms]) -> np.ndarray:
+        data = [x.arrays["momenta"] for x in atoms]
+        try:
+            return np.array(data).astype(float)
+        except ValueError:
+            return self._fill_with_nan(data).astype(float)
+
     def _get_stress(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_stress() for x in atoms]).astype(float)
 
     def _get_edges(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([x.get_cell() for x in atoms]).astype(float)
 
-    def _get_boundary(self, atoms: list[ase.Atoms]) -> np.ndarray:
+    def _get_pbc(self, atoms: list[ase.Atoms]) -> np.ndarray:
         return np.array([[x.get_pbc()] for x in atoms]).astype(bool)
+
+    def _get_boundary(self, atoms: list[ase.Atoms]) -> np.ndarray:
+        data = atoms[0].get_pbc()
+        # boundary is constant and should be the same for all atoms
+        return GRP.encode_boundary(data)
 
     def yield_chunks(
         self, group_names: list = None
@@ -97,7 +121,10 @@ class AtomsReader(DataReader):
                 GRP.stress: self._get_stress,
                 GRP.edges: self._get_edges,
                 GRP.boundary: self._get_boundary,
+                GRP.momentum: self._get_momenta,
             }
+            if self.use_pbc_group:
+                functions[GRP.pbc] = self._get_pbc
 
             for name in group_names or functions:
                 if name not in functions:
@@ -110,12 +137,28 @@ class AtomsReader(DataReader):
                         step=self.step,
                         time=self.time,
                     )
-                except (PropertyNotImplementedError, RuntimeError) as err:
+                except (PropertyNotImplementedError, RuntimeError, KeyError) as err:
                     if group_names is not None:
                         # if the property was specifically selected, raise the error
                         raise err
                     else:
-                        continue
+                        log.debug(f"Skipping {name} because {err}")
+
+            if self.atoms[0].calc is not None and self.save_atoms_results:
+                # we only gather the keys that are present in the first Atoms object.
+                # We assume they occur in all the others as well.
+                for key in self.atoms[0].calc.results:
+                    if key not in functions:
+                        value = [x.calc.results[key] for x in self.atoms]
+                        try:
+                            value = np.array(value).astype(float)
+                        except ValueError:
+                            value = self._fill_with_nan(value).astype(float)
+                        data[key] = FixedStepTimeChunk(
+                            value=value,
+                            step=self.step,
+                            time=self.time,
+                        )
             yield data
             start_index = stop_index
             pbar.update(self.frames_per_chunk)
@@ -143,6 +186,7 @@ class ASEFileReader(DataReader):
     frames_per_chunk: int = 5000
     time: float = 1
     step: int = 1
+    use_pbc_group: bool = False
 
     def yield_chunks(self) -> typing.Iterator[typing.Dict[str, FixedStepTimeChunk]]:
         """Yield chunks using AtomsReader."""
@@ -152,6 +196,7 @@ class ASEFileReader(DataReader):
             frames_per_chunk=self.frames_per_chunk,
             time=self.time,
             step=self.step,
+            use_pbc_group=self.use_pbc_group,
         )
 
         for atoms in tqdm.tqdm(ase.io.iread(self.filename)):
@@ -178,15 +223,15 @@ class ChemfilesReader(DataReader):
             positions = []
             species = []
             for frame in tqdm.tqdm(trajectory, total=trajectory.nsteps):
-                positions.append(frame.positions)
-                species.append([atom.atomic_number for atom in frame.atoms])
+                positions.append(np.copy(frame.positions))
+                species.append(np.copy([atom.atomic_number for atom in frame.atoms]))
+
+                assert len(positions) == len(species)
 
                 if len(positions) == self.frames_per_chunk:
                     positions = np.stack(positions)
                     species = np.stack(species)
-                    assert (
-                        positions.shape == species.shape
-                    ), f"{positions.shape} != {species.shape}"
+
                     yield {
                         GRP.position: FixedStepTimeChunk(
                             value=positions,

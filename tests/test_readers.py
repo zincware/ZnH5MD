@@ -4,6 +4,7 @@ import ase.io
 import numpy as np
 import numpy.testing as npt
 import pytest
+import tqdm
 
 import znh5md
 
@@ -82,5 +83,7 @@ def test_ChemfilesReader(tmp_path, atoms_list, frames_per_chunk):
     atoms = data.get_atoms_list()
 
     assert len(atoms) == len(atoms_list)
+    for a, b in zip(ase.io.iread("traj.xyz"), atoms_list):
+        npt.assert_array_almost_equal(a.get_positions(), b.get_positions())
     for a, b in zip(atoms, atoms_list):
         npt.assert_array_almost_equal(a.get_positions(), b.get_positions())

@@ -30,7 +30,7 @@ jobs:
           poetry-version: 1.3.2
       - name: Install package
         run: |
-          poetry install --without=notebook
+          poetry install --without=notebook --all-extras
       - name: Pytest
         run: |
           poetry run coverage run -m pytest

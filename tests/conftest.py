@@ -60,8 +60,6 @@ def atoms_list(request) -> list[ase.Atoms]:
         - "no_stress": do not set stress
         - "vary_size_vary_pbc": use ase.collections.g2 and vary pbc
     """
-    np.random.seed(1234)
-
     if getattr(request, "param", "").startswith("vary_size"):
         atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
         for atom in atoms:

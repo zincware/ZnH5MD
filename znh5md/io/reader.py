@@ -222,9 +222,12 @@ class ChemfilesReader(DataReader):
         with chemfiles.Trajectory(self.filename, format=self.format) as trajectory:
             positions = []
             species = []
+            energy = []
             for frame in tqdm.tqdm(trajectory, total=trajectory.nsteps):
                 positions.append(np.copy(frame.positions))
                 species.append(np.copy([atom.atomic_number for atom in frame.atoms]))
+                if "energy" in frame.list_properties():
+                    energy.append(np.copy(frame["energy"]).astype(float))
 
                 assert len(positions) == len(species)
 
@@ -232,7 +235,7 @@ class ChemfilesReader(DataReader):
                     positions = np.stack(positions)
                     species = np.stack(species)
 
-                    yield {
+                    data =  {
                         GRP.position: FixedStepTimeChunk(
                             value=positions,
                             step=self.step,
@@ -244,10 +247,20 @@ class ChemfilesReader(DataReader):
                             time=self.time,
                         ),
                     }
+                    if len(energy) > 0:
+                        data[GRP.energy] = FixedStepTimeChunk(
+                            value=np.stack(energy),
+                            step=self.step,
+                            time=self.time,
+                        )
+
+                    yield data
+
                     positions = []
                     species = []
+                    energy = []
             if len(positions) > 0:
-                yield {
+                data = {
                     GRP.position: FixedStepTimeChunk(
                         value=np.stack(positions),
                         step=self.step,
@@ -259,3 +272,10 @@ class ChemfilesReader(DataReader):
                         time=self.time,
                     ),
                 }
+                if len(energy) > 0:
+                    data[GRP.energy] = FixedStepTimeChunk(
+                        value=np.stack(energy),
+                        step=self.step,
+                        time=self.time,
+                    )
+                yield data

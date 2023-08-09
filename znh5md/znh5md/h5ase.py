@@ -10,6 +10,7 @@ from ase.calculators.singlepoint import SinglePointCalculator
 from znh5md.format import GRP, OBSERVABLES_GRP, PARTICLES_GRP
 from znh5md.utils import rm_nan
 from znh5md.znh5md.base import H5MDBase
+from znh5md.atoms import Atoms
 
 
 def _gather_value(particles_data, key, idx):
@@ -92,7 +93,7 @@ class ASEH5MD(H5MDBase):
                     )
         return observables
 
-    def get_atoms_list(self, item=None) -> typing.List[ase.Atoms]:
+    def get_atoms_list(self, item=None) -> typing.List[Atoms]:
         """Get an 'ase.Atoms' list for all data."""
         single_item = isinstance(item, int)
         if single_item:
@@ -106,7 +107,7 @@ class ASEH5MD(H5MDBase):
         atoms = []
 
         for idx in range(len(particles_data[GRP.position])):
-            obj = ase.Atoms(
+            obj = Atoms(
                 symbols=_gather_value(particles_data, GRP.species, idx),
                 positions=_gather_value(particles_data, GRP.position, idx),
                 momenta=_gather_value(particles_data, GRP.momentum, idx),

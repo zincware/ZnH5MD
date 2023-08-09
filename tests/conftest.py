@@ -8,7 +8,7 @@ import ase.io
 import h5py
 import numpy as np
 import pytest
-
+import znh5md
 
 @pytest.fixture
 def example_h5(tmp_path) -> pathlib.Path:
@@ -44,6 +44,29 @@ def example_h5(tmp_path) -> pathlib.Path:
 
     return filename
 
+@pytest.fixture
+def g2_h5(tmp_path) -> pathlib.Path:
+    filename = tmp_path / "example.h5"
+
+    atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
+    for atom in atoms:
+        atom.set_velocities(np.random.rand(len(atom), 3))
+
+    for idx, atom in enumerate(atoms):
+        atom.calc = ase.calculators.singlepoint.SinglePointCalculator(
+            atoms=atom,
+            energy=idx / 21,
+            forces=np.random.rand(len(atom), 3),
+            stress=np.random.rand(6),
+        )
+        atom.calc.results["predicted_forces"] = np.random.rand(len(atom), 3)
+        atom.calc.results["predicted_energy"] = idx / 21 + 0.5
+
+    db = znh5md.io.DataWriter(filename=filename)
+    db.initialize_database_groups()
+    db.add(znh5md.io.AtomsReader(atoms))
+
+    return filename
 
 @pytest.fixture
 def atoms_list(request) -> list[ase.Atoms]:

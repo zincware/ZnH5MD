@@ -5,8 +5,9 @@ import importlib.metadata
 from znh5md import io, utils
 from znh5md.format import FormatHandler
 from znh5md.znh5md import ASEH5MD
+from znh5md.atoms import Atoms
 
-__all__ = ["DaskH5MD", "ASEH5MD", "io", "FormatHandler", "utils"]
+__all__ = ["DaskH5MD", "ASEH5MD", "io", "FormatHandler", "utils", "Atoms"]
 
 with contextlib.suppress(ImportError):
     from znh5md.znh5md.h5dask import DaskH5MD

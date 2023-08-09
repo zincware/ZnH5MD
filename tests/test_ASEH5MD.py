@@ -19,6 +19,7 @@ def test_get_atoms_list(example_h5):
     atoms = traj.get_atoms_list()
     assert len(atoms) == 100
     assert isinstance(atoms[0], ase.Atoms)
+    assert isinstance(atoms[0], znh5md.Atoms)
 
 
 @pytest.mark.parametrize("remove_calc", [True, False])

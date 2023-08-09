@@ -8,7 +8,9 @@ import ase.io
 import h5py
 import numpy as np
 import pytest
+
 import znh5md
+
 
 @pytest.fixture
 def example_h5(tmp_path) -> pathlib.Path:
@@ -44,6 +46,7 @@ def example_h5(tmp_path) -> pathlib.Path:
 
     return filename
 
+
 @pytest.fixture
 def g2_h5(tmp_path) -> pathlib.Path:
     filename = tmp_path / "example.h5"
@@ -67,6 +70,7 @@ def g2_h5(tmp_path) -> pathlib.Path:
     db.add(znh5md.io.AtomsReader(atoms))
 
     return filename
+
 
 @pytest.fixture
 def atoms_list(request) -> list[ase.Atoms]:

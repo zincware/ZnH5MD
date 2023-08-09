@@ -7,10 +7,10 @@ import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 
+from znh5md.atoms import Atoms
 from znh5md.format import GRP, OBSERVABLES_GRP, PARTICLES_GRP
 from znh5md.utils import rm_nan
 from znh5md.znh5md.base import H5MDBase
-from znh5md.atoms import Atoms
 
 
 def _gather_value(particles_data, key, idx):

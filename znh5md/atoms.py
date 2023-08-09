@@ -1,10 +1,13 @@
-import ase
 import contextlib
+
+import ase
+
 from znh5md.format import GRP
 
 
 class Atoms(ase.Atoms):
     """Extension of ase.Atoms with additional methods for serialization."""
+
     # def to_dict(self) -> dict:
     #     data = {}
 
@@ -22,7 +25,7 @@ class Atoms(ase.Atoms):
     #         with contextlib.suppress(RuntimeError):
     #             data[key] = func(self)
     #     return data
-    
+
     # @classmethod
     # def from_dict(cls, d: dict):
     #     atoms = cls(
@@ -39,4 +42,3 @@ class Atoms(ase.Atoms):
     #             forces=d[GRP.forces],
     #         ))
     #     return atoms
-

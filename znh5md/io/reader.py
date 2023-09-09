@@ -10,8 +10,10 @@ from ase.calculators.calculator import PropertyNotImplementedError
 
 from znh5md.format import GRP
 from znh5md.io.base import DataReader, FixedStepTimeChunk
+from znh5md import utils
 
 log = logging.getLogger(__name__)
+
 
 
 @dataclasses.dataclass
@@ -35,6 +37,8 @@ class AtomsReader(DataReader):
         and might cause issues with other software!
     save_atoms_results : bool, optional
         Save 'atoms.calc.results' which can contain custom keys.
+    save_atoms_arrays : bool, optional
+        Save 'atoms.arrays' which can contain custom keys.
     """
 
     atoms: list[ase.Atoms]
@@ -43,6 +47,7 @@ class AtomsReader(DataReader):
     time: float = 1
     use_pbc_group: bool = False
     save_atoms_results: bool = True
+    save_atoms_arrays: bool = True
 
     def _get_positions(self, atoms: list[ase.Atoms]) -> np.ndarray:
         data = [x.get_positions() for x in atoms]
@@ -89,6 +94,27 @@ class AtomsReader(DataReader):
         data = atoms[0].get_pbc()
         # boundary is constant and should be the same for all atoms
         return GRP.encode_boundary(data)
+
+    def _get_arrays_data(self, atoms: list[ase.Atoms]) -> typing.Dict[str, np.ndarray]:
+        data = {}
+        for config in atoms:
+            for key in config.arrays:
+                if key in utils.ASE_ARRAYS_KEYS:
+                    continue
+                if key not in data:
+                    data[key] = []
+                data[key].append(config.arrays[key])
+            for key in data:
+                if key not in config.arrays:
+                    data[key].append(np.full_like(data[key][0], np.nan))
+        
+        for key in data:
+            try:
+                data[key] = np.array(data[key]).astype(float)
+            except ValueError:
+                data[key] = self._fill_with_nan(data[key]).astype(float)
+
+        return data
 
     def yield_chunks(
         self, group_names: list = None
@@ -150,6 +176,17 @@ class AtomsReader(DataReader):
                             step=self.step,
                             time=self.time,
                         )
+            
+            
+            if self.save_atoms_arrays:
+                arrays = self._get_arrays_data(self.atoms[start_index:stop_index])
+                for key in arrays:
+                    data[key] = FixedStepTimeChunk(
+                        value=arrays[key],
+                        step=self.step,
+                        time=self.time,
+                    ) 
+
             yield data
             start_index = stop_index
             pbar.update(self.frames_per_chunk)

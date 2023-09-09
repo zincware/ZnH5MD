@@ -95,3 +95,14 @@ def atoms_list(request) -> list[ase.Atoms]:
         atom.calc.results["predicted_energy"] = idx / 21 + 0.5
 
     return atoms
+
+@pytest.fixture
+def atoms_list_with_custom_arrays():
+    atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
+    for atom in atoms:
+        atom.set_velocities(np.random.rand(len(atom), 3))
+        atom.arrays['forces_1'] = np.random.rand(len(atom), 3) # e.g. forces
+        atom.arrays['stress_1'] = np.random.rand(3, 3) # e.g. stress
+        atom.arrays['energy_1'] = np.random.rand() # e.g. energy
+
+    return atoms

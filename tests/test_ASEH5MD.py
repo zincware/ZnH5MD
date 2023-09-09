@@ -3,6 +3,7 @@ import os
 import ase
 import pytest
 from ase.calculators.calculator import PropertyNotImplementedError
+import numpy.testing as npt
 
 import znh5md
 
@@ -70,3 +71,19 @@ def test_request_missing_properties(tmp_path, atoms_list, remove_calc):
                 group_names=["stress"]
             ):
                 db.add_chunk_data(**chunk)
+
+def test_DataWriter_custom_arrays(tmp_path, atoms_list_with_custom_arrays):
+    os.chdir(tmp_path)
+
+    db = znh5md.io.DataWriter(filename="db.h5")
+    db.initialize_database_groups()
+    db.add(znh5md.io.AtomsReader(atoms_list_with_custom_arrays))
+
+    traj = znh5md.ASEH5MD("db.h5")
+
+    for a, b in zip(traj.get_atoms_list(), atoms_list_with_custom_arrays):
+        for key in b.arrays:
+            if key in ["initial_magmoms", "initial_charges"]:
+                # TODO these are currently not supported by ZnH5MD
+                continue
+            npt.assert_allclose(a.arrays[key], b.arrays[key])

@@ -6,6 +6,7 @@ import ase
 import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
+from ase.calculators.calculator import all_properties
 
 from znh5md.format import GRP, OBSERVABLES_GRP, PARTICLES_GRP
 from znh5md.utils import rm_nan
@@ -118,7 +119,10 @@ class ASEH5MD(H5MDBase):
                     obj, forces=_gather_value(particles_data, GRP.forces, idx)
                 )
                 for key in observables_data:
-                    obj.calc.results[key] = observables_data[key][idx]
+                    if key in all_properties:
+                        obj.calc.results[key] = observables_data[key][idx]
+                    else:
+                        obj.arrays[key] = rm_nan(observables_data[key][idx])
 
             atoms.append(obj)
 

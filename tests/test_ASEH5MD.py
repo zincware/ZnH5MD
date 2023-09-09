@@ -1,9 +1,9 @@
 import os
 
 import ase
+import numpy.testing as npt
 import pytest
 from ase.calculators.calculator import PropertyNotImplementedError
-import numpy.testing as npt
 
 import znh5md
 
@@ -71,6 +71,7 @@ def test_request_missing_properties(tmp_path, atoms_list, remove_calc):
                 group_names=["stress"]
             ):
                 db.add_chunk_data(**chunk)
+
 
 def test_DataWriter_custom_arrays(tmp_path, atoms_list_with_custom_arrays):
     os.chdir(tmp_path)

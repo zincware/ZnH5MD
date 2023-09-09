@@ -8,12 +8,11 @@ import numpy as np
 import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
 
+from znh5md import utils
 from znh5md.format import GRP
 from znh5md.io.base import DataReader, FixedStepTimeChunk
-from znh5md import utils
 
 log = logging.getLogger(__name__)
-
 
 
 @dataclasses.dataclass
@@ -107,7 +106,7 @@ class AtomsReader(DataReader):
             for key in data:
                 if key not in config.arrays:
                     data[key].append(np.full_like(data[key][0], np.nan))
-        
+
         for key in data:
             try:
                 data[key] = np.array(data[key]).astype(float)
@@ -166,7 +165,10 @@ class AtomsReader(DataReader):
                 # We assume they occur in all the others as well.
                 for key in self.atoms[0].calc.results:
                     if key not in functions:
-                        value = [x.calc.results[key] for x in self.atoms[start_index:stop_index]]
+                        value = [
+                            x.calc.results[key]
+                            for x in self.atoms[start_index:stop_index]
+                        ]
                         try:
                             value = np.array(value).astype(float)
                         except ValueError:
@@ -176,8 +178,7 @@ class AtomsReader(DataReader):
                             step=self.step,
                             time=self.time,
                         )
-            
-            
+
             if self.save_atoms_arrays:
                 arrays = self._get_arrays_data(self.atoms[start_index:stop_index])
                 for key in arrays:
@@ -185,7 +186,7 @@ class AtomsReader(DataReader):
                         value=arrays[key],
                         step=self.step,
                         time=self.time,
-                    ) 
+                    )
 
             yield data
             start_index = stop_index

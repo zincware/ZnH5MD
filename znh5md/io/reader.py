@@ -140,7 +140,7 @@ class AtomsReader(DataReader):
                 # We assume they occur in all the others as well.
                 for key in self.atoms[0].calc.results:
                     if key not in functions:
-                        value = [x.calc.results[key] for x in self.atoms]
+                        value = [x.calc.results[key] for x in self.atoms[start_index:stop_index]]
                         try:
                             value = np.array(value).astype(float)
                         except ValueError:

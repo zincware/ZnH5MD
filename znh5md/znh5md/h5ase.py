@@ -17,11 +17,15 @@ def _gather_value(particles_data, key, idx):
 
     Returns None if the key is not present in the data.
     """
-    if key in particles_data:
-        if key in [GRP.species, GRP.position, GRP.velocity, GRP.forces, GRP.momentum]:
-            # use PARTICLES_GRP
-            return rm_nan(particles_data[key][idx])
-        return particles_data[key][idx]
+    try:
+        if key in particles_data:
+            if key in [GRP.species, GRP.position, GRP.velocity, GRP.forces, GRP.momentum]:
+                # use PARTICLES_GRP
+                return rm_nan(particles_data[key][idx])
+            return particles_data[key][idx]
+    except IndexError:
+        # a property might not be available at all frames.
+        pass
     return None
 
 

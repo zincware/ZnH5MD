@@ -71,6 +71,7 @@ def test_request_missing_properties(tmp_path, atoms_list, remove_calc):
             ):
                 db.add_chunk_data(**chunk)
 
+
 @pytest.mark.parametrize("atoms_list", ["vary_size"], indirect=True)
 def test_skip_property(tmp_path, atoms_list):
     os.chdir(tmp_path)

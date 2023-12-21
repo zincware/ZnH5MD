@@ -70,3 +70,18 @@ def test_request_missing_properties(tmp_path, atoms_list, remove_calc):
                 group_names=["stress"]
             ):
                 db.add_chunk_data(**chunk)
+
+@pytest.mark.parametrize("atoms_list", ["vary_size"], indirect=True)
+def test_skip_property(tmp_path, atoms_list):
+    os.chdir(tmp_path)
+
+    db = znh5md.io.DataWriter(filename="db.h5")
+    db.initialize_database_groups()
+
+    atoms_list[-1].arrays.pop("momenta")
+    atoms_list[-1].get_momenta()
+
+    db.add(znh5md.io.AtomsReader(atoms_list))
+
+    traj = znh5md.ASEH5MD("db.h5")
+    assert traj.get_atoms_list() == atoms_list

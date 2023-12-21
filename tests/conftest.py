@@ -76,6 +76,8 @@ def atoms_list(request) -> list[ase.Atoms]:
             )
             for _ in range(21)
         ]
+
+
     if getattr(request, "param", "").endswith("vary_pbc"):
         atoms[0].pbc = np.array([True, True, False])
         atoms[1].pbc = np.array([True, False, True])

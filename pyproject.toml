@@ -8,26 +8,23 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-h5py = "^3.7.0"
-dask = {extras = ["array"], version = "^2022.11.1", optional = true}
+h5py = "^3"
+dask = {extras = ["array"], version = "^2022", optional = true}
 ase = "^3.22.1"
-tqdm = "^4.65.0"
-chemfiles = "^0.10.3"
-typer = {extras = ["all"], version = "^0.7.0"}
+tqdm = "^4"
+chemfiles = "^0.10"
+typer = {extras = ["all"], version = "^0"}
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.1.0"
-isort = "^5.12.0"
-ruff = "^0.0.256"
 pytest = "^7.2.0"
-graphviz = "^0.20.1"
+graphviz = "^0.20.1" # WHY?
 pre-commit = "^2.20.0"
 coverage = "^7.1.0"
 pytest-profiling = "^1.7.0"
 pytest-benchmark = "^4.0.0"
 
 [tool.poetry.group.notebook.dependencies]
-jupyterlab = "^3.5.0"
+jupyterlab = "^4"
 
 [tool.poetry.scripts]
 znh5md = 'znh5md.cli:app'

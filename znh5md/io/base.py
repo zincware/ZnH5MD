@@ -32,6 +32,9 @@ class StepTimeChunk:
     value: np.ndarray
     step: np.ndarray
     time: np.ndarray
+    
+    value_units: str = None
+    time_units: str = None
 
     @property
     def shape(self) -> tuple:
@@ -83,15 +86,20 @@ class ExplicitStepTimeChunk(StepTimeChunk):
 
     def create_dataset(self, dataset_group: h5py.Group):
         """Create the datasets for the chunk."""
-        dataset_group.create_dataset(
+        value_ds = dataset_group.create_dataset(
             "value", maxshape=self.shape, data=self.value, chunks=True
         )
-        dataset_group.create_dataset(
+        time_ds = dataset_group.create_dataset(
             "time", maxshape=(None,), data=self.time, chunks=True
         )
         dataset_group.create_dataset(
             "step", maxshape=(None,), data=self.step, chunks=True
         )
+
+        if self.value_units is not None:
+            value_ds.attrs["unit"] = self.value_units
+        if self.time_units is not None:
+            time_ds.attrs["unit"] = self.time_units
 
     def append_to_dataset(self, dataset_group: h5py.Group):
         n_current_frames = dataset_group["value"].shape[0]
@@ -113,11 +121,16 @@ class FixedStepTimeChunk(StepTimeChunk):
 
     def create_dataset(self, dataset_group: h5py.Group):
         """Create the datasets for the chunk."""
-        dataset_group.create_dataset(
+        value_ds = dataset_group.create_dataset(
             "value", maxshape=self.shape, data=self.value, chunks=True
         )
-        dataset_group.create_dataset("time", data=self.time)
+        time_ds = dataset_group.create_dataset("time", data=self.time)
         dataset_group.create_dataset("step", data=self.step)
+
+        if self.value_units is not None:
+            value_ds.attrs["unit"] = self.value_units
+        if self.time_units is not None:
+            time_ds.attrs["unit"] = self.time_units
 
     def append_to_dataset(self, dataset_group: h5py.Group):
         n_current_frames = dataset_group["value"].shape[0]
@@ -208,7 +221,7 @@ class DataWriter:
         dataset_group = db_path.create_group(group_name)
         chunk_data.create_dataset(dataset_group)
 
-    def add_data_to_group(self, db_path, group_name, chunk_data):
+    def add_data_to_group(self, db_path, group_name, chunk_data: StepTimeChunk):
         """Add data to an existing group.
 
         For each group in kwargs, the following datasets are resized and appended to:

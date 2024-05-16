@@ -66,6 +66,23 @@ PARTICLES_GRP = [
 
 OBSERVABLES_GRP = [GRP.energy, GRP.stress]
 
+@dataclasses.dataclass
+class StepTimeChunkUnits:
+    value: str
+    time: str
+
+
+# We store everything in ASE units
+UNITS_PER_GRP = {
+    GRP.position: StepTimeChunkUnits(value="Angstrom", time="fs"),
+    GRP.velocity: StepTimeChunkUnits(value="Angstrom/fs", time="fs"),
+    GRP.forces: StepTimeChunkUnits(value="eV/Angstrom", time="fs"),
+    GRP.energy: StepTimeChunkUnits(value="eV", time="fs"),
+    GRP.stress: StepTimeChunkUnits(value="GPa", time="fs"),
+    GRP.momentum: StepTimeChunkUnits(value="eV/fs", time="fs"),
+    GRP.edges: StepTimeChunkUnits(value="Angstrom", time="fs"),
+    GRP.boundary: StepTimeChunkUnits(value="Angstrom", time="fs"),
+}
 
 @dataclasses.dataclass
 class FormatHandler:

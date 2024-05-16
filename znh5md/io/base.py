@@ -32,7 +32,7 @@ class StepTimeChunk:
     value: np.ndarray
     step: np.ndarray
     time: np.ndarray
-    
+
     value_units: str = None
     time_units: str = None
 

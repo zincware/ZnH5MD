@@ -252,6 +252,9 @@ class DataWriter:
             # dimension group is required by H5MD
             atoms.create_dataset(f"box/{GRP.dimension}", data=len(chunk_data.value))
 
+            atoms["box"].attrs["boundary"] = ["periodic", "periodic", "periodic"]
+            atoms["box"].attrs["dimension"] = 3
+
     def add_chunk_data(self, **kwargs: CHUNK_DICT) -> None:
         """Write Chunks to the database.
 

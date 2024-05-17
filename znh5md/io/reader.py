@@ -127,8 +127,12 @@ class AtomsReader(DataReader):
                         value=value,
                         step=self.step,
                         time=self.time,
-                        time_units=UNITS_PER_GRP[name].time if name in UNITS_PER_GRP else None,
-                        value_units=UNITS_PER_GRP[name].value if name in UNITS_PER_GRP else None,
+                        time_units=(
+                            UNITS_PER_GRP[name].time if name in UNITS_PER_GRP else None
+                        ),
+                        value_units=(
+                            UNITS_PER_GRP[name].value if name in UNITS_PER_GRP else None
+                        ),
                     )
                 except (PropertyNotImplementedError, RuntimeError, KeyError) as err:
                     if group_names is not None:
@@ -151,8 +155,16 @@ class AtomsReader(DataReader):
                             value=value,
                             step=self.step,
                             time=self.time,
-                            time_units=UNITS_PER_GRP[GRP.energy].time if GRP.energy in UNITS_PER_GRP else None,
-                            value_units=UNITS_PER_GRP[GRP.energy].value if GRP.energy in UNITS_PER_GRP else None,
+                            time_units=(
+                                UNITS_PER_GRP[GRP.energy].time
+                                if GRP.energy in UNITS_PER_GRP
+                                else None
+                            ),
+                            value_units=(
+                                UNITS_PER_GRP[GRP.energy].value
+                                if GRP.energy in UNITS_PER_GRP
+                                else None
+                            ),
                         )
             yield data
             start_index = stop_index

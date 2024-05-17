@@ -66,6 +66,7 @@ PARTICLES_GRP = [
 
 OBSERVABLES_GRP = [GRP.energy, GRP.stress]
 
+
 @dataclasses.dataclass
 class StepTimeChunkUnits:
     value: str
@@ -83,6 +84,7 @@ UNITS_PER_GRP = {
     GRP.edges: StepTimeChunkUnits(value="Angstrom", time="fs"),
     GRP.boundary: StepTimeChunkUnits(value="Angstrom", time="fs"),
 }
+
 
 @dataclasses.dataclass
 class FormatHandler:

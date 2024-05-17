@@ -9,30 +9,39 @@ on:
     - cron: '14 3 * * 1'  # at 03:14 on Monday.
 
 jobs:
-  test:
-
-    runs-on: ubuntu-latest
+  pytest:
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         python-version:
+          - "3.12"
+          - "3.11"
           - "3.10"
+          - "3.9"
+        os:
+          - ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Poetry
-        uses: abatilo/actions-poetry@v2
+        uses: snok/install-poetry@v1
         with:
-          poetry-version: 1.3.2
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Install package
+        run: |
+          poetry install --no-interaction --without=notebook --all-extras
       - name: Install package
         run: |
           poetry install --without=notebook --all-extras
       - name: Pytest
         run: |
+          poetry run python --version
           poetry run coverage run -m pytest
           poetry run coverage lcov
       - name: Coveralls

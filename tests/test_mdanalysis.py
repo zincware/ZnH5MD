@@ -33,9 +33,10 @@ def h5_trajectory(tmp_path, trajectory) -> pathlib.Path:
     return filename
 
 
-def test_read_h5md(h5_trajectory):
-    u = mda.Universe.empty(3, n_residues=3, atom_resindex=np.arange(3), trajectory=True)
-    reader = H5MDReader(h5_trajectory, convert_units=False)
+def test_read_h5md(h5_trajectory, trajectory):
+    u = mda.Universe.empty(n_atoms=3, trajectory=True)
+    reader = H5MDReader(h5_trajectory)
     u.trajectory = reader
-
     assert len(u.trajectory) == 100
+    for ref, ts in zip(trajectory, u.trajectory):
+        assert np.allclose(ref.positions, ts.positions)

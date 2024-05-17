@@ -12,7 +12,6 @@ def test_AtomsReader(tmp_path, atoms_list):
     print(tmp_path)
 
     db = znh5md.io.DataWriter(filename="db.h5")
-    db.initialize_database_groups()
 
     reader = znh5md.io.AtomsReader(atoms_list, frames_per_chunk=10)
     db.add(reader)

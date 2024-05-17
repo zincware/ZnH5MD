@@ -29,7 +29,6 @@ def test_get_slice(tmp_path, atoms_list, remove_calc):
             atoms.calc = None
 
     db = znh5md.io.DataWriter(filename="db.h5")
-    db.initialize_database_groups()
     db.add(znh5md.io.AtomsReader(atoms_list))
 
     traj = znh5md.ASEH5MD("db.h5")
@@ -56,7 +55,6 @@ def test_request_missing_properties(tmp_path, atoms_list, remove_calc):
             atoms.calc = None
 
     db = znh5md.io.DataWriter(filename="db.h5")
-    db.initialize_database_groups()
 
     if remove_calc:
         with pytest.raises(RuntimeError):
@@ -77,7 +75,6 @@ def test_skip_property(tmp_path, atoms_list):
     os.chdir(tmp_path)
 
     db = znh5md.io.DataWriter(filename="db.h5")
-    db.initialize_database_groups()
 
     atoms_list[-1].arrays.pop("momenta")
     atoms_list[-1].get_momenta()

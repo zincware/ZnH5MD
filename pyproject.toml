@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "znh5md"
-version = "0.1.9"
+version = "0.2.0"
 description = "High Performance Interface for H5MD Trajectories"
 authors = ["zincwarecode <zincwarecode@gmail.com>"]
 license = "Apache-2.0"
@@ -22,6 +22,7 @@ pre-commit = "^2.20.0"
 coverage = "^7.1.0"
 pytest-profiling = "^1.7.0"
 pytest-benchmark = "^4.0.0"
+mdanalysis = "^2"
 
 [tool.poetry.group.notebook.dependencies]
 jupyterlab = "^4"

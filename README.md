@@ -63,7 +63,6 @@ import ase
 atoms: list[ase.Atoms]
 
 db = znh5md.io.DataWriter(filename="db.h5")
-db.initialize_database_groups()
 
 db.add(znh5md.io.AtomsReader(atoms)) # or znh5md.io.ChemfilesReader
 

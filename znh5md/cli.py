@@ -36,9 +36,6 @@ def convert(file: str, db_file: str):
     import znh5md
 
     db = znh5md.io.DataWriter(db_file)
-    if not pathlib.Path(db_file).exists():
-        db.initialize_database_groups()
-
     db.add(znh5md.io.ASEFileReader(file))
 
 

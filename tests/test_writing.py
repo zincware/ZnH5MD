@@ -13,7 +13,6 @@ def test_DataWriter(tmp_path, atoms_list):
     os.chdir(tmp_path)
 
     db = DataWriter(filename="db.h5")
-    db.initialize_database_groups()
 
     reader = AtomsReader(atoms_list)
 

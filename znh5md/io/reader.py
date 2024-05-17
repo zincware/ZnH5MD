@@ -8,7 +8,7 @@ import numpy as np
 import tqdm
 from ase.calculators.calculator import PropertyNotImplementedError
 
-from znh5md.format import GRP
+from znh5md.format import GRP, UNITS_PER_GRP
 from znh5md.io.base import DataReader, FixedStepTimeChunk
 
 log = logging.getLogger(__name__)
@@ -127,6 +127,12 @@ class AtomsReader(DataReader):
                         value=value,
                         step=self.step,
                         time=self.time,
+                        time_units=(
+                            UNITS_PER_GRP[name].time if name in UNITS_PER_GRP else None
+                        ),
+                        value_units=(
+                            UNITS_PER_GRP[name].value if name in UNITS_PER_GRP else None
+                        ),
                     )
                 except (PropertyNotImplementedError, RuntimeError, KeyError) as err:
                     if group_names is not None:
@@ -149,6 +155,16 @@ class AtomsReader(DataReader):
                             value=value,
                             step=self.step,
                             time=self.time,
+                            time_units=(
+                                UNITS_PER_GRP[GRP.energy].time
+                                if GRP.energy in UNITS_PER_GRP
+                                else None
+                            ),
+                            value_units=(
+                                UNITS_PER_GRP[GRP.energy].value
+                                if GRP.energy in UNITS_PER_GRP
+                                else None
+                            ),
                         )
             yield data
             start_index = stop_index

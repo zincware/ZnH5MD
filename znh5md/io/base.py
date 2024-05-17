@@ -1,12 +1,15 @@
 import abc
 import dataclasses
 import logging
+import pathlib
 import typing
 
 import h5py
 import numpy as np
 
 log = logging.getLogger(__name__)
+
+import typing_extensions as te
 
 from znh5md.format import GRP, PARTICLES_GRP
 
@@ -32,6 +35,9 @@ class StepTimeChunk:
     value: np.ndarray
     step: np.ndarray
     time: np.ndarray
+
+    value_units: str = None
+    time_units: str = None
 
     @property
     def shape(self) -> tuple:
@@ -83,15 +89,20 @@ class ExplicitStepTimeChunk(StepTimeChunk):
 
     def create_dataset(self, dataset_group: h5py.Group):
         """Create the datasets for the chunk."""
-        dataset_group.create_dataset(
+        value_ds = dataset_group.create_dataset(
             "value", maxshape=self.shape, data=self.value, chunks=True
         )
-        dataset_group.create_dataset(
+        time_ds = dataset_group.create_dataset(
             "time", maxshape=(None,), data=self.time, chunks=True
         )
         dataset_group.create_dataset(
             "step", maxshape=(None,), data=self.step, chunks=True
         )
+
+        if self.value_units is not None:
+            value_ds.attrs["unit"] = self.value_units
+        if self.time_units is not None:
+            time_ds.attrs["unit"] = self.time_units
 
     def append_to_dataset(self, dataset_group: h5py.Group):
         n_current_frames = dataset_group["value"].shape[0]
@@ -113,11 +124,23 @@ class FixedStepTimeChunk(StepTimeChunk):
 
     def create_dataset(self, dataset_group: h5py.Group):
         """Create the datasets for the chunk."""
-        dataset_group.create_dataset(
+        value_ds = dataset_group.create_dataset(
             "value", maxshape=self.shape, data=self.value, chunks=True
         )
-        dataset_group.create_dataset("time", data=self.time)
-        dataset_group.create_dataset("step", data=self.step)
+        time_ds = dataset_group.create_dataset(
+            "time",
+            data=np.arange(len(self.value)) * self.time,
+            chunks=True,
+            maxshape=(None,),
+        )
+        dataset_group.create_dataset(
+            "step", data=np.arange(len(self.value)), chunks=True, maxshape=(None,)
+        )
+
+        if self.value_units is not None:
+            value_ds.attrs["unit"] = self.value_units
+        if self.time_units is not None:
+            time_ds.attrs["unit"] = self.time_units
 
     def append_to_dataset(self, dataset_group: h5py.Group):
         n_current_frames = dataset_group["value"].shape[0]
@@ -126,6 +149,21 @@ class FixedStepTimeChunk(StepTimeChunk):
         dataset_group["value"].resize(n_current_frames + len(self), axis=0)
         dataset_group["value"][:] = np.concatenate(
             [dataset_group["value"][:n_current_frames], self.value]
+        )
+        # append to time and step as well
+        dataset_group["time"].resize(n_current_frames + len(self), axis=0)
+        dataset_group["time"][:] = np.concatenate(
+            [
+                dataset_group["time"][:n_current_frames],
+                np.arange(len(self.value)) * self.time + n_current_frames * self.time,
+            ]
+        )
+        dataset_group["step"].resize(n_current_frames + len(self), axis=0)
+        dataset_group["step"][:] = np.concatenate(
+            [
+                dataset_group["step"][:n_current_frames],
+                np.arange(len(self.value)) + n_current_frames,
+            ]
         )
 
 
@@ -168,18 +206,14 @@ class DataWriter:
     particles_path: str = "particles/atoms"
     observables_path: str = "observables/atoms"
 
+    @te.deprecated("DB will be initialized automatically when adding data.")
     def initialize_database_groups(self):
         """Create all groups that are required.
 
         We create the following groups:
         - particles/atoms
         """
-        with h5py.File(self.filename, "w") as file:
-            particles = file.create_group("particles")
-            _ = particles.create_group("atoms")
-
-            observables = file.create_group("observables")
-            _ = observables.create_group("atoms")
+        pass
 
     def _handle_special_cases_group_names(self, groupname: str) -> str:
         """Update group name in special cases.
@@ -208,7 +242,7 @@ class DataWriter:
         dataset_group = db_path.create_group(group_name)
         chunk_data.create_dataset(dataset_group)
 
-    def add_data_to_group(self, db_path, group_name, chunk_data):
+    def add_data_to_group(self, db_path, group_name, chunk_data: StepTimeChunk):
         """Add data to an existing group.
 
         For each group in kwargs, the following datasets are resized and appended to:
@@ -239,6 +273,9 @@ class DataWriter:
             # dimension group is required by H5MD
             atoms.create_dataset(f"box/{GRP.dimension}", data=len(chunk_data.value))
 
+            atoms["box"].attrs["boundary"] = ["periodic", "periodic", "periodic"]
+            atoms["box"].attrs["dimension"] = 3
+
     def add_chunk_data(self, **kwargs: CHUNK_DICT) -> None:
         """Write Chunks to the database.
 
@@ -250,15 +287,25 @@ class DataWriter:
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
         """
+        if not pathlib.Path(self.filename).exists():
+            _ = h5py.File(self.filename, "w")  # create the file
         with h5py.File(self.filename, "r+") as file:
             for group_name, chunk_data in kwargs.items():
                 if group_name == GRP.boundary:
                     self.handle_boundary(file, chunk_data)
                 else:
                     if group_name in PARTICLES_GRP:
-                        group_path = file[self.particles_path]
+                        try:
+                            group_path = file[self.particles_path]
+                        except KeyError:
+                            log.debug(f"creating particle groups {group_name}")
+                            group_path = file.create_group(self.particles_path)
                     else:
-                        group_path = file[self.observables_path]
+                        try:
+                            group_path = file[self.observables_path]
+                        except KeyError:
+                            log.debug(f"creating observable groups {group_name}")
+                            group_path = file.create_group(self.observables_path)
 
                     try:
                         self.add_data_to_group(group_path, group_name, chunk_data)

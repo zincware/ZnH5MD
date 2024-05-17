@@ -126,11 +126,8 @@ class FixedStepTimeChunk(StepTimeChunk):
         value_ds = dataset_group.create_dataset(
             "value", maxshape=self.shape, data=self.value, chunks=True
         )
-        # time_ds = dataset_group.create_dataset("time", data=np.arange(len(self.value)), chunks=True, maxshape=(None,))
-        # dataset_group.create_dataset("step", data=np.arange(len(self.value)), chunks=True, maxshape=(None,))
-
-        time_ds = dataset_group.create_dataset("time", data=self.time)
-        dataset_group.create_dataset("step", data=self.step)
+        time_ds = dataset_group.create_dataset("time", data=np.arange(len(self.value)) * self.time, chunks=True, maxshape=(None,))
+        dataset_group.create_dataset("step", data=np.arange(len(self.value)), chunks=True, maxshape=(None,))
 
         if self.value_units is not None:
             value_ds.attrs["unit"] = self.value_units
@@ -145,15 +142,15 @@ class FixedStepTimeChunk(StepTimeChunk):
         dataset_group["value"][:] = np.concatenate(
             [dataset_group["value"][:n_current_frames], self.value]
         )
-        # # append to time and step as well
-        # dataset_group["time"].resize(n_current_frames + len(self), axis=0)
-        # dataset_group["time"][:] = np.concatenate(
-        #     [dataset_group["time"][:n_current_frames], np.arange(len(self.value))]
-        # )
-        # dataset_group["step"].resize(n_current_frames + len(self), axis=0)
-        # dataset_group["step"][:] = np.concatenate(
-        #     [dataset_group["step"][:n_current_frames], np.arange(len(self.value))]
-        # )
+        # append to time and step as well
+        dataset_group["time"].resize(n_current_frames + len(self), axis=0)
+        dataset_group["time"][:] = np.concatenate(
+            [dataset_group["time"][:n_current_frames], np.arange(len(self.value)) * self.time + n_current_frames * self.time]
+        )
+        dataset_group["step"].resize(n_current_frames + len(self), axis=0)
+        dataset_group["step"][:] = np.concatenate(
+            [dataset_group["step"][:n_current_frames], np.arange(len(self.value)) + n_current_frames]
+        )
 
 
 CHUNK_DICT = typing.Dict[str, ExplicitStepTimeChunk]

@@ -27,7 +27,6 @@ def h5_trajectory(tmp_path, trajectory) -> pathlib.Path:
     """Write the trajectory to an H5 file."""
     filename = tmp_path / "trajectory.h5"
     db = znh5md.io.DataWriter(filename=filename)
-    db.initialize_database_groups()
     reader = znh5md.io.AtomsReader(trajectory)
     db.add(reader)
     return filename

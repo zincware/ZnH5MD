@@ -17,7 +17,6 @@ def test_AtomsReader(tmp_path, reader, atoms_list, use_add):
     print(tmp_path)
 
     db = znh5md.io.DataWriter(filename="db.h5")
-    db.initialize_database_groups()
 
     if reader == znh5md.io.AtomsReader:
         inputs = atoms_list
@@ -72,7 +71,6 @@ def test_ChemfilesReader(tmp_path, atoms_list, frames_per_chunk):
     print(tmp_path)
 
     db = znh5md.io.DataWriter(filename="db.h5")
-    db.initialize_database_groups()
 
     inputs = "traj.xyz"
     ase.io.write(inputs, atoms_list)

@@ -1,16 +1,17 @@
 import abc
 import dataclasses
 import logging
-import typing
 import pathlib
+import typing
 
 import h5py
 import numpy as np
 
 log = logging.getLogger(__name__)
 
-from znh5md.format import GRP, PARTICLES_GRP
 import typing_extensions as te
+
+from znh5md.format import GRP, PARTICLES_GRP
 
 
 @dataclasses.dataclass
@@ -126,8 +127,15 @@ class FixedStepTimeChunk(StepTimeChunk):
         value_ds = dataset_group.create_dataset(
             "value", maxshape=self.shape, data=self.value, chunks=True
         )
-        time_ds = dataset_group.create_dataset("time", data=np.arange(len(self.value)) * self.time, chunks=True, maxshape=(None,))
-        dataset_group.create_dataset("step", data=np.arange(len(self.value)), chunks=True, maxshape=(None,))
+        time_ds = dataset_group.create_dataset(
+            "time",
+            data=np.arange(len(self.value)) * self.time,
+            chunks=True,
+            maxshape=(None,),
+        )
+        dataset_group.create_dataset(
+            "step", data=np.arange(len(self.value)), chunks=True, maxshape=(None,)
+        )
 
         if self.value_units is not None:
             value_ds.attrs["unit"] = self.value_units
@@ -145,11 +153,17 @@ class FixedStepTimeChunk(StepTimeChunk):
         # append to time and step as well
         dataset_group["time"].resize(n_current_frames + len(self), axis=0)
         dataset_group["time"][:] = np.concatenate(
-            [dataset_group["time"][:n_current_frames], np.arange(len(self.value)) * self.time + n_current_frames * self.time]
+            [
+                dataset_group["time"][:n_current_frames],
+                np.arange(len(self.value)) * self.time + n_current_frames * self.time,
+            ]
         )
         dataset_group["step"].resize(n_current_frames + len(self), axis=0)
         dataset_group["step"][:] = np.concatenate(
-            [dataset_group["step"][:n_current_frames], np.arange(len(self.value)) + n_current_frames]
+            [
+                dataset_group["step"][:n_current_frames],
+                np.arange(len(self.value)) + n_current_frames,
+            ]
         )
 
 
@@ -274,7 +288,7 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
         """
         if not pathlib.Path(self.filename).exists():
-            _ = h5py.File(self.filename, "w") # create the file
+            _ = h5py.File(self.filename, "w")  # create the file
         with h5py.File(self.filename, "r+") as file:
             for group_name, chunk_data in kwargs.items():
                 if group_name == GRP.boundary:

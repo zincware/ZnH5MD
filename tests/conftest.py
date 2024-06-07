@@ -18,6 +18,12 @@ def example_h5(tmp_path) -> pathlib.Path:
     n_particles = 10
 
     with h5py.File(filename, "w") as file:
+        h5md = file.create_group("h5md")
+        h5md.attrs['version'] = np.array([1,1])
+        author = h5md.create_group("author")
+        author.attrs['name'] = "N/A"
+        creator = h5md.create_group("creator")
+        creator.attrs['name'] = "ZnH5MD"
         particles = file.create_group("particles")
         atoms = particles.create_group("atoms")
         position = atoms.create_group("position")

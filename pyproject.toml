@@ -23,6 +23,7 @@ coverage = "^7.1.0"
 pytest-profiling = "^1.7.0"
 pytest-benchmark = "^4.0.0"
 mdanalysis = "^2"
+pyh5md = "^1.0.0"
 
 [tool.poetry.group.notebook.dependencies]
 jupyterlab = "^4"

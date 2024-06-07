@@ -288,7 +288,15 @@ class DataWriter:
             The chunk data to write to the database. The key is the name of the group.
         """
         if not pathlib.Path(self.filename).exists():
-            _ = h5py.File(self.filename, "w")  # create the file
+            with h5py.File(self.filename, "w") as f:
+                 # create the file
+                h5md = f.create_group("h5md")
+                h5md.attrs['version'] = np.array([1,1])
+                author = h5md.create_group("author")
+                author.attrs['name'] = "N/A" # TODO: make configurable
+                creator = h5md.create_group("creator")
+                creator.attrs['name'] = "ZnH5MD"
+            
         with h5py.File(self.filename, "r+") as file:
             for group_name, chunk_data in kwargs.items():
                 if group_name == GRP.boundary:

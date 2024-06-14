@@ -1,12 +1,98 @@
 """Test against pyh5md reference implementation."""
 
-import os
-
 import ase
 import numpy as np
+import numpy.testing as npt
+import pytest
 from pyh5md import File, element
 
 import znh5md
+
+
+@pytest.fixture
+def md() -> list[ase.Atoms]:
+    """Run a simple MD simulation with ASE."""
+    from ase import units
+    from ase.calculators.emt import EMT
+    from ase.calculators.singlepoint import SinglePointCalculator
+    from ase.lattice.cubic import FaceCenteredCubic
+    from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+    from ase.md.verlet import VelocityVerlet
+
+    size = 3
+
+    atoms = FaceCenteredCubic(
+        directions=[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        symbol="Cu",
+        size=(size, size, size),
+        pbc=True,
+    )
+
+    atoms.calc = EMT()
+    MaxwellBoltzmannDistribution(atoms, temperature_K=300)
+    dyn = VelocityVerlet(atoms, 5 * units.fs)
+
+    structures = []
+
+    for _ in range(10):
+        dyn.run(1)
+        structures.append(atoms.copy())
+        structures[-1].set_calculator(
+            SinglePointCalculator(
+                atoms, energy=atoms.get_potential_energy(), forces=atoms.get_forces()
+            )
+        )
+    return structures
+
+
+def ase_to_pyh5md(structures, path):
+    with File(path, "w") as f:
+        at = f.particles_group("atoms")
+
+        at_pos = element(
+            at,
+            "position",
+            store="time",
+            time=True,
+            shape=(len(structures[0]), 3),
+            dtype=np.float64,
+        )
+
+        at_species = element(
+            at,
+            "species",
+            store="time",
+            step_from=at_pos,
+            time=True,
+            shape=(len(structures[0]),),
+            dtype=np.int32,
+        )
+
+        at_v = element(
+            at,
+            "momentum",
+            store="time",
+            shape=(len(structures[0]), 3),
+            dtype=np.float64,
+        )
+        at_f = element(
+            at, "forces", store="time", shape=(len(structures[0]), 3), dtype=np.float64
+        )
+
+        obs_at_e = element(
+            f, "observables/atoms/energy", store="time", shape=(1,), dtype=np.float64
+        )
+
+        DT = 0.1
+
+        structures = []
+
+        for idx, atoms in enumerate(structures):
+            at_pos.append(atoms.get_positions(), idx, idx * DT)
+            at_species.append(atoms.get_atomic_numbers(), idx, idx * DT)
+            at_v.append(atoms.get_momenta(), idx, idx * DT)
+            obs_at_e.append(atoms.get_potential_energy(), idx * DT)
+            at_f.append(atoms.get_forces(), idx, idx * DT)
 
 
 def test_open(example_h5):
@@ -14,68 +100,40 @@ def test_open(example_h5):
         print(f)
 
 
-def test_DataWriter(tmp_path):
-    os.chdir(tmp_path)
+def test_pyh5md_ASEH5MD(md, tmp_path):
+    """Read pyh5md file with ASEH5MD."""
+    path = tmp_path / "db.h5"
+    ase_to_pyh5md(md, path)
+    znh5md.ASEH5MD(path)
+    structures = znh5md.ASEH5MD(path).get_atoms_list()
+    # check that the data is not the same
+    assert md[0].get_positions()[0][0] != md[1].get_positions()[0][0]
 
-    atoms = ase.Atoms("H2", positions=[[0, 0, 0], [0, 0, 1]])
-    with File("db.h5", "w") as f:
-        at = f.particles_group("atoms")
+    for a, b in zip(md, structures):
+        npt.assert_array_equal(a.get_positions(), b.get_positions())
+        npt.assert_array_equal(a.get_momenta(), b.get_momenta())
+        npt.assert_array_equal(a.get_forces(), b.get_forces())
+        npt.assert_array_equal(a.get_potential_energy(), b.get_potential_energy())
+        npt.assert_array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
 
-        # Creating position data
-        r = np.zeros((100, 3), dtype=np.float64)
-        at_pos = element(at, "position", store="time", data=r, time=True)
 
-        # Creating species
-        s = np.ones(r.shape[:1])
-        # element(at, 'species', data=s, store='fixed')
-        at_species = element(
-            at, "species", data=s, store="time", step_from=at_pos, time=True
-        )
+def test_DataWriter_pyh5md(md, tmp_path):
+    """Test reading DataWriter with pyh5md."""
+    path = tmp_path / "db.h5"
+    db = znh5md.io.DataWriter(path)
+    db.add(znh5md.io.AtomsReader(md))
 
-        # Creating velocity data
-        v = np.zeros((100, 3), dtype=np.float64)
-        at_v = element(
-            at, "velocity", store="time", data=v, step_from=at_pos, time=True
-        )
+    with File(path, "r") as f:
+        g = f.particles_group("atoms")
+        position = element(g, "position").value[:]
+        species = element(g, "species").value[:]
+        momentum = element(g, "momentum").value[:]
+        forces = element(g, "forces").value[:]
+        energy = element(f, "observables/atoms/energy").value[:]
 
-        # Create an observable
-        com = r.mean(axis=0)
-        obs_com = element(
-            f, "observables/center_of_mass", store="linear", data=com, step=10
-        )
-        # Create a scalar time independent observable
-        element(f, "observables/random_number", data=np.random.random(), store="fixed")
-
-        edges = (1.0, 1.0, 1.0)
-        box = at.create_box(
-            dimension=3,
-            boundary=["none", "none", "none"],
-            store="time",
-            data=edges,
-            step_from=at_pos,
-        )
-
-        DT = 0.1
-        time = 0.0
-
-        def dump(t):
-            if t % 10 == 0:
-                at_pos.append(r, t, t * DT)
-                at_v.append(v, t, t * DT)
-                obs_com.append(r.mean(axis=0))
-                at.box.edges.append(edges, t, t * DT)
-                at_species.append(s, t, t * DT)
-
-        dump(0)
-        t = 0
-        t_max = 200
-        while t < t_max:
-            r += DT * 0.5 * v
-            v += DT * np.random.normal(0.0, 1.0, v.shape)
-            r += DT * 0.5 * v
-            time += DT
-            t += 1
-            dump(t)
-    data = znh5md.ASEH5MD("db.h5")
-
-    new_atoms = data.get_atoms_list()[0]
+    for idx, atoms in enumerate(md):
+        npt.assert_array_equal(position[idx], atoms.get_positions())
+        npt.assert_array_equal(species[idx], atoms.get_atomic_numbers())
+        npt.assert_array_equal(momentum[idx], atoms.get_momenta())
+        npt.assert_array_equal(forces[idx], atoms.get_forces())
+        npt.assert_array_equal(energy[idx], atoms.get_potential_energy())

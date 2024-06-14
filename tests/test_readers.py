@@ -1,10 +1,8 @@
 import os
 
 import ase.io
-import numpy as np
 import numpy.testing as npt
 import pytest
-import tqdm
 
 import znh5md
 
@@ -43,7 +41,9 @@ def test_AtomsReader(tmp_path, reader, atoms_list, use_add):
         npt.assert_array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
         npt.assert_array_almost_equal(a.get_forces(), b.get_forces())
         npt.assert_array_almost_equal(a.get_cell(), b.get_cell())
-        npt.assert_array_almost_equal(a.get_potential_energy(), b.get_potential_energy())
+        npt.assert_array_almost_equal(
+            a.get_potential_energy(), b.get_potential_energy()
+        )
         npt.assert_array_equal(a.get_pbc(), b.get_pbc())
         npt.assert_array_almost_equal(a.get_stress(), b.get_stress())
 
@@ -88,5 +88,7 @@ def test_ChemfilesReader(tmp_path, atoms_list, frames_per_chunk):
         npt.assert_array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
         # npt.assert_array_almost_equal(a.get_forces(), b.get_forces())
         npt.assert_array_almost_equal(a.get_cell(), b.get_cell())
-        npt.assert_array_almost_equal(a.get_potential_energy(), b.get_potential_energy())
+        npt.assert_array_almost_equal(
+            a.get_potential_energy(), b.get_potential_energy()
+        )
         npt.assert_array_equal(a.get_pbc(), b.get_pbc())

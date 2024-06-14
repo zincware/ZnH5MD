@@ -19,17 +19,19 @@ def example_h5(tmp_path) -> pathlib.Path:
 
     with h5py.File(filename, "w") as file:
         h5md = file.create_group("h5md")
-        h5md.attrs['version'] = np.array([1,1])
+        h5md.attrs["version"] = np.array([1, 1])
         author = h5md.create_group("author")
-        author.attrs['name'] = "N/A"
+        author.attrs["name"] = "N/A"
         creator = h5md.create_group("creator")
-        creator.attrs['name'] = "ZnH5MD"
+        creator.attrs["name"] = "ZnH5MD"
         particles = file.create_group("particles")
         atoms = particles.create_group("atoms")
         position = atoms.create_group("position")
         position.create_dataset(
             "value",
-            data=np.arange(n_steps * n_particles * 3).reshape((n_steps, n_particles, 3)),
+            data=np.arange(n_steps * n_particles * 3).reshape(
+                (n_steps, n_particles, 3)
+            ),
         )
         position.create_dataset("time", data=np.linspace(0, 1, n_steps))
         position.create_dataset("step", data=np.arange(n_steps))
@@ -53,8 +55,7 @@ def example_h5(tmp_path) -> pathlib.Path:
 
 @pytest.fixture
 def atoms_list(request) -> list[ase.Atoms]:
-    """
-    Generate ase.Atoms objects with random positions and increasing energy
+    """Generate ase.Atoms objects with random positions and increasing energy
     and random force values
 
     Parameters
@@ -65,6 +66,7 @@ def atoms_list(request) -> list[ase.Atoms]:
         - "vary_size": use ase.collections.g2
         - "no_stress": do not set stress
         - "vary_size_vary_pbc": use ase.collections.g2 and vary pbc
+
     """
     if getattr(request, "param", "").startswith("vary_size"):
         atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
@@ -90,7 +92,9 @@ def atoms_list(request) -> list[ase.Atoms]:
 
     for idx, atom in enumerate(atoms):
         stress = (
-            np.random.rand(6) if getattr(request, "param", None) != "no_stress" else None
+            np.random.rand(6)
+            if getattr(request, "param", None) != "no_stress"
+            else None
         )
         atom.calc = ase.calculators.singlepoint.SinglePointCalculator(
             atoms=atom,

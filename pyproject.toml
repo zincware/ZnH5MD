@@ -24,6 +24,7 @@ pytest-profiling = "^1.7.0"
 pytest-benchmark = "^4.0.0"
 mdanalysis = "^2"
 pyh5md = "^1.0.0"
+ruff = "^0.4.8"
 
 [tool.poetry.group.notebook.dependencies]
 jupyterlab = "^4"
@@ -38,24 +39,9 @@ dask = ["dask"]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
-line-length = 90
-preview = true
+[tool.ruff.lint]
 
-[tool.isort]
-profile = 'black'
-multi_line_output = 3
-
-[tool.ruff]
-line-length = 90
-
-select = ["E", "F", "D", "N", "C"] #, "ANN"]
+select = ["E", "F", "D", "N", "C", "I"]
 extend-ignore = [
     "D213", "D203", "N802", "N801"
-]
-
-exclude = [
-    "tmp",
-    "tests",
-    "docs",
 ]

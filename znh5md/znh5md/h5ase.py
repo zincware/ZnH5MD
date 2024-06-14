@@ -19,7 +19,13 @@ def _gather_value(particles_data, key, idx):
     """
     try:
         if key in particles_data:
-            if key in [GRP.species, GRP.position, GRP.velocity, GRP.forces, GRP.momentum]:
+            if key in [
+                GRP.species,
+                GRP.position,
+                GRP.velocity,
+                GRP.forces,
+                GRP.momentum,
+            ]:
                 # use PARTICLES_GRP
                 return rm_nan(particles_data[key][idx])
             return particles_data[key][idx]
@@ -38,6 +44,7 @@ class ASEH5MD(H5MDBase):
     load_all_observables: bool, default=True
         if True, all observables are loaded into 'atoms.calc.results'.
         Otherwise, only the standard ASE observables are loaded.
+
     """
 
     load_all_observables: bool = True
@@ -70,7 +77,9 @@ class ASEH5MD(H5MDBase):
 
         if GRP.boundary in data and GRP.pbc not in data:
             data[GRP.pbc] = np.repeat(
-                [GRP.decode_boundary(data[GRP.boundary])], len(data[GRP.position]), axis=0
+                [GRP.decode_boundary(data[GRP.boundary])],
+                len(data[GRP.position]),
+                axis=0,
             )
 
         return data

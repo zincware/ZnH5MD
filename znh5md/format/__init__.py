@@ -1,4 +1,5 @@
 """Format handler for h5md files."""
+
 import contextlib
 import dataclasses
 import typing
@@ -17,6 +18,7 @@ class GRP:
         This group is not a H5MD group that supports time-dependent pbc.
         It can be used to store data from different trajectories in one group,
         that don't share pbc.
+
     """
 
     edges: str = "edges"
@@ -46,9 +48,9 @@ class GRP:
 
     @staticmethod
     def decode_boundary(value) -> np.ndarray:
-        pbc = np.array([x == "periodic".encode(encoding="utf-8") for x in value]).astype(
-            bool
-        )
+        pbc = np.array(
+            [x == "periodic".encode(encoding="utf-8") for x in value]
+        ).astype(bool)
         return pbc
 
 

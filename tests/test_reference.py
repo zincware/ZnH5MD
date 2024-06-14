@@ -48,6 +48,13 @@ def md() -> list[ase.Atoms]:
 def ase_to_pyh5md(structures, path):
     with File(path, "w") as f:
         at = f.particles_group("atoms")
+        at.create_box(
+            dimension=3,
+            boundary=["periodic"] * 3,
+            store="time",
+            shape=(3,),
+            dtype=np.float64,
+        )
 
         at_pos = element(
             at,
@@ -85,14 +92,13 @@ def ase_to_pyh5md(structures, path):
 
         DT = 0.1
 
-        structures = []
-
         for idx, atoms in enumerate(structures):
             at_pos.append(atoms.get_positions(), idx, idx * DT)
             at_species.append(atoms.get_atomic_numbers(), idx, idx * DT)
             at_v.append(atoms.get_momenta(), idx, idx * DT)
             obs_at_e.append(atoms.get_potential_energy(), idx * DT)
             at_f.append(atoms.get_forces(), idx, idx * DT)
+            at.box.edges.append(atoms.get_cell().diagonal(), idx, idx * DT)
 
 
 def test_open(example_h5):
@@ -106,6 +112,7 @@ def test_pyh5md_ASEH5MD(md, tmp_path):
     ase_to_pyh5md(md, path)
     znh5md.ASEH5MD(path)
     structures = znh5md.ASEH5MD(path).get_atoms_list()
+    assert len(structures) == len(md)
     # check that the data is not the same
     assert md[0].get_positions()[0][0] != md[1].get_positions()[0][0]
 
@@ -115,6 +122,7 @@ def test_pyh5md_ASEH5MD(md, tmp_path):
         npt.assert_array_equal(a.get_forces(), b.get_forces())
         npt.assert_array_equal(a.get_potential_energy(), b.get_potential_energy())
         npt.assert_array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
+        npt.assert_array_equal(a.get_cell(), b.get_cell())
 
 
 def test_DataWriter_pyh5md(md, tmp_path):
@@ -130,10 +138,13 @@ def test_DataWriter_pyh5md(md, tmp_path):
         momentum = element(g, "momentum").value[:]
         forces = element(g, "forces").value[:]
         energy = element(f, "observables/atoms/energy").value[:]
+        # cell = g.box.edges.value[:]
 
+    assert len(position) == len(md)
     for idx, atoms in enumerate(md):
         npt.assert_array_equal(position[idx], atoms.get_positions())
         npt.assert_array_equal(species[idx], atoms.get_atomic_numbers())
         npt.assert_array_equal(momentum[idx], atoms.get_momenta())
         npt.assert_array_equal(forces[idx], atoms.get_forces())
         npt.assert_array_equal(energy[idx], atoms.get_potential_energy())
+        # npt.assert_array_equal(cell[idx], atoms.get_cell().diagonal())

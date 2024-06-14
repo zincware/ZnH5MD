@@ -1,4 +1,5 @@
 """ZnH5MD: High Performance Interface for H5MD Trajectories."""
+
 import contextlib
 import importlib.metadata
 

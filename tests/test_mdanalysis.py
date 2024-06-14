@@ -1,4 +1,5 @@
 """Use the MDAnalysis library to read H5 files and check compliance with the H5MD standard."""
+
 import pathlib
 
 import ase.build

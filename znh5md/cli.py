@@ -1,5 +1,4 @@
 import importlib.metadata
-import pathlib
 
 import ase.io
 import ase.visualize

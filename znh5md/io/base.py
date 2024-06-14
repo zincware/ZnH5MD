@@ -30,6 +30,7 @@ class StepTimeChunk:
     References
     ----------
     https://h5md.nongnu.org/h5md.html#time-dependent-data
+
     """
 
     value: np.ndarray
@@ -66,7 +67,9 @@ class StepTimeChunk:
         """Resize the value array."""
         fill_shape = list(self.value.shape)
         fill_shape[1] = n_new_particles
-        self.value = np.concatenate([self.value, np.full(fill_shape, fill_value)], axis=1)
+        self.value = np.concatenate(
+            [self.value, np.full(fill_shape, fill_value)], axis=1
+        )
 
     def resize_by_particle_count(self, dataset_group: h5py.Group, fill_value=np.nan):
         # We also have to reshape value, if the the shape
@@ -187,6 +190,7 @@ class DataReader(abc.ABC):
         typing.Iterator[typing.Dict[str, ExplicitStepTimeChunk]]
             A dictionary of chunks. The key is the name of the group.
             Each chunk containing the data for one group.
+
         """
         raise NotImplementedError()
 
@@ -237,6 +241,7 @@ class DataWriter:
         ----------
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
+
         """
         group_name = self._handle_special_cases_group_names(group_name)
         dataset_group = db_path.create_group(group_name)
@@ -255,6 +260,7 @@ class DataWriter:
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
             The group must already exist.
+
         """
         group_name = self._handle_special_cases_group_names(group_name)
         dataset_group = db_path[group_name]
@@ -286,9 +292,18 @@ class DataWriter:
         ----------
         kwargs: dict[str, ExplicitStepTimeChunk]
             The chunk data to write to the database. The key is the name of the group.
+
         """
         if not pathlib.Path(self.filename).exists():
-            _ = h5py.File(self.filename, "w")  # create the file
+            with h5py.File(self.filename, "w") as f:
+                # create the file
+                h5md = f.create_group("h5md")
+                h5md.attrs["version"] = np.array([1, 1])
+                author = h5md.create_group("author")
+                author.attrs["name"] = "N/A"  # TODO: make configurable
+                creator = h5md.create_group("creator")
+                creator.attrs["name"] = "ZnH5MD"
+
         with h5py.File(self.filename, "r+") as file:
             for group_name, chunk_data in kwargs.items():
                 if group_name == GRP.boundary:

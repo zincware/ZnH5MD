@@ -19,14 +19,6 @@ repos:
         args: ['--fix=lf']
       - id: sort-simple-yaml
       - id: trailing-whitespace
-  - repo: https://github.com/psf/black
-    rev: 23.7.0
-    hooks:
-      - id: black
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.5
     hooks:
@@ -34,9 +26,13 @@ repos:
         additional_dependencies: ["tomli"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: 'v0.0.282'
+    rev: v0.4.8
     hooks:
+      # Run the linter.
       - id: ruff
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.16
     hooks:

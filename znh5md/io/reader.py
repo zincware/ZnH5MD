@@ -35,6 +35,7 @@ class AtomsReader(DataReader):
         and might cause issues with other software!
     save_atoms_results : bool, optional
         Save 'atoms.calc.results' which can contain custom keys.
+
     """
 
     atoms: list[ase.Atoms]
@@ -187,6 +188,7 @@ class ASEFileReader(DataReader):
         Time step
     step : int, optional
         Step size
+
     """
 
     filename: str

@@ -74,3 +74,20 @@ def test_datasets_h5py(tmp_path, dataset, request):
         assert "observables/atoms/mlip_energy/value" in f
         assert "observables/atoms/mlip_energy_2/value" in f
         assert "observables/atoms/mlip_stress/value" in f
+
+
+def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell):
+    io_a = znh5md.IO(tmp_path / "test.h5", particle_group="a")
+    io_b = znh5md.IO(tmp_path / "test.h5", particle_group="b")
+    io_a.extend(s22_all_properties)
+    io_b.extend(s22_mixed_pbc_cell)
+
+    with h5py.File(tmp_path / "test.h5", "r") as f:
+        assert "/particles/a/position/value" in f
+        assert "/particles/b/position/value" in f
+
+    for a, b in zip(s22_all_properties, io_a[:]):
+        npt.assert_array_equal(a.get_positions(), b.get_positions())
+
+    for a, b in zip(s22_mixed_pbc_cell, io_b[:]):
+        npt.assert_array_equal(a.get_positions(), b.get_positions())

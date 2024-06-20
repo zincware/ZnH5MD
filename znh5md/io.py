@@ -39,7 +39,7 @@ class IO(MutableSequence):
         if self.particle_group and self.filename.exists():
             with h5py.File(self.filename, "r") as f:
                 self.particle_group = next(iter(f["particles"].keys()))
-        else:
+        elif not self.particle_group:
             self.particle_group = "atoms"
 
     def create_file(self):

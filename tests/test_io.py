@@ -17,6 +17,9 @@ def test_IO(cu_file):
 
     assert io[0].pbc.all()
 
+    assert "forces" in io[0].calc.results
+    forces = io[0].get_forces()
+
     assert isinstance(io[1:2], list)
     for atoms in io[1:2]:
         assert isinstance(atoms, ase.Atoms)
@@ -27,3 +30,9 @@ def test_IO(cu_file):
 
         assert not np.array_equal(atoms.get_momenta(), momenta)
         momenta = atoms.get_momenta()
+
+        assert atoms.pbc.all()
+
+        assert "forces" in atoms.calc.results
+        assert not np.array_equal(atoms.get_forces(), forces)
+        forces = atoms.get_forces()

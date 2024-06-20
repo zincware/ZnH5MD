@@ -172,6 +172,7 @@ class IO(MutableSequence):
                         maxshape=([None] * data.positions.ndim),
                         dtype=np.float64,
                     )
+                    ds_value.attrs["unit"] = "Angstrom"
                     ds_time = g_positions.create_dataset(
                         "time",
                         dtype=int,
@@ -232,7 +233,7 @@ class IO(MutableSequence):
                         )
 
                 if data.momenta is not None:
-                    g_momenta = g_particle_grp.create_group("momentum")
+                    g_momenta = g_particle_grp.create_group("velocity")
                     ds_value = g_momenta.create_dataset(
                         "value",
                         data=data.momenta,
@@ -240,6 +241,7 @@ class IO(MutableSequence):
                         maxshape=([None] * data.momenta.ndim),
                         dtype=np.float64,
                     )
+                    ds_value.attrs["unit"] = "Angstrom fs-1"
                     ds_time = g_momenta.create_dataset(
                         "time",
                         dtype=int,
@@ -260,6 +262,7 @@ class IO(MutableSequence):
                         maxshape=([None] * value.ndim),
                         dtype=np.float64,
                     )
+                    # TODO: units
                     ds_time = g_array.create_dataset(
                         "time",
                         dtype=int,
@@ -271,34 +274,6 @@ class IO(MutableSequence):
                         dtype=int,
                         data=np.arange(len(data.atomic_numbers)),
                     )
-
-                if len(data.calc_data) > 0:
-                    if "observables" not in f:
-                        g_observables = f.create_group("observables")
-                    if self.particle_group not in f["observables"]:
-                        g_calc = f["observables"].create_group(self.particle_group)
-                    else:
-                        g_calc = f["observables"][self.particle_group]
-                    for key, value in data.calc_data.items():
-                        g_observable = g_calc.create_group(key)
-                        ds_value = g_observable.create_dataset(
-                            "value",
-                            data=value,
-                            chunks=True,
-                            maxshape=([None] * value.ndim),
-                            dtype=np.float64,
-                        )
-                        ds_time = g_observable.create_dataset(
-                            "time",
-                            dtype=int,
-                            data=np.arange(len(data.atomic_numbers)),
-                        )
-                        ds_time.attrs["unit"] = "fs"
-                        ds_frame = g_observable.create_dataset(
-                            "step",
-                            dtype=int,
-                            data=np.arange(len(data.atomic_numbers)),
-                        )
 
                 if len(data.info_data) > 0:
                     if "observables" not in f:
@@ -351,7 +326,7 @@ class IO(MutableSequence):
                         utils.fill_dataset(g_pbc["value"], data.pbc)
 
                 if data.momenta is not None:
-                    g_momenta = g_particle_grp["momentum"]
+                    g_momenta = g_particle_grp["velocity"]
                     utils.fill_dataset(g_momenta["value"], data.momenta)
 
                 for key, value in data.arrays_data.items():
@@ -360,10 +335,6 @@ class IO(MutableSequence):
 
                 if f"observables/{self.particle_group}" in f:
                     g_observables = f["observables"][self.particle_group]
-                    for key, value in data.calc_data.items():
-                        g_val = g_observables[key]
-                        utils.fill_dataset(g_val["value"], value)
-
                     for key, value in data.info_data.items():
                         g_val = g_observables[key]
                         utils.fill_dataset(g_val["value"], value)

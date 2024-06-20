@@ -15,7 +15,6 @@ class ASEData:
     cell: np.ndarray | None
     pbc: np.ndarray
     momenta: np.ndarray | None
-    calc_data: dict[str, np.ndarray]
     info_data: dict[str, np.ndarray]
     arrays_data: dict[str, np.ndarray]
 
@@ -40,7 +39,7 @@ def get_box(group, name, index) -> np.ndarray | None:
 
 
 def get_momenta(group, name, index) -> np.ndarray | None:
-    return get_property(group, name, "momentum", index)
+    return get_property(group, name, "velocity", index)
 
 
 def get_pbc(group, name, index) -> np.ndarray:
@@ -60,7 +59,7 @@ ASE_TO_H5MD = bidict(
         "numbers": "species",
         "positions": "position",
         "cell": "box",
-        "momenta": "momentum",
+        "momenta": "velocity",
     }
 )
 
@@ -71,22 +70,21 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
     cell = atoms.get_cell()
     pbc = atoms.get_pbc()
     momenta = atoms.get_momenta()
-    calc_data = {}
     info_data = {}
     arrays_data = {}
     if atoms.calc is not None:
         for key in atoms.calc.results:
-            if key in all_properties:
-                calc_data[key] = (
-                    atoms.calc.results[key]
-                    if isinstance(atoms.calc.results[key], np.ndarray)
-                    else np.array([atoms.calc.results[key]])
-                )
-            elif key not in ASE_TO_H5MD:
-                if len(atoms.calc.results[key]) == len(atomic_numbers):
-                    arrays_data[key] = np.array([atoms.calc.results[key]])
-                else:
-                    info_data[key] = np.array([atoms.calc.results[key]])
+            if isinstance(atoms.calc.results[key], (int, float)):
+                value = np.array([atoms.calc.results[key]])
+            else:
+                value = atoms.calc.results[key]
+            # We check for all properties, because shape[0] can be
+            # equal to the number of atoms so this makes it a bit safer.
+            # if you encout any issues here, make sure that #atoms != len(property)
+            if value.shape[0] == len(atomic_numbers) or key in all_properties:
+                arrays_data[key] = value
+            else:
+                info_data[key] = value
     for key in atoms.info:
         if key not in all_properties and key not in ASE_TO_H5MD:
             info_data[key] = atoms.info[key]
@@ -101,7 +99,6 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
         cell=cell,
         pbc=pbc,
         momenta=momenta,
-        calc_data=calc_data,
         info_data=info_data,
         arrays_data=arrays_data,
     )
@@ -130,17 +127,6 @@ def combine_asedata(data: list[ASEData]) -> ASEData:
         momenta = concatenate_varying_shape_arrays(
             [x.momenta if x.momenta is not None else np.array([]) for x in data]
         )
-    calc_data = {
-        key: concatenate_varying_shape_arrays(
-            [
-                x.calc_data[key]
-                if isinstance(x.calc_data[key], np.ndarray)
-                else np.array([x.calc_data[key]])
-                for x in data
-            ]
-        )
-        for key in data[0].calc_data
-    }
     info_data = {
         key: concatenate_varying_shape_arrays(
             [
@@ -164,5 +150,5 @@ def combine_asedata(data: list[ASEData]) -> ASEData:
         for key in data[0].arrays_data
     }
     return ASEData(
-        atomic_numbers, positions, cell, pbc, momenta, calc_data, info_data, arrays_data
+        atomic_numbers, positions, cell, pbc, momenta, info_data, arrays_data
     )

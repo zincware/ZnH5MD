@@ -152,6 +152,17 @@ class IO(MutableSequence):
                     chunks=True,
                     maxshape=([None] * data.atomic_numbers.ndim),
                 )
+                ds_time = g_species.create_dataset(
+                    "time",
+                    dtype=int,
+                    data=np.arange(len(data.atomic_numbers)),
+                )
+                ds_time.attrs["unit"] = "fs"
+                ds_frame = g_species.create_dataset(
+                    "step",
+                    dtype=int,
+                    data=np.arange(len(data.atomic_numbers)),
+                )
                 if data.positions is not None:
                     g_positions = g_particle_grp.create_group("position")
                     ds_value = g_positions.create_dataset(
@@ -161,9 +172,20 @@ class IO(MutableSequence):
                         maxshape=([None] * data.positions.ndim),
                         dtype=np.float64,
                     )
+                    ds_time = g_positions.create_dataset(
+                        "time",
+                        dtype=int,
+                        data=np.arange(len(data.atomic_numbers)),
+                    )
+                    ds_time.attrs["unit"] = "fs"
+                    ds_frame = g_positions.create_dataset(
+                        "step",
+                        dtype=int,
+                        data=np.arange(len(data.atomic_numbers)),
+                    )
                 if data.cell is not None:
                     g_cell = g_particle_grp.create_group("box")
-                    g_cell.attrs["dimension"] = 3 # hard coded for now
+                    g_cell.attrs["dimension"] = 3  # hard coded for now
                     g_edges = g_cell.create_group("edges")
                     ds_value = g_edges.create_dataset(
                         "value",
@@ -171,6 +193,17 @@ class IO(MutableSequence):
                         chunks=True,
                         maxshape=([None] * data.cell.ndim),
                         dtype=np.float64,
+                    )
+                    ds_time = g_edges.create_dataset(
+                        "time",
+                        dtype=int,
+                        data=np.arange(len(data.atomic_numbers)),
+                    )
+                    ds_time.attrs["unit"] = "fs"
+                    ds_frame = g_edges.create_dataset(
+                        "step",
+                        dtype=int,
+                        data=np.arange(len(data.atomic_numbers)),
                     )
                 if self.pbc_group:
                     if data.pbc is not None:
@@ -186,6 +219,17 @@ class IO(MutableSequence):
                             maxshape=(None, 3),
                             dtype=np.float64,
                         )
+                        ds_time = g_pbc.create_dataset(
+                            "time",
+                            dtype=int,
+                            data=np.arange(len(data.atomic_numbers)),
+                        )
+                        ds_time.attrs["unit"] = "fs"
+                        ds_frame = g_pbc.create_dataset(
+                            "step",
+                            dtype=int,
+                            data=np.arange(len(data.atomic_numbers)),
+                        )
 
                 if data.momenta is not None:
                     g_momenta = g_particle_grp.create_group("momentum")
@@ -196,6 +240,17 @@ class IO(MutableSequence):
                         maxshape=([None] * data.momenta.ndim),
                         dtype=np.float64,
                     )
+                    ds_time = g_momenta.create_dataset(
+                        "time",
+                        dtype=int,
+                        data=np.arange(len(data.atomic_numbers)),
+                    )
+                    ds_time.attrs["unit"] = "fs"
+                    ds_frame = g_momenta.create_dataset(
+                        "step",
+                        dtype=int,
+                        data=np.arange(len(data.atomic_numbers)),
+                    )
                 for key, value in data.arrays_data.items():
                     g_array = g_particle_grp.create_group(key)
                     ds_value = g_array.create_dataset(
@@ -204,6 +259,17 @@ class IO(MutableSequence):
                         chunks=True,
                         maxshape=([None] * value.ndim),
                         dtype=np.float64,
+                    )
+                    ds_time = g_array.create_dataset(
+                        "time",
+                        dtype=int,
+                        data=np.arange(len(data.atomic_numbers)),
+                    )
+                    ds_time.attrs["unit"] = "fs"
+                    ds_frame = g_array.create_dataset(
+                        "step",
+                        dtype=int,
+                        data=np.arange(len(data.atomic_numbers)),
                     )
 
                 if len(data.calc_data) > 0:
@@ -222,6 +288,17 @@ class IO(MutableSequence):
                             maxshape=([None] * value.ndim),
                             dtype=np.float64,
                         )
+                        ds_time = g_observable.create_dataset(
+                            "time",
+                            dtype=int,
+                            data=np.arange(len(data.atomic_numbers)),
+                        )
+                        ds_time.attrs["unit"] = "fs"
+                        ds_frame = g_observable.create_dataset(
+                            "step",
+                            dtype=int,
+                            data=np.arange(len(data.atomic_numbers)),
+                        )
 
                 if len(data.info_data) > 0:
                     if "observables" not in f:
@@ -238,6 +315,17 @@ class IO(MutableSequence):
                             chunks=True,
                             maxshape=([None] * value.ndim),
                             dtype=np.float64,
+                        )
+                        ds_time = g_observable.create_dataset(
+                            "time",
+                            dtype=int,
+                            data=np.arange(len(data.atomic_numbers)),
+                        )
+                        ds_time.attrs["unit"] = "fs"
+                        ds_frame = g_observable.create_dataset(
+                            "step",
+                            dtype=int,
+                            data=np.arange(len(data.atomic_numbers)),
                         )
             else:
                 # we assume every key exists and won't create new datasets.

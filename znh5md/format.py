@@ -127,15 +127,36 @@ def combine_asedata(data: list[ASEData]) -> ASEData:
             [x.momenta if x.momenta is not None else np.array([]) for x in data]
         )
     calc_data = {
-        key: concatenate_varying_shape_arrays([x.calc_data[key] for x in data])
+        key: concatenate_varying_shape_arrays(
+            [
+                x.calc_data[key]
+                if isinstance(x.calc_data[key], np.ndarray)
+                else np.array([x.calc_data[key]])
+                for x in data
+            ]
+        )
         for key in data[0].calc_data
     }
     info_data = {
-        key: concatenate_varying_shape_arrays([x.info_data[key] for x in data])
+        key: concatenate_varying_shape_arrays(
+            [
+                x.info_data[key]
+                if isinstance(x.info_data[key], np.ndarray)
+                else np.array([x.info_data[key]])
+                for x in data
+            ]
+        )
         for key in data[0].info_data
     }
     arrays_data = {
-        key: concatenate_varying_shape_arrays([x.arrays_data[key] for x in data])
+        key: concatenate_varying_shape_arrays(
+            [
+                x.arrays_data[key]
+                if isinstance(x.arrays_data[key], np.ndarray)
+                else np.array([x.arrays_data[key]])
+                for x in data
+            ]
+        )
         for key in data[0].arrays_data
     }
     return ASEData(

@@ -4,7 +4,9 @@ import pytest
 import znh5md
 
 
-@pytest.mark.parametrize("dataset", ["s22", "s22_energy", "s22_all_properties"])
+@pytest.mark.parametrize(
+    "dataset", ["s22", "s22_energy", "s22_all_properties", "s22_info_arrays_calc"]
+)
 def test_datasets(tmp_path, dataset, request):
     images = request.getfixturevalue(dataset)
     io = znh5md.IO(tmp_path / "test.h5")
@@ -28,4 +30,4 @@ def test_datasets(tmp_path, dataset, request):
             npt.assert_array_equal(a.arrays[key], b.arrays[key])
 
         for key in a.info:
-            assert a.info[key] == b.info[key]
+            npt.assert_array_equal(a.info[key], b.info[key])

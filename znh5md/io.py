@@ -186,7 +186,10 @@ class IO(MutableSequence):
                 if len(data.calc_data) > 0:
                     if "observables" not in f:
                         g_observables = f.create_group("observables")
-                    g_calc = f["observables"].create_group(self.particle_group)
+                    if self.particle_group not in f["observables"]:
+                        g_calc = f["observables"].create_group(self.particle_group)
+                    else:
+                        g_calc = f["observables"][self.particle_group]
                     for key, value in data.calc_data.items():
                         g_observable = g_calc.create_group(key)
                         ds_value = g_observable.create_dataset(
@@ -200,7 +203,10 @@ class IO(MutableSequence):
                 if len(data.info_data) > 0:
                     if "observables" not in f:
                         g_observables = f.create_group("observables")
-                    g_info = f["observables"].create_group(self.particle_group)
+                    if self.particle_group not in f["observables"]:
+                        g_info = f["observables"].create_group(self.particle_group)
+                    else:
+                        g_info = f["observables"][self.particle_group]
                     for key, value in data.info_data.items():
                         g_observable = g_info.create_group(key)
                         ds_value = g_observable.create_dataset(

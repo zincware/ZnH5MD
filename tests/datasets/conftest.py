@@ -5,12 +5,12 @@ from ase.calculators.singlepoint import SinglePointCalculator
 
 
 @pytest.fixture
-def s22():
+def s22() -> list[ase.Atoms]:
     return ase.collections.s22
 
 
 @pytest.fixture
-def s22_energy():
+def s22_energy() -> list[ase.Atoms]:
     images = []
     for atoms in ase.collections.s22:
         calc = SinglePointCalculator(atoms, energy=np.random.rand())
@@ -20,7 +20,7 @@ def s22_energy():
 
 
 @pytest.fixture
-def s22_all_properties():
+def s22_all_properties() -> list[ase.Atoms]:
     images = []
     for atoms in ase.collections.s22:
         # shapes taken from https://gitlab.com/ase/ase/-/blob/master/ase/outputs.py
@@ -57,5 +57,36 @@ def s22_all_properties():
         )
 
         atoms.calc = calc
+        images.append(atoms)
+    return images
+
+
+@pytest.fixture
+def s22_info_arrays_calc():
+    images = []
+    for atoms in ase.collections.s22:
+        atoms.info.update(
+            {
+                "mlip_energy": np.random.rand(),
+                "mlip_energy_2": np.random.rand(),
+                "mlip_stress": np.random.rand(6),
+            }
+        )
+        atoms.new_array("mlip_forces", np.random.rand(len(atoms), 3))
+        atoms.new_array("mlip_forces_2", np.random.rand(len(atoms), 3))
+        calc = SinglePointCalculator(
+            atoms, energy=np.random.rand(), forces=np.random.rand(len(atoms), 3)
+        )
+        atoms.set_calculator(calc)
+        images.append(atoms)
+    return images
+
+
+@pytest.fixture
+def s22_mixed_pbc_cell() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        atoms.set_pbc(np.random.rand(3) > 0.5)
+        atoms.set_cell(np.random.rand(3, 3))
         images.append(atoms)
     return images

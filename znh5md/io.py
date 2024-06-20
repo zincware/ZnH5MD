@@ -49,11 +49,10 @@ class IO(MutableSequence):
             g_creator.attrs["version"] = self.creator_version
 
             g_particles = f.create_group("particles")
-            g_particles.create_group(self.particle_group)
 
     def __len__(self) -> int:
         with h5py.File(self.filename, "r") as f:
-            return len(f["particles"][self.particle_group])
+            return len(f["particles"][self.particle_group]["species"]["value"])
 
     def __getitem__(self, index) -> ase.Atoms | list[ase.Atoms]:
         single_item = isinstance(index, int)
@@ -140,10 +139,39 @@ class IO(MutableSequence):
         positions = utils.concatenate_varying_shape_arrays(positions)
 
         with h5py.File(self.filename, "a") as f:
-            g_particle_grp = f["particles"][self.particle_group]
-            # add g_particle_grp.attrs["species"]["value"] = species
-            g_species = g_particle_grp.create_group("species")
-            ds_value = g_species.create_dataset("value", data=species)
+            if self.particle_group not in f["particles"]:
+                g_particle_grp = f["particles"].create_group(self.particle_group)
+                g_particle_grp = f["particles"][self.particle_group]
+                # add g_particle_grp.attrs["species"]["value"] = species
+                g_species = g_particle_grp.create_group("species")
+                ds_value = g_species.create_dataset(
+                    "value",
+                    data=species,
+                    dtype=np.float32,
+                    chunks=True,
+                    maxshape=(None, None),
+                )
 
-            g_positions = g_particle_grp.create_group("position")
-            ds_value = g_positions.create_dataset("value", data=positions)
+                g_positions = g_particle_grp.create_group("position")
+                ds_value = g_positions.create_dataset(
+                    "value",
+                    data=positions,
+                    chunks=True,
+                    maxshape=(None, None, None),
+                    dtype=np.float32,
+                )
+            else:
+                # we assume every key exists and won't create new datasets.
+                # if there is suddenly new data we would have to fill
+                # everything with NaNs before that value, which is
+                # currently not implemented
+                g_particle_grp = f["particles"][self.particle_group]
+
+                g_species = g_particle_grp["species"]
+                utils.fill_dataset(g_species["value"], species)
+
+                g_positions = g_particle_grp["position"]
+                utils.fill_dataset(g_positions["value"], positions)
+
+    def append(self, atoms: ase.Atoms):
+        self.extend([atoms])

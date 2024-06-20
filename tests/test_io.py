@@ -55,9 +55,21 @@ def test_IO_extend(tmp_path):
     assert len(structures) == len(images)
     for a, b in zip(images, structures):
         assert np.array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
-        assert np.array_equal(a.get_positions(), b.get_positions())
+        assert np.allclose(a.get_positions(), b.get_positions())
 
 
 def test_IO_len(cu_file):
     io = znh5md.IO(cu_file)
-    assert len(io) == 5
+    assert len(io) == 10
+
+
+def test_IO_append(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    images = list(ase.collections.s22)
+    io.extend(images)
+    io.append(images[0])
+
+    assert len(io) == len(images) + 1
+    for a, b in zip(images + [images[0]], io[:]):
+        assert np.array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
+        assert np.allclose(a.get_positions(), b.get_positions())

@@ -11,10 +11,10 @@ def test_IO_read(cu_file):
     assert io[0].get_atomic_numbers().tolist() == 108 * [29]
     positions = io[0].get_positions()
 
-    assert np.sum(np.pow(positions, 2)) > 0
+    assert np.sum(positions ** 2) > 0
 
     momenta = io[0].get_momenta()
-    assert np.sum(np.pow(momenta, 2)) > 0
+    assert np.sum(momenta ** 2) > 0
 
     assert io[0].pbc.all()
 

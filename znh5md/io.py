@@ -163,6 +163,7 @@ class IO(MutableSequence):
                     )
                 if data.cell is not None:
                     g_cell = g_particle_grp.create_group("box")
+                    g_cell.attrs["dimension"] = 3 # hard coded for now
                     g_edges = g_cell.create_group("edges")
                     ds_value = g_edges.create_dataset(
                         "value",

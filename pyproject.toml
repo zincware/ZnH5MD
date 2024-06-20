@@ -19,6 +19,7 @@ bidict = "^0.23.1"
 pytest = "^7.2.0"
 pre-commit = "^2.20.0"
 ruff = "^0.4"
+mdanalysis = "^2.7.0"
 
 [tool.poetry.scripts]
 znh5md = 'znh5md.cli:app'

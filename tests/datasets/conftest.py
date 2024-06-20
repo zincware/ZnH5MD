@@ -90,3 +90,9 @@ def s22_mixed_pbc_cell() -> list[ase.Atoms]:
         atoms.set_cell(np.random.rand(3, 3))
         images.append(atoms)
     return images
+
+
+@pytest.fixture
+def water() -> list[ase.Atoms]:
+    """Get a dataset without positions."""
+    return [ase.Atoms("H2O")]

@@ -12,6 +12,7 @@ import znh5md
         "s22_all_properties",
         "s22_info_arrays_calc",
         "s22_mixed_pbc_cell",
+        "water",
     ],
 )
 def test_datasets(tmp_path, dataset, request):

@@ -12,8 +12,6 @@ from ase.calculators.singlepoint import SinglePointCalculator
 import znh5md.format as fmt
 from znh5md import utils
 
-MutableSequence = object
-
 # TODO: use pint to convert the units in the h5md file to ase units
 # TODO: allow to keep the file open when extending / appending to the file
 # TODO: allow external file handles instead of providing filename
@@ -348,3 +346,12 @@ class IO(MutableSequence):
 
     def append(self, atoms: ase.Atoms):
         self.extend([atoms])
+
+    def __delitem__(self, index):
+        raise NotImplementedError("Deleting items is not supported")
+
+    def __setitem__(self, index, value):
+        raise NotImplementedError("Setting items is not supported")
+
+    def insert(self, index, value):
+        raise NotImplementedError("Inserting items is not supported")

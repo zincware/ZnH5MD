@@ -1,10 +1,10 @@
-import ase
+import ase.collections
 import numpy as np
 
 import znh5md
 
 
-def test_IO(cu_file):
+def test_IO_read(cu_file):
     io = znh5md.IO(cu_file)
 
     assert isinstance(io[0], ase.Atoms)
@@ -44,3 +44,20 @@ def test_IO(cu_file):
         assert "energy" in atoms.calc.results
         assert not np.array_equal(atoms.get_potential_energy(), energy)
         energy = atoms.get_potential_energy()
+
+
+def test_IO_extend(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    images = list(ase.collections.s22)
+    io.extend(images)
+
+    structures = io[:]
+    assert len(structures) == len(images)
+    for a, b in zip(images, structures):
+        assert np.array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
+        assert np.array_equal(a.get_positions(), b.get_positions())
+
+
+def test_IO_len(cu_file):
+    io = znh5md.IO(cu_file)
+    assert len(io) == 5

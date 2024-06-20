@@ -13,6 +13,7 @@ ase = "^3.22"
 tqdm = "^4"
 typer = {extras = ["all"], version = "^0"}
 pyh5md = "^1.0.0"
+bidict = "^0.23.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"

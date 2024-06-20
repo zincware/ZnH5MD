@@ -4,3 +4,7 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/zincware/ZnH5MD/HEAD)
 
 # ZnH5MD - ASE Interface for the H5MD format.
+
+### Extended H5MD Format
+- support for grand canonical and varying atomic number data
+- support for changes in PBC conditions

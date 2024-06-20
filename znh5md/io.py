@@ -142,9 +142,9 @@ class IO(MutableSequence):
                 ds_value = g_species.create_dataset(
                     "value",
                     data=data.atomic_numbers,
-                    dtype=np.float32,
+                    dtype=np.float64,
                     chunks=True,
-                    maxshape=(None, None),
+                    maxshape=([None] * data.atomic_numbers.ndim),
                 )
                 if data.positions is not None:
                     g_positions = g_particle_grp.create_group("position")
@@ -152,8 +152,8 @@ class IO(MutableSequence):
                         "value",
                         data=data.positions,
                         chunks=True,
-                        maxshape=(None, None, None),
-                        dtype=np.float32,
+                        maxshape=([None] * data.positions.ndim),
+                        dtype=np.float64,
                     )
                 if data.cell is not None:
                     g_cell = g_particle_grp.create_group("box")
@@ -161,8 +161,8 @@ class IO(MutableSequence):
                         "value",
                         data=data.cell,
                         chunks=True,
-                        maxshape=(None, None, None),
-                        dtype=np.float32,
+                        maxshape=([None] * data.cell.ndim),
+                        dtype=np.float64,
                     )
                 if data.momenta is not None:
                     g_momenta = g_particle_grp.create_group("momentum")
@@ -170,8 +170,8 @@ class IO(MutableSequence):
                         "value",
                         data=data.momenta,
                         chunks=True,
-                        maxshape=(None, None, None),
-                        dtype=np.float32,
+                        maxshape=([None] * data.momenta.ndim),
+                        dtype=np.float64,
                     )
                 for key, value in data.arrays_data.items():
                     g_array = g_particle_grp.create_group(key)
@@ -179,11 +179,13 @@ class IO(MutableSequence):
                         "value",
                         data=value,
                         chunks=True,
-                        maxshape=(None, None),
-                        dtype=np.float32,
+                        maxshape=([None] * value.ndim),
+                        dtype=np.float64,
                     )
 
                 if len(data.calc_data) > 0:
+                    if "observables" not in f:
+                        g_observables = f.create_group("observables")
                     g_calc = f["observables"].create_group(self.particle_group)
                     for key, value in data.calc_data.items():
                         g_observable = g_calc.create_group(key)
@@ -191,11 +193,13 @@ class IO(MutableSequence):
                             "value",
                             data=value,
                             chunks=True,
-                            maxshape=(None, None),
-                            dtype=np.float32,
+                            maxshape=([None] * value.ndim),
+                            dtype=np.float64,
                         )
 
                 if len(data.info_data) > 0:
+                    if "observables" not in f:
+                        g_observables = f.create_group("observables")
                     g_info = f["observables"].create_group(self.particle_group)
                     for key, value in data.info_data.items():
                         g_observable = g_info.create_group(key)
@@ -203,8 +207,8 @@ class IO(MutableSequence):
                             "value",
                             data=value,
                             chunks=True,
-                            maxshape=(None, None),
-                            dtype=np.float32,
+                            maxshape=([None] * value.ndim),
+                            dtype=np.float64,
                         )
             else:
                 # we assume every key exists and won't create new datasets.

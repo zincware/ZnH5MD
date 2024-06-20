@@ -74,8 +74,17 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
     arrays_data = {}
     if atoms.calc is not None:
         for key in atoms.calc.results:
-            if key not in all_properties:
-                calc_data[key] = atoms.calc.results[key]
+            if key in all_properties:
+                calc_data[key] = (
+                    atoms.calc.results[key]
+                    if isinstance(atoms.calc.results[key], np.ndarray)
+                    else np.array([atoms.calc.results[key]])
+                )
+            elif key not in ASE_TO_H5MD:
+                if len(atoms.calc.results[key]) == len(atomic_numbers):
+                    arrays_data[key] = np.array([atoms.calc.results[key]])
+                else:
+                    info_data[key] = np.array([atoms.calc.results[key]])
     for key in atoms.info:
         if key not in all_properties and key not in ASE_TO_H5MD:
             info_data[key] = atoms.info[key]

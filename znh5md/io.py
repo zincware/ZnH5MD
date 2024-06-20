@@ -20,8 +20,7 @@ from znh5md import utils
 
 @dataclasses.dataclass
 class IO(MutableSequence):
-    """A class for handling H5MD files for ASE Atoms objects.
-    """
+    """A class for handling H5MD files for ASE Atoms objects."""
 
     filename: Union[str, os.PathLike]
     pbc_group: bool = True  # Specify PBC per step (Not H5MD conform)
@@ -172,7 +171,7 @@ class IO(MutableSequence):
         self._create_group(g_particle_grp, "position", data.positions, "Angstrom")
         self._create_group(g_particle_grp, "box/edges", data.cell)
         g_particle_grp["box"].attrs["dimension"] = 3
-        
+
         if self.pbc_group and data.pbc is not None:
             self._create_group(g_particle_grp, "box/pbc", data.pbc)
         self._create_group(g_particle_grp, "velocity", data.velocities, "Angstrom/fs")

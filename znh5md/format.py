@@ -13,7 +13,7 @@ class ASEData:
     atomic_numbers: np.ndarray | None
     positions: np.ndarray | None
     cell: np.ndarray | None
-    pbc: list[bool]
+    pbc: np.ndarray
     momenta: np.ndarray | None
     calc_data: dict[str, np.ndarray]
     info_data: dict[str, np.ndarray]
@@ -43,13 +43,15 @@ def get_momenta(group, name, index) -> np.ndarray | None:
     return get_property(group, name, "momentum", index)
 
 
-def get_pbc(group, name, index) -> list[bool]:
-    # TODO: support pbc on/off
-    try:
-        boundary = group[name]["box"].attrs["boundary"]
-        return [True if x == b"periodic" else False for x in boundary]
-    except KeyError:
-        return [False, False, False]
+def get_pbc(group, name, index) -> np.ndarray:
+    if "pbc" in group[name]["box"]:
+        return group[name]["box"]["pbc"]["value"][index]
+    else:
+        try:
+            boundary = group[name]["box"].attrs["boundary"]
+            return np.array([True if x == b"periodic" else False for x in boundary])
+        except KeyError:
+            return np.array([False, False, False])
 
 
 # TODO: mapping from ASE to H5MD property names
@@ -119,7 +121,9 @@ def combine_asedata(data: list[ASEData]) -> ASEData:
         cell = concatenate_varying_shape_arrays(
             [x.cell if x.cell is not None else np.array([]) for x in data]
         )
-    pbc = [x.pbc if x.pbc is not None else [False, False, False] for x in data]
+    pbc = np.array(
+        [x.pbc if x.pbc is not None else [False, False, False] for x in data]
+    )
     if all(x.momenta is None for x in data):
         momenta = None
     else:

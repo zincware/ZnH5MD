@@ -5,7 +5,14 @@ import znh5md
 
 
 @pytest.mark.parametrize(
-    "dataset", ["s22", "s22_energy", "s22_all_properties", "s22_info_arrays_calc"]
+    "dataset",
+    [
+        "s22",
+        "s22_energy",
+        "s22_all_properties",
+        "s22_info_arrays_calc",
+        "s22_mixed_pbc_cell",
+    ],
 )
 def test_datasets(tmp_path, dataset, request):
     images = request.getfixturevalue(dataset)

@@ -23,6 +23,9 @@ MutableSequence = object
 class IO(MutableSequence):
     filename: os.PathLike
 
+    # NOT H5MD conform, specify pbc per step
+    pbc_group: bool = True
+
     author: str = "'N/A"
     author_email: str = "N/A"
     creator: str = "N/A"
@@ -108,7 +111,10 @@ class IO(MutableSequence):
                 if momenta is not None:
                     atoms.set_momenta(utils.remove_nan_rows(momenta[idx]))
                 if pbc is not None:
-                    atoms.pbc = pbc
+                    if isinstance(pbc[idx], np.ndarray):
+                        atoms.pbc = pbc[idx]
+                    else:
+                        atoms.pbc = pbc
                 for key, value in arrays_data.items():
                     atoms.new_array(key, utils.remove_nan_rows(value[idx]))
 
@@ -157,13 +163,29 @@ class IO(MutableSequence):
                     )
                 if data.cell is not None:
                     g_cell = g_particle_grp.create_group("box")
-                    ds_value = g_cell.create_dataset(
+                    g_edges = g_cell.create_group("edges")
+                    ds_value = g_edges.create_dataset(
                         "value",
                         data=data.cell,
                         chunks=True,
                         maxshape=([None] * data.cell.ndim),
                         dtype=np.float64,
                     )
+                if self.pbc_group:
+                    if data.pbc is not None:
+                        if "box" not in g_particle_grp:
+                            g_cell = g_particle_grp.create_group("box")
+                        else:
+                            g_cell = g_particle_grp["box"]
+                        g_pbc = g_cell.create_group("pbc")
+                        ds_value = g_pbc.create_dataset(
+                            "value",
+                            data=data.pbc,
+                            chunks=True,
+                            maxshape=(None, 3),
+                            dtype=np.float64,
+                        )
+
                 if data.momenta is not None:
                     g_momenta = g_particle_grp.create_group("momentum")
                     ds_value = g_momenta.create_dataset(
@@ -231,7 +253,14 @@ class IO(MutableSequence):
                     utils.fill_dataset(g_positions["value"], data.positions)
                 if data.cell is not None:
                     g_cell = g_particle_grp["box"]
-                    utils.fill_dataset(g_cell["value"], data.cell)
+                    g_edges = g_cell["edges"]
+                    utils.fill_dataset(g_edges["value"], data.cell)
+                if self.pbc_group:
+                    if data.pbc is not None:
+                        g_cell = g_particle_grp["box"]
+                        g_pbc = g_cell["pbc"]
+                        utils.fill_dataset(g_pbc["value"], data.pbc)
+
                 if data.momenta is not None:
                     g_momenta = g_particle_grp["momentum"]
                     utils.fill_dataset(g_momenta["value"], data.momenta)

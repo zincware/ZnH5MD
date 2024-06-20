@@ -114,7 +114,7 @@ class IO(MutableSequence):
                         f["observables"], self.particle_group, key, index
                     )
 
-    def _build_structures(
+    def _build_structures(  # noqa: C901
         self,
         atomic_numbers,
         positions,
@@ -206,7 +206,7 @@ class IO(MutableSequence):
             g_info = g_observables.require_group(self.particle_group)
             for key, value in info_data.items():
                 g_observable = g_info.create_group(key)
-                ds_value = g_observable.create_dataset(
+                _ = g_observable.create_dataset(
                     "value",
                     data=value,
                     dtype=np.float64,

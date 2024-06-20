@@ -67,7 +67,8 @@ def split_varying_shape_array(array: np.ndarray) -> list[np.ndarray]:
 
     Returns
     -------
-        list of numpy.array: A list of numpy arrays where each array corresponds to a row in the input array.
+        list of numpy.array: A list of numpy arrays where
+        each array corresponds to a row in the input array.
 
     Example:
     >>> split_varying_shape_array(np.array([[ 1.,  2., np.nan], [ 3.,  4.,  5.]]))

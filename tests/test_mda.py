@@ -1,7 +1,7 @@
 """Test against MDAnalysis."""
 
 import ase.build
-import MDAnalysis as mda
+import MDAnalysis as mda  # noqa:N813
 import numpy as np
 import numpy.testing as npt
 from ase.calculators.singlepoint import SinglePointCalculator

@@ -136,7 +136,7 @@ class IO(MutableSequence):
                 if velocities is not None:
                     atoms.set_velocities(utils.remove_nan_rows(velocities[idx]))
                 if pbc is not None:
-                    atoms.pbc = pbc[idx] if isinstance(pbc[idx], np.ndarray) else pbc
+                    atoms.pbc = pbc[idx] if isinstance(pbc[0], np.ndarray) else pbc
 
                 for key, value in arrays_data.items():
                     atoms.new_array(key, utils.remove_nan_rows(value[idx]))

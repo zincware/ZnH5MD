@@ -988,6 +988,17 @@ files = [
 windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
+name = "pyh5md"
+version = "1.0.0"
+description = "pyh5md - Read and write H5MD files"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyh5md-1.0.0-py2.py3-none-any.whl", hash = "sha256:0a3e80a20ff7662ffdfff0e6bd977e5cbabe3e3384d875ad3fb29455ecac75f9"},
+    {file = "pyh5md-1.0.0.tar.gz", hash = "sha256:424cb9737464db5f49996b3be2371e718bf2a27dec0440870bc89591817015d2"},
+]
+
+[[package]]
 name = "pyparsing"
 version = "3.1.2"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
@@ -1297,4 +1308,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "f9be321816bf92e0bff419b8ec00b835a9bba7fbe79d40b1578c693fcbd09672"
+content-hash = "a8ace92c92f55a066b9e0c797bc962a8209df4e402a44af2886d06db8daf39b3"

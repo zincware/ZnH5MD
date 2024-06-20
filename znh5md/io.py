@@ -171,6 +171,8 @@ class IO(MutableSequence):
         self._create_group(g_particle_grp, "position", data.positions, "Angstrom")
         self._create_group(g_particle_grp, "box/edges", data.cell)
         g_particle_grp["box"].attrs["dimension"] = 3
+        boundary = [["periodic" if y else "none" for y in x] for x in data.pbc]
+        g_particle_grp["box"].attrs["boundary"] = boundary
 
         if self.pbc_group and data.pbc is not None:
             self._create_group(g_particle_grp, "box/pbc", data.pbc)

@@ -133,13 +133,13 @@ def test_DataWriter_pyh5md(md, tmp_path):
         velocities = element(g, "velocity").value[:]
         forces = element(g, "force").value[:]
         energy = element(f, "observables/atoms/energy").value[:]
-        # cell = g.box.edges.value[:]
+        cell = element(g, "box/edges").value[:]
 
-    # assert len(position) == len(md)
+    assert len(position) == len(md)
     for idx, atoms in enumerate(md):
         npt.assert_array_equal(position[idx], atoms.get_positions())
         npt.assert_array_equal(species[idx], atoms.get_atomic_numbers())
         npt.assert_array_equal(velocities[idx], atoms.get_velocities())
         npt.assert_array_equal(forces[idx], atoms.get_forces())
         npt.assert_array_equal(energy[idx], atoms.get_potential_energy())
-        # npt.assert_array_equal(cell[idx], atoms.get_cell().diagonal())
+        npt.assert_array_equal(cell[idx], atoms.get_cell())

@@ -9,6 +9,8 @@ import ase
 
 MutableSequence = object
 
+# TODO: use pint to convert the units in the h5md file to ase units
+
 
 @dataclasses.dataclass
 class IO(MutableSequence):
@@ -34,11 +36,15 @@ class IO(MutableSequence):
             positions = fmt.get_positions(f["particles"], self.particle_group, index)
             cell = fmt.get_box(f["particles"], self.particle_group, index)
             pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
+            momenta = fmt.get_momenta(f["particles"], self.particle_group, index)
 
         structures = []
         for idx in range(len(atomic_numbers)):
             atoms = ase.Atoms(
-                symbols=atomic_numbers[idx], positions=positions[idx], cell=cell[idx]
+                symbols=atomic_numbers[idx],
+                positions=positions[idx],
+                cell=cell[idx],
+                momenta=momenta[idx],
             )
             if isinstance(pbc[0], bool):
                 atoms.pbc = pbc

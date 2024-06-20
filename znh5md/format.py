@@ -1,6 +1,6 @@
 import numpy as np
 
-CUSTOM_KEYS = ["species", "position", "box"]
+CUSTOM_KEYS = ["species", "position", "box", "momentum"]
 
 
 def get_atomic_numbers(group, name, index) -> np.ndarray:
@@ -13,6 +13,10 @@ def get_positions(group, name, index) -> np.ndarray:
 
 def get_box(group, name, index) -> np.ndarray:
     return group[name]["box"]["edges"]["value"][index]
+
+
+def get_momenta(group, name, index) -> np.ndarray:
+    return group[name]["momentum"]["value"][index]
 
 
 def get_pbc(group, name, index) -> list[bool]:

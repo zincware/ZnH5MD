@@ -1,6 +1,7 @@
-import znh5md
 import ase
 import numpy as np
+
+import znh5md
 
 
 def test_IO(cu_file):
@@ -20,6 +21,9 @@ def test_IO(cu_file):
     assert "forces" in io[0].calc.results
     forces = io[0].get_forces()
 
+    assert "energy" in io[0].calc.results
+    energy = io[0].get_potential_energy()
+
     assert isinstance(io[1:2], list)
     for atoms in io[1:2]:
         assert isinstance(atoms, ase.Atoms)
@@ -36,3 +40,7 @@ def test_IO(cu_file):
         assert "forces" in atoms.calc.results
         assert not np.array_equal(atoms.get_forces(), forces)
         forces = atoms.get_forces()
+
+        assert "energy" in atoms.calc.results
+        assert not np.array_equal(atoms.get_potential_energy(), energy)
+        energy = atoms.get_potential_energy()

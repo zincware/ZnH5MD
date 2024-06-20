@@ -1,13 +1,14 @@
-from collections.abc import MutableSequence
 import dataclasses
 import os
-import h5py
 import pathlib
-import znh5md.format as fmt
-import ase
-from ase.calculators.singlepoint import SinglePointCalculator
-from ase.calculators.calculator import all_properties
+from collections.abc import MutableSequence
 
+import ase
+import h5py
+from ase.calculators.calculator import all_properties
+from ase.calculators.singlepoint import SinglePointCalculator
+
+import znh5md.format as fmt
 
 MutableSequence = object
 
@@ -55,6 +56,22 @@ class IO(MutableSequence):
                         arrays_data[key] = fmt.get_property(
                             f["particles"], self.particle_group, key, index
                         )
+            if f"observables/{self.particle_group}" in f:
+                for key in f[f"observables/{self.particle_group}"].keys():
+                    if key in all_properties:
+                        calc_data[key] = fmt.get_property(
+                            f["observables"],
+                            self.particle_group,
+                            key,
+                            index,
+                        )
+                    else:
+                        info_data[key] = fmt.get_property(
+                            f["observables"],
+                            self.particle_group,
+                            key,
+                            index,
+                        )
 
         structures = []
         for idx in range(len(atomic_numbers)):
@@ -76,6 +93,9 @@ class IO(MutableSequence):
                 atoms.calc = SinglePointCalculator(atoms)
             for key, value in calc_data.items():
                 atoms.calc.results[key] = value[idx]
+
+            for key, value in info_data.items():
+                atoms.info[key] = value[idx]
 
             structures.append(atoms)
 

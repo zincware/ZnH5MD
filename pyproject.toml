@@ -34,3 +34,6 @@ select = ["E", "F", "N", "C", "I"]
 extend-ignore = [
     "D213", "D203", "N802", "N801"
 ]
+
+[tool.codespell]
+skip = "poetry.lock"

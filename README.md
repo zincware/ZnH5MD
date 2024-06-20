@@ -18,7 +18,7 @@ print(list(zn5hmd.iread("s22.h5")))
 # list[ase.Atoms]
 ```
 
-Further, you can access any data from within the entrie dataset through the
+Further, you can access any data from within the entire dataset through the
 `znh5md.IO` class which provides a `MutableSequence`-like interface.
 
 ```python
@@ -54,6 +54,6 @@ eventually. Any contributions are welcome.
 - Time/Step: ZnH5MD assumes a fixed timestamp and time interval of 1. This is
   primarily, because ASE does not include time data by default.
 - Units: There is no automatic unit conversion through e.g. the pint package
-- performance tweeks: there are many places in ZnH5MD that can be optimized
+- performance tweaks: there are many places in ZnH5MD that can be optimized
   w.r.t to better performance. Currently most of the values are hard-coded. This
   affects e.g. chunk size.

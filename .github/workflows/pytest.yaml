@@ -35,11 +35,8 @@ jobs:
           virtualenvs-in-project: true
       - name: Install package
         run: |
-          poetry install --no-interaction --without=notebook --all-extras
-      - name: Install package
-        run: |
-          poetry install --without=notebook --all-extras
-      - name: Pytest
+          poetry install --no-interaction
+      - name: Run pytest
         run: |
           poetry run python --version
           poetry run coverage run -m pytest

@@ -128,50 +128,117 @@ class IO(MutableSequence):
         if not self.filename.exists():
             self.create_file()
 
-        species = []
-        positions = []
+        data = []
 
         for atoms in images:
-            species.append(atoms.get_atomic_numbers())
-            positions.append(atoms.get_positions())
+            data.append(fmt.extract_atoms_data(atoms))
 
-        species = utils.concatenate_varying_shape_arrays(species)
-        positions = utils.concatenate_varying_shape_arrays(positions)
+        data = fmt.combine_asedata(data)
 
         with h5py.File(self.filename, "a") as f:
             if self.particle_group not in f["particles"]:
                 g_particle_grp = f["particles"].create_group(self.particle_group)
-                g_particle_grp = f["particles"][self.particle_group]
-                # add g_particle_grp.attrs["species"]["value"] = species
                 g_species = g_particle_grp.create_group("species")
                 ds_value = g_species.create_dataset(
                     "value",
-                    data=species,
+                    data=data.atomic_numbers,
                     dtype=np.float32,
                     chunks=True,
                     maxshape=(None, None),
                 )
+                if data.positions is not None:
+                    g_positions = g_particle_grp.create_group("position")
+                    ds_value = g_positions.create_dataset(
+                        "value",
+                        data=data.positions,
+                        chunks=True,
+                        maxshape=(None, None, None),
+                        dtype=np.float32,
+                    )
+                if data.cell is not None:
+                    g_cell = g_particle_grp.create_group("box")
+                    ds_value = g_cell.create_dataset(
+                        "value",
+                        data=data.cell,
+                        chunks=True,
+                        maxshape=(None, None, None),
+                        dtype=np.float32,
+                    )
+                if data.momenta is not None:
+                    g_momenta = g_particle_grp.create_group("momentum")
+                    ds_value = g_momenta.create_dataset(
+                        "value",
+                        data=data.momenta,
+                        chunks=True,
+                        maxshape=(None, None, None),
+                        dtype=np.float32,
+                    )
+                for key, value in data.arrays_data.items():
+                    g_array = g_particle_grp.create_group(key)
+                    ds_value = g_array.create_dataset(
+                        "value",
+                        data=value,
+                        chunks=True,
+                        maxshape=(None, None),
+                        dtype=np.float32,
+                    )
 
-                g_positions = g_particle_grp.create_group("position")
-                ds_value = g_positions.create_dataset(
-                    "value",
-                    data=positions,
-                    chunks=True,
-                    maxshape=(None, None, None),
-                    dtype=np.float32,
-                )
+                if len(data.calc_data) > 0:
+                    g_calc = f["observables"].create_group(self.particle_group)
+                    for key, value in data.calc_data.items():
+                        g_observable = g_calc.create_group(key)
+                        ds_value = g_observable.create_dataset(
+                            "value",
+                            data=value,
+                            chunks=True,
+                            maxshape=(None, None),
+                            dtype=np.float32,
+                        )
+
+                if len(data.info_data) > 0:
+                    g_info = f["observables"].create_group(self.particle_group)
+                    for key, value in data.info_data.items():
+                        g_observable = g_info.create_group(key)
+                        ds_value = g_observable.create_dataset(
+                            "value",
+                            data=value,
+                            chunks=True,
+                            maxshape=(None, None),
+                            dtype=np.float32,
+                        )
             else:
                 # we assume every key exists and won't create new datasets.
                 # if there is suddenly new data we would have to fill
                 # everything with NaNs before that value, which is
                 # currently not implemented
                 g_particle_grp = f["particles"][self.particle_group]
-
                 g_species = g_particle_grp["species"]
-                utils.fill_dataset(g_species["value"], species)
+                utils.fill_dataset(g_species["value"], data.atomic_numbers)
+                # TODO: should check if there are groups that are not in the new data.
+                # They also must be extended then!
+                if data.positions is not None:
+                    g_positions = g_particle_grp["position"]
+                    utils.fill_dataset(g_positions["value"], data.positions)
+                if data.cell is not None:
+                    g_cell = g_particle_grp["box"]
+                    utils.fill_dataset(g_cell["value"], data.cell)
+                if data.momenta is not None:
+                    g_momenta = g_particle_grp["momentum"]
+                    utils.fill_dataset(g_momenta["value"], data.momenta)
 
-                g_positions = g_particle_grp["position"]
-                utils.fill_dataset(g_positions["value"], positions)
+                for key, value in data.arrays_data.items():
+                    g_array = g_particle_grp[key]
+                    utils.fill_dataset(g_array["value"], value)
+
+                if f"observables/{self.particle_group}" in f:
+                    g_observables = f["observables"][self.particle_group]
+                    for key, value in data.calc_data.items():
+                        g_val = g_observables[key]
+                        utils.fill_dataset(g_val["value"], value)
+
+                    for key, value in data.info_data.items():
+                        g_val = g_observables[key]
+                        utils.fill_dataset(g_val["value"], value)
 
     def append(self, atoms: ase.Atoms):
         self.extend([atoms])

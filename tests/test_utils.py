@@ -44,6 +44,22 @@ def test_concatenate_split_varying_shape_arrays(a, b, c, result):
     assert np.array_equal(a3, c)
 
 
+def test_concatenate_split_varying_shape_arrays_empty():
+    a = np.array([1, 2])
+    b = np.array([])
+    c = np.array([4, 5, 6])
+
+    result = np.array([[1, 2, np.nan], [np.nan, np.nan, np.nan], [4, 5, 6]])
+    assert np.array_equal(
+        concatenate_varying_shape_arrays([a, b, c]), result, equal_nan=True
+    )
+
+    a, b, c = split_varying_shape_array(result)
+    assert np.array_equal(a, np.array([1, 2]))
+    assert np.array_equal(b, np.array([]))
+    assert np.array_equal(c, np.array([4, 5, 6]))
+
+
 @pytest.mark.parametrize(
     ["a", "b", "result"],
     [

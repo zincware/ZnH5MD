@@ -12,6 +12,8 @@ from ase.calculators.calculator import all_properties
 MutableSequence = object
 
 # TODO: use pint to convert the units in the h5md file to ase units
+# TODO: allow to keep the file open when extending / appending to the file
+# TODO: allow external file handles instead of providing filename
 
 
 @dataclasses.dataclass

@@ -16,7 +16,7 @@ def test_mda_read(tmp_path):
     water.calc = SinglePointCalculator(
         water, forces=np.random.rand(*water.positions.shape)
     )
-    io = znh5md.IO(tmp_path / "test.h5")
+    io = znh5md.IO(tmp_path / "test.h5", save_units=False)
     io.append(water)
     io.append(water)
 
@@ -26,6 +26,18 @@ def test_mda_read(tmp_path):
     for idx, ts in enumerate(u.trajectory):
         assert ts.frame == idx
         npt.assert_allclose(ts.positions, water.positions)
-        npt.assert_allclose(ts.velocities, water.get_momenta())
-        # TODO: can also read velocity and force
-        # TODO: convert units
+        npt.assert_allclose(ts.velocities, water.get_velocities())
+        npt.assert_allclose(ts.forces, water.calc.results["forces"])
+
+
+def test_mda_read_convert(tmp_path):
+    water = ase.build.molecule("H2O")
+    io = znh5md.IO(tmp_path / "test.h5")
+    io.append(water)
+    io.append(water)
+    u = mda.Universe.empty(3, trajectory=True)
+    reader = H5MDReader(tmp_path / "test.h5", convert_units=True)
+    u.trajectory = reader
+    for idx, ts in enumerate(u.trajectory):
+        assert ts.frame == idx
+        npt.assert_allclose(ts.positions, water.positions)

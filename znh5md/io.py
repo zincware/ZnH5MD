@@ -25,6 +25,8 @@ class IO(MutableSequence):
 
     # NOT H5MD conform, specify pbc per step
     pbc_group: bool = True
+    # export ASE units into the h5md file
+    save_units: bool = True
 
     author: str = "'N/A"
     author_email: str = "N/A"
@@ -72,12 +74,14 @@ class IO(MutableSequence):
             positions = fmt.get_positions(f["particles"], self.particle_group, index)
             cell = fmt.get_box(f["particles"], self.particle_group, index)
             pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
-            momenta = fmt.get_momenta(f["particles"], self.particle_group, index)
+            velocities = fmt.get_velocities(f["particles"], self.particle_group, index)
             for key in f["particles"][self.particle_group].keys():
                 if key not in fmt.ASE_TO_H5MD.inverse:
-                    if key in all_properties:
-                        calc_data[key] = fmt.get_property(
-                            f["particles"], self.particle_group, key, index
+                    if key in all_properties or key == "force":
+                        calc_data[key if key != "force" else "forces"] = (
+                            fmt.get_property(
+                                f["particles"], self.particle_group, key, index
+                            )
                         )
                     else:
                         arrays_data[key] = fmt.get_property(
@@ -108,8 +112,8 @@ class IO(MutableSequence):
                     atoms.positions = utils.remove_nan_rows(positions[idx])
                 if cell is not None:
                     atoms.cell = cell[idx]
-                if momenta is not None:
-                    atoms.set_momenta(utils.remove_nan_rows(momenta[idx]))
+                if velocities is not None:
+                    atoms.set_velocities(utils.remove_nan_rows(velocities[idx]))
                 if pbc is not None:
                     if isinstance(pbc[idx], np.ndarray):
                         atoms.pbc = pbc[idx]
@@ -172,7 +176,8 @@ class IO(MutableSequence):
                         maxshape=([None] * data.positions.ndim),
                         dtype=np.float64,
                     )
-                    ds_value.attrs["unit"] = "Angstrom"
+                    if self.save_units:
+                        ds_value.attrs["unit"] = "Angstrom"
                     ds_time = g_positions.create_dataset(
                         "time",
                         dtype=int,
@@ -232,23 +237,24 @@ class IO(MutableSequence):
                             data=np.arange(len(data.atomic_numbers)),
                         )
 
-                if data.momenta is not None:
-                    g_momenta = g_particle_grp.create_group("velocity")
-                    ds_value = g_momenta.create_dataset(
+                if data.velocities is not None:
+                    g_velocity = g_particle_grp.create_group("velocity")
+                    ds_value = g_velocity.create_dataset(
                         "value",
-                        data=data.momenta,
+                        data=data.velocities,
                         chunks=True,
-                        maxshape=([None] * data.momenta.ndim),
+                        maxshape=([None] * data.velocities.ndim),
                         dtype=np.float64,
                     )
-                    ds_value.attrs["unit"] = "Angstrom fs-1"
-                    ds_time = g_momenta.create_dataset(
+                    if self.save_units:
+                        ds_value.attrs["unit"] = "Angstrom/fs"
+                    ds_time = g_velocity.create_dataset(
                         "time",
                         dtype=int,
                         data=np.arange(len(data.atomic_numbers)),
                     )
                     ds_time.attrs["unit"] = "fs"
-                    ds_frame = g_momenta.create_dataset(
+                    ds_frame = g_velocity.create_dataset(
                         "step",
                         dtype=int,
                         data=np.arange(len(data.atomic_numbers)),
@@ -262,7 +268,8 @@ class IO(MutableSequence):
                         maxshape=([None] * value.ndim),
                         dtype=np.float64,
                     )
-                    # TODO: units
+                    if key == "force" and self.save_units:
+                        ds_value.attrs["unit"] = "eV/Angstrom"
                     ds_time = g_array.create_dataset(
                         "time",
                         dtype=int,
@@ -325,9 +332,9 @@ class IO(MutableSequence):
                         g_pbc = g_cell["pbc"]
                         utils.fill_dataset(g_pbc["value"], data.pbc)
 
-                if data.momenta is not None:
-                    g_momenta = g_particle_grp["velocity"]
-                    utils.fill_dataset(g_momenta["value"], data.momenta)
+                if data.velocities is not None:
+                    g_velocity = g_particle_grp["velocity"]
+                    utils.fill_dataset(g_velocity["value"], data.velocities)
 
                 for key, value in data.arrays_data.items():
                     g_array = g_particle_grp[key]

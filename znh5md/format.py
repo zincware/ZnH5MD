@@ -14,7 +14,7 @@ class ASEData:
     positions: np.ndarray | None
     cell: np.ndarray | None
     pbc: np.ndarray
-    momenta: np.ndarray | None
+    velocities: np.ndarray | None
     info_data: dict[str, np.ndarray]
     arrays_data: dict[str, np.ndarray]
 
@@ -38,7 +38,7 @@ def get_box(group, name, index) -> np.ndarray | None:
     return get_property(group, name, "box/edges", index)
 
 
-def get_momenta(group, name, index) -> np.ndarray | None:
+def get_velocities(group, name, index) -> np.ndarray | None:
     return get_property(group, name, "velocity", index)
 
 
@@ -54,12 +54,14 @@ def get_pbc(group, name, index) -> np.ndarray:
 
 
 # TODO: mapping from ASE to H5MD property names
+# TODO: this is currently used in two different ways:
+# - exclude properties with custom readers
+# - map ASE to H5MD property names and vice versa
 ASE_TO_H5MD = bidict(
     {
         "numbers": "species",
         "positions": "position",
         "cell": "box",
-        "momenta": "velocity",
     }
 )
 
@@ -69,7 +71,10 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
     positions = atoms.get_positions()
     cell = atoms.get_cell()
     pbc = atoms.get_pbc()
-    momenta = atoms.get_momenta()
+    if "momenta" in atoms.arrays:
+        velocities = atoms.get_velocities()
+    else:
+        velocities = None
     info_data = {}
     arrays_data = {}
     if atoms.calc is not None:
@@ -82,7 +87,7 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
             # equal to the number of atoms so this makes it a bit safer.
             # if you encout any issues here, make sure that #atoms != len(property)
             if value.shape[0] == len(atomic_numbers) or key in all_properties:
-                arrays_data[key] = value
+                arrays_data[key if key != "forces" else "force"] = value
             else:
                 info_data[key] = value
     for key in atoms.info:
@@ -98,7 +103,7 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
         positions=positions,
         cell=cell,
         pbc=pbc,
-        momenta=momenta,
+        velocities=velocities,
         info_data=info_data,
         arrays_data=arrays_data,
     )
@@ -121,11 +126,11 @@ def combine_asedata(data: list[ASEData]) -> ASEData:
     pbc = np.array(
         [x.pbc if x.pbc is not None else [False, False, False] for x in data]
     )
-    if all(x.momenta is None for x in data):
-        momenta = None
+    if all(x.velocities is None for x in data):
+        velocities = None
     else:
-        momenta = concatenate_varying_shape_arrays(
-            [x.momenta if x.momenta is not None else np.array([]) for x in data]
+        velocities = concatenate_varying_shape_arrays(
+            [x.velocities if x.velocities is not None else np.array([]) for x in data]
         )
     info_data = {
         key: concatenate_varying_shape_arrays(
@@ -150,5 +155,5 @@ def combine_asedata(data: list[ASEData]) -> ASEData:
         for key in data[0].arrays_data
     }
     return ASEData(
-        atomic_numbers, positions, cell, pbc, momenta, info_data, arrays_data
+        atomic_numbers, positions, cell, pbc, velocities, info_data, arrays_data
     )

@@ -12,7 +12,6 @@ h5py = "^3"
 ase = "^3.22"
 tqdm = "^4"
 typer = {extras = ["all"], version = "^0"}
-pyh5md = "^1.0.0"
 bidict = "^0.23.1"
 
 [tool.poetry.group.dev.dependencies]
@@ -20,6 +19,7 @@ pytest = "^7.2.0"
 pre-commit = "^2.20.0"
 ruff = "^0.4"
 mdanalysis = "^2.7.0"
+coverage = "^7.5.3"
 
 [tool.poetry.scripts]
 znh5md = 'znh5md.cli:app'

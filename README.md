@@ -23,7 +23,7 @@ Further, you can access any data from within the entrie dataset through the `znh
 import znh5md
 from ase.collections import s22
 
-io = znh5md.IO("s22.h5")
+io = znh5md.IO("s22.h5", particle_group="s22")
 io.extend(list(s22))
 
 print(io[5:10])

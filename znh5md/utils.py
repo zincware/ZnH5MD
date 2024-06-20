@@ -31,7 +31,7 @@ def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
     return result
 
 
-def remove_nan_rows(array: np.ndarray) -> np.ndarray:
+def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
     """Remove rows with NaN values from a numpy array.
 
     Parameters
@@ -45,8 +45,14 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray:
     Example:
     >>> remove_nan_rows(np.array([[ 1.,  2., np.nan], [ 3.,  4.,  5.]]))
     array([[3., 4., 5.]])
+    >>> remove_nan_rows(np.nan)
+    None
+    >>> remove_nan_rows(np.array(1))
+    1
 
     """
+    if len(np.shape(array)) == 0:
+        return array if not np.isnan(array) else None
     return array[~np.isnan(array).all(axis=tuple(range(1, array.ndim)))]
 
 

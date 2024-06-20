@@ -5,6 +5,7 @@ import pytest
 from znh5md.utils import (
     concatenate_varying_shape_arrays,
     fill_dataset,
+    remove_nan_rows,
     split_varying_shape_array,
 )
 
@@ -95,3 +96,16 @@ def test_fill_dataset(tmp_path, a, b, result):
         ds = f["test"][:]
 
     assert np.array_equal(ds, result, equal_nan=True)
+
+
+def test_remove_nan_rows():
+    a = np.array([1, 2, np.nan, 4, 5])
+    assert np.array_equal(remove_nan_rows(a), np.array([1, 2, 4, 5]))
+
+    b = np.array([[1, 2], [np.nan, np.nan], [4, 5]])
+    assert np.array_equal(remove_nan_rows(b), np.array([[1, 2], [4, 5]]))
+
+    c = np.array(5)
+
+    assert np.array_equal(remove_nan_rows(c), 5)
+    assert remove_nan_rows(np.nan) is None

@@ -34,11 +34,10 @@ def test_datasets(tmp_path, dataset, request):
             assert set(a.calc.results) == set(b.calc.results)
             for key in a.calc.results:
                 npt.assert_array_equal(a.calc.results[key], b.calc.results[key])
-
             if "energy" in a.calc.results:
                 assert b.get_potential_energy() == a.get_potential_energy()
-                assert isinstance(b.get_potential_energy(), float)
                 assert isinstance(a.get_potential_energy(), float)
+                assert isinstance(b.get_potential_energy(), float)
 
         assert set(a.arrays) == set(b.arrays)
         for key in a.arrays:
@@ -55,7 +54,7 @@ def test_datasets(tmp_path, dataset, request):
         "s22_info_arrays_calc",
     ],
 )
-def test_datasets(tmp_path, dataset, request):
+def test_datasets_h5py(tmp_path, dataset, request):
     images = request.getfixturevalue(dataset)
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(images)

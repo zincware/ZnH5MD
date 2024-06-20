@@ -91,3 +91,22 @@ def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell):
 
     for a, b in zip(s22_mixed_pbc_cell, io_b[:]):
         npt.assert_array_equal(a.get_positions(), b.get_positions())
+
+
+def test_two_datasets_external(tmp_path, s22_all_properties, s22_mixed_pbc_cell):
+    with h5py.File(tmp_path / "test.h5", "w") as f:
+        io_a = znh5md.IO(file_handle=f, particle_group="a")
+        io_b = znh5md.IO(file_handle=f, particle_group="b")
+
+        io_a.extend(s22_all_properties)
+        io_b.extend(s22_mixed_pbc_cell)
+
+        assert len(io_a) == len(s22_all_properties)
+        assert len(io_b) == len(s22_mixed_pbc_cell)
+
+    with h5py.File(tmp_path / "test.h5", "r") as f:
+        io_a = znh5md.IO(file_handle=f, particle_group="a")
+        io_b = znh5md.IO(file_handle=f, particle_group="b")
+
+        assert len(io_a) == len(s22_all_properties)
+        assert len(io_b) == len(s22_mixed_pbc_cell)

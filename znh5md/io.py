@@ -2,6 +2,7 @@ import dataclasses
 import os
 import pathlib
 from collections.abc import MutableSequence
+from typing import List, Optional, Union
 
 import ase
 import h5py
@@ -19,21 +20,23 @@ from znh5md import utils
 
 @dataclasses.dataclass
 class IO(MutableSequence):
-    filename: os.PathLike
+    """A class for handling H5MD files for ASE Atoms objects.
+    """
 
-    # NOT H5MD conform, specify pbc per step
-    pbc_group: bool = True
-    # export ASE units into the h5md file
-    save_units: bool = True
-
-    author: str = "'N/A"
+    filename: Union[str, os.PathLike]
+    pbc_group: bool = True  # Specify PBC per step (Not H5MD conform)
+    save_units: bool = True  # Export ASE units into the H5MD file
+    author: str = "N/A"
     author_email: str = "N/A"
     creator: str = "N/A"
     creator_version: str = "N/A"
-    particle_group: str | None = None
+    particle_group: Optional[str] = None
 
     def __post_init__(self):
         self.filename = pathlib.Path(self.filename)
+        self._set_particle_group()
+
+    def _set_particle_group(self):
         if self.particle_group and self.filename.exists():
             with h5py.File(self.filename, "r") as f:
                 self.particle_group = next(iter(f["particles"].keys()))
@@ -50,14 +53,15 @@ class IO(MutableSequence):
             g_creator = g_h5md.create_group("creator")
             g_creator.attrs["name"] = self.creator
             g_creator.attrs["version"] = self.creator_version
-
-            g_particles = f.create_group("particles")
+            f.create_group("particles")
 
     def __len__(self) -> int:
         with h5py.File(self.filename, "r") as f:
             return len(f["particles"][self.particle_group]["species"]["value"])
 
-    def __getitem__(self, index) -> ase.Atoms | list[ase.Atoms]:
+    def __getitem__(
+        self, index: Union[int, slice]
+    ) -> Union[ase.Atoms, List[ase.Atoms]]:
         single_item = isinstance(index, int)
         index = [index] if single_item else index
 
@@ -73,35 +77,55 @@ class IO(MutableSequence):
             cell = fmt.get_box(f["particles"], self.particle_group, index)
             pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
             velocities = fmt.get_velocities(f["particles"], self.particle_group, index)
-            for key in f["particles"][self.particle_group].keys():
-                if key not in fmt.ASE_TO_H5MD.inverse:
-                    if key in all_properties or key == "force":
-                        calc_data[key if key != "force" else "forces"] = (
-                            fmt.get_property(
-                                f["particles"], self.particle_group, key, index
-                            )
-                        )
-                    else:
-                        arrays_data[key] = fmt.get_property(
-                            f["particles"], self.particle_group, key, index
-                        )
-            if f"observables/{self.particle_group}" in f:
-                for key in f[f"observables/{self.particle_group}"].keys():
-                    if key in all_properties:
-                        calc_data[key] = fmt.get_property(
-                            f["observables"],
-                            self.particle_group,
-                            key,
-                            index,
-                        )
-                    else:
-                        info_data[key] = fmt.get_property(
-                            f["observables"],
-                            self.particle_group,
-                            key,
-                            index,
-                        )
 
+            self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
+
+        structures = self._build_structures(
+            atomic_numbers,
+            positions,
+            cell,
+            pbc,
+            velocities,
+            arrays_data,
+            calc_data,
+            info_data,
+        )
+
+        return structures[0] if single_item else structures
+
+    def _extract_additional_data(self, f, index, arrays_data, calc_data, info_data):
+        for key in f["particles"][self.particle_group].keys():
+            if key not in fmt.ASE_TO_H5MD.inverse:
+                if key in all_properties or key == "force":
+                    calc_data[key if key != "force" else "forces"] = fmt.get_property(
+                        f["particles"], self.particle_group, key, index
+                    )
+                else:
+                    arrays_data[key] = fmt.get_property(
+                        f["particles"], self.particle_group, key, index
+                    )
+        if f"observables/{self.particle_group}" in f:
+            for key in f[f"observables/{self.particle_group}"].keys():
+                if key in all_properties:
+                    calc_data[key] = fmt.get_property(
+                        f["observables"], self.particle_group, key, index
+                    )
+                else:
+                    info_data[key] = fmt.get_property(
+                        f["observables"], self.particle_group, key, index
+                    )
+
+    def _build_structures(
+        self,
+        atomic_numbers,
+        positions,
+        cell,
+        pbc,
+        velocities,
+        arrays_data,
+        calc_data,
+        info_data,
+    ):
         structures = []
         if atomic_numbers is not None:
             for idx in range(len(atomic_numbers)):
@@ -113,236 +137,109 @@ class IO(MutableSequence):
                 if velocities is not None:
                     atoms.set_velocities(utils.remove_nan_rows(velocities[idx]))
                 if pbc is not None:
-                    if isinstance(pbc[idx], np.ndarray):
-                        atoms.pbc = pbc[idx]
-                    else:
-                        atoms.pbc = pbc
+                    atoms.pbc = pbc[idx] if isinstance(pbc[idx], np.ndarray) else pbc
+
                 for key, value in arrays_data.items():
                     atoms.new_array(key, utils.remove_nan_rows(value[idx]))
 
-                if len(calc_data) > 0:
+                if calc_data:
                     atoms.calc = SinglePointCalculator(atoms)
-                for key, value in calc_data.items():
-                    atoms.calc.results[key] = utils.remove_nan_rows(value[idx])
+                    for key, value in calc_data.items():
+                        atoms.calc.results[key] = utils.remove_nan_rows(value[idx])
 
                 for key, value in info_data.items():
                     atoms.info[key] = utils.remove_nan_rows(value[idx])
 
                 structures.append(atoms)
+        return structures
 
-        return structures[0] if single_item else structures
-
-    def extend(self, images: list[ase.Atoms]):
+    def extend(self, images: List[ase.Atoms]):
         if not self.filename.exists():
             self.create_file()
 
-        data = []
-
-        for atoms in images:
-            data.append(fmt.extract_atoms_data(atoms))
-
-        data = fmt.combine_asedata(data)
+        data = [fmt.extract_atoms_data(atoms) for atoms in images]
+        combined_data = fmt.combine_asedata(data)
 
         with h5py.File(self.filename, "a") as f:
             if self.particle_group not in f["particles"]:
-                g_particle_grp = f["particles"].create_group(self.particle_group)
-                g_species = g_particle_grp.create_group("species")
-                ds_value = g_species.create_dataset(
+                self._create_particle_group(f, combined_data)
+            else:
+                self._extend_existing_data(f, combined_data)
+
+    def _create_particle_group(self, f, data):
+        g_particle_grp = f["particles"].create_group(self.particle_group)
+        self._create_group(g_particle_grp, "species", data.atomic_numbers)
+        self._create_group(g_particle_grp, "position", data.positions, "Angstrom")
+        self._create_group(g_particle_grp, "box/edges", data.cell)
+        g_particle_grp["box"].attrs["dimension"] = 3
+        
+        if self.pbc_group and data.pbc is not None:
+            self._create_group(g_particle_grp, "box/pbc", data.pbc)
+        self._create_group(g_particle_grp, "velocity", data.velocities, "Angstrom/fs")
+        for key, value in data.arrays_data.items():
+            self._create_group(
+                g_particle_grp, key, value, "eV/Angstrom" if key == "force" else None
+            )
+        self._create_observables(f, data.info_data)
+
+    def _create_group(self, parent_grp, name, data, unit=None):
+        if data is not None:
+            g_grp = parent_grp.create_group(name)
+            ds_value = g_grp.create_dataset(
+                "value",
+                data=data,
+                dtype=np.float64,
+                chunks=True,
+                maxshape=([None] * data.ndim),
+            )
+            if unit and self.save_units:
+                ds_value.attrs["unit"] = unit
+            self._add_time_and_step(g_grp, len(data))
+
+    def _add_time_and_step(self, grp, length):
+        ds_time = grp.create_dataset("time", dtype=int, data=np.arange(length))
+        ds_time.attrs["unit"] = "fs"
+        grp.create_dataset("step", dtype=int, data=np.arange(length))
+
+    def _create_observables(self, f, info_data):
+        if info_data:
+            g_observables = f.require_group("observables")
+            g_info = g_observables.require_group(self.particle_group)
+            for key, value in info_data.items():
+                g_observable = g_info.create_group(key)
+                ds_value = g_observable.create_dataset(
                     "value",
-                    data=data.atomic_numbers,
+                    data=value,
                     dtype=np.float64,
                     chunks=True,
-                    maxshape=([None] * data.atomic_numbers.ndim),
+                    maxshape=([None] * value.ndim),
                 )
-                ds_time = g_species.create_dataset(
-                    "time",
-                    dtype=int,
-                    data=np.arange(len(data.atomic_numbers)),
-                )
-                ds_time.attrs["unit"] = "fs"
-                ds_frame = g_species.create_dataset(
-                    "step",
-                    dtype=int,
-                    data=np.arange(len(data.atomic_numbers)),
-                )
-                if data.positions is not None:
-                    g_positions = g_particle_grp.create_group("position")
-                    ds_value = g_positions.create_dataset(
-                        "value",
-                        data=data.positions,
-                        chunks=True,
-                        maxshape=([None] * data.positions.ndim),
-                        dtype=np.float64,
-                    )
-                    if self.save_units:
-                        ds_value.attrs["unit"] = "Angstrom"
-                    ds_time = g_positions.create_dataset(
-                        "time",
-                        dtype=int,
-                        data=np.arange(len(data.atomic_numbers)),
-                    )
-                    ds_time.attrs["unit"] = "fs"
-                    ds_frame = g_positions.create_dataset(
-                        "step",
-                        dtype=int,
-                        data=np.arange(len(data.atomic_numbers)),
-                    )
-                if data.cell is not None:
-                    g_cell = g_particle_grp.create_group("box")
-                    g_cell.attrs["dimension"] = 3  # hard coded for now
-                    g_edges = g_cell.create_group("edges")
-                    ds_value = g_edges.create_dataset(
-                        "value",
-                        data=data.cell,
-                        chunks=True,
-                        maxshape=([None] * data.cell.ndim),
-                        dtype=np.float64,
-                    )
-                    ds_time = g_edges.create_dataset(
-                        "time",
-                        dtype=int,
-                        data=np.arange(len(data.atomic_numbers)),
-                    )
-                    ds_time.attrs["unit"] = "fs"
-                    ds_frame = g_edges.create_dataset(
-                        "step",
-                        dtype=int,
-                        data=np.arange(len(data.atomic_numbers)),
-                    )
-                if self.pbc_group:
-                    if data.pbc is not None:
-                        if "box" not in g_particle_grp:
-                            g_cell = g_particle_grp.create_group("box")
-                        else:
-                            g_cell = g_particle_grp["box"]
-                        g_pbc = g_cell.create_group("pbc")
-                        ds_value = g_pbc.create_dataset(
-                            "value",
-                            data=data.pbc,
-                            chunks=True,
-                            maxshape=(None, 3),
-                            dtype=np.float64,
-                        )
-                        ds_time = g_pbc.create_dataset(
-                            "time",
-                            dtype=int,
-                            data=np.arange(len(data.atomic_numbers)),
-                        )
-                        ds_time.attrs["unit"] = "fs"
-                        ds_frame = g_pbc.create_dataset(
-                            "step",
-                            dtype=int,
-                            data=np.arange(len(data.atomic_numbers)),
-                        )
+                self._add_time_and_step(g_observable, len(value))
 
-                if data.velocities is not None:
-                    g_velocity = g_particle_grp.create_group("velocity")
-                    ds_value = g_velocity.create_dataset(
-                        "value",
-                        data=data.velocities,
-                        chunks=True,
-                        maxshape=([None] * data.velocities.ndim),
-                        dtype=np.float64,
-                    )
-                    if self.save_units:
-                        ds_value.attrs["unit"] = "Angstrom/fs"
-                    ds_time = g_velocity.create_dataset(
-                        "time",
-                        dtype=int,
-                        data=np.arange(len(data.atomic_numbers)),
-                    )
-                    ds_time.attrs["unit"] = "fs"
-                    ds_frame = g_velocity.create_dataset(
-                        "step",
-                        dtype=int,
-                        data=np.arange(len(data.atomic_numbers)),
-                    )
-                for key, value in data.arrays_data.items():
-                    g_array = g_particle_grp.create_group(key)
-                    ds_value = g_array.create_dataset(
-                        "value",
-                        data=value,
-                        chunks=True,
-                        maxshape=([None] * value.ndim),
-                        dtype=np.float64,
-                    )
-                    if key == "force" and self.save_units:
-                        ds_value.attrs["unit"] = "eV/Angstrom"
-                    ds_time = g_array.create_dataset(
-                        "time",
-                        dtype=int,
-                        data=np.arange(len(data.atomic_numbers)),
-                    )
-                    ds_time.attrs["unit"] = "fs"
-                    ds_frame = g_array.create_dataset(
-                        "step",
-                        dtype=int,
-                        data=np.arange(len(data.atomic_numbers)),
-                    )
+    def _extend_existing_data(self, f, data):
+        g_particle_grp = f["particles"][self.particle_group]
+        self._extend_group(g_particle_grp, "species", data.atomic_numbers)
+        self._extend_group(g_particle_grp, "position", data.positions)
+        self._extend_group(g_particle_grp, "box/edges", data.cell)
+        if self.pbc_group and data.pbc is not None:
+            self._extend_group(g_particle_grp, "box/pbc", data.pbc)
+        self._extend_group(g_particle_grp, "velocity", data.velocities)
+        for key, value in data.arrays_data.items():
+            self._extend_group(g_particle_grp, key, value)
+        self._extend_observables(f, data.info_data)
 
-                if len(data.info_data) > 0:
-                    if "observables" not in f:
-                        g_observables = f.create_group("observables")
-                    if self.particle_group not in f["observables"]:
-                        g_info = f["observables"].create_group(self.particle_group)
-                    else:
-                        g_info = f["observables"][self.particle_group]
-                    for key, value in data.info_data.items():
-                        g_observable = g_info.create_group(key)
-                        ds_value = g_observable.create_dataset(
-                            "value",
-                            data=value,
-                            chunks=True,
-                            maxshape=([None] * value.ndim),
-                            dtype=np.float64,
-                        )
-                        ds_time = g_observable.create_dataset(
-                            "time",
-                            dtype=int,
-                            data=np.arange(len(data.atomic_numbers)),
-                        )
-                        ds_time.attrs["unit"] = "fs"
-                        ds_frame = g_observable.create_dataset(
-                            "step",
-                            dtype=int,
-                            data=np.arange(len(data.atomic_numbers)),
-                        )
-            else:
-                # we assume every key exists and won't create new datasets.
-                # if there is suddenly new data we would have to fill
-                # everything with NaNs before that value, which is
-                # currently not implemented
-                g_particle_grp = f["particles"][self.particle_group]
-                g_species = g_particle_grp["species"]
-                utils.fill_dataset(g_species["value"], data.atomic_numbers)
-                # TODO: should check if there are groups that are not in the new data.
-                # They also must be extended then!
-                if data.positions is not None:
-                    g_positions = g_particle_grp["position"]
-                    utils.fill_dataset(g_positions["value"], data.positions)
-                if data.cell is not None:
-                    g_cell = g_particle_grp["box"]
-                    g_edges = g_cell["edges"]
-                    utils.fill_dataset(g_edges["value"], data.cell)
-                if self.pbc_group:
-                    if data.pbc is not None:
-                        g_cell = g_particle_grp["box"]
-                        g_pbc = g_cell["pbc"]
-                        utils.fill_dataset(g_pbc["value"], data.pbc)
+    def _extend_group(self, parent_grp, name, data):
+        if data is not None and name in parent_grp:
+            g_grp = parent_grp[name]
+            utils.fill_dataset(g_grp["value"], data)
 
-                if data.velocities is not None:
-                    g_velocity = g_particle_grp["velocity"]
-                    utils.fill_dataset(g_velocity["value"], data.velocities)
-
-                for key, value in data.arrays_data.items():
-                    g_array = g_particle_grp[key]
-                    utils.fill_dataset(g_array["value"], value)
-
-                if f"observables/{self.particle_group}" in f:
-                    g_observables = f["observables"][self.particle_group]
-                    for key, value in data.info_data.items():
-                        g_val = g_observables[key]
-                        utils.fill_dataset(g_val["value"], value)
+    def _extend_observables(self, f, info_data):
+        if f"observables/{self.particle_group}" in f:
+            g_observables = f[f"observables/{self.particle_group}"]
+            for key, value in info_data.items():
+                if key in g_observables:
+                    g_val = g_observables[key]
+                    utils.fill_dataset(g_val["value"], value)
 
     def append(self, atoms: ase.Atoms):
         self.extend([atoms])

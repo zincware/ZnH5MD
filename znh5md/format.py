@@ -80,13 +80,10 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
     if atoms.calc is not None:
         for key in atoms.calc.results:
             if isinstance(atoms.calc.results[key], (int, float)):
-                value = np.array([atoms.calc.results[key]])
+                value = np.array(atoms.calc.results[key])
             else:
                 value = atoms.calc.results[key]
-            # We check for all properties, because shape[0] can be
-            # equal to the number of atoms so this makes it a bit safer.
-            # if you encout any issues here, make sure that #atoms != len(property)
-            if value.shape[0] == len(atomic_numbers) or key in all_properties:
+            if len(np.shape(value)) > 1 and value.shape[0] == len(atomic_numbers):
                 arrays_data[key if key != "forces" else "force"] = value
             else:
                 info_data[key] = value

@@ -1,3 +1,4 @@
+import h5py
 import numpy.testing as npt
 import pytest
 
@@ -34,8 +35,43 @@ def test_datasets(tmp_path, dataset, request):
             for key in a.calc.results:
                 npt.assert_array_equal(a.calc.results[key], b.calc.results[key])
 
+            if "energy" in a.calc.results:
+                assert b.get_potential_energy() == a.get_potential_energy()
+                assert isinstance(b.get_potential_energy(), float)
+                assert isinstance(a.get_potential_energy(), float)
+
+        assert set(a.arrays) == set(b.arrays)
         for key in a.arrays:
             npt.assert_array_equal(a.arrays[key], b.arrays[key])
 
+        assert set(a.info) == set(b.info)
         for key in a.info:
             npt.assert_array_equal(a.info[key], b.info[key])
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "s22_info_arrays_calc",
+    ],
+)
+def test_datasets(tmp_path, dataset, request):
+    images = request.getfixturevalue(dataset)
+    io = znh5md.IO(tmp_path / "test.h5")
+    io.extend(images)
+
+    with h5py.File(tmp_path / "test.h5", "r") as f:
+        assert "particles/atoms/position/value" in f
+        assert "particles/atoms/species/value" in f
+        assert "particles/atoms/force/value" in f
+        assert "observables/atoms/force/value" not in f
+
+        assert "particles/atoms/energy/value" not in f
+        assert "observables/atoms/energy/value" in f
+
+        assert "particles/atoms/mlip_forces/value" in f
+        assert "particles/atoms/mlip_forces_2/value" in f
+
+        assert "observables/atoms/mlip_energy/value" in f
+        assert "observables/atoms/mlip_energy_2/value" in f
+        assert "observables/atoms/mlip_stress/value" in f

@@ -41,4 +41,4 @@ extend-ignore = [
 ]
 
 [tool.codespell]
-skip = "poetry.lock"
+skip = "poetry.lock,*.ipynb"

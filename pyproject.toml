@@ -22,6 +22,11 @@ mdanalysis = "^2.7.0"
 coverage = "^7.5.3"
 pyh5md = "^1.0.0"
 
+
+[tool.poetry.group.benchmark.dependencies]
+pandas = "^2.2.2"
+chemfiles = "^0.10.4"
+
 [tool.poetry.scripts]
 znh5md = 'znh5md.cli:app'
 

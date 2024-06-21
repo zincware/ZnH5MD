@@ -131,6 +131,6 @@ def test_pbc(tmp_path, s22_mixed_pbc_cell):
             npt.assert_array_equal(
                 f["particles/atoms/box/edges/value"][idx], atom.get_cell()
             )
-            # Do we want to rename "pbc" to "boundary" and make if "none" 
+            # Do we want to rename "pbc" to "boundary" and make if "none"
             # or "periodic" as well? This should only exist if requested
             npt.assert_array_equal(f["particles/atoms/box/pbc/value"][idx], atom.pbc)

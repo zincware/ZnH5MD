@@ -75,6 +75,10 @@ def test_datasets_h5py(tmp_path, dataset, request):
         assert "observables/atoms/mlip_energy_2/value" in f
         assert "observables/atoms/mlip_stress/value" in f
 
+        npt.assert_array_equal(
+            f["particles/atoms/box"].attrs["boundary"], ["none", "none", "none"]
+        )
+
 
 def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell):
     io_a = znh5md.IO(tmp_path / "test.h5", particle_group="a")
@@ -110,3 +114,23 @@ def test_two_datasets_external(tmp_path, s22_all_properties, s22_mixed_pbc_cell)
 
         assert len(io_a) == len(s22_all_properties)
         assert len(io_b) == len(s22_mixed_pbc_cell)
+
+
+def test_pbc(tmp_path, s22_mixed_pbc_cell):
+    io = znh5md.IO(tmp_path / "test.h5")
+    io.extend(s22_mixed_pbc_cell)
+
+    pbc = ["periodic" if x else "none" for x in io[0].pbc]
+
+    with h5py.File(tmp_path / "test.h5", "r") as f:
+        assert "/particles/atoms/position/value" in f
+        assert "/particles/atoms/box" in f
+
+        npt.assert_array_equal(f["particles/atoms/box"].attrs["boundary"], pbc)
+        for idx, atom in enumerate(s22_mixed_pbc_cell):
+            npt.assert_array_equal(
+                f["particles/atoms/box/edges/value"][idx], atom.get_cell()
+            )
+            # Do we want to rename "pbc" to "boundary" and make if "none" or "periodic" as well?
+            # This should only exist if requested
+            npt.assert_array_equal(f["particles/atoms/box/pbc/value"][idx], atom.pbc)

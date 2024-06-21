@@ -1,3 +1,5 @@
+import ase
+import numpy as np
 import numpy.testing as npt
 import pytest
 
@@ -33,3 +35,15 @@ def test_append_false(tmp_path, s22_all_properties):
     znh5md.write(file, s22_all_properties)
     with pytest.raises(FileExistsError):
         znh5md.write(file, s22_all_properties, append=False)
+
+
+def test_write_H(tmp_path):
+    n_atoms = 10
+    images = [
+        ase.Atoms("H" * n_atoms, positions=np.random.rand(n_atoms, 3))
+        for _ in range(10000)
+    ]
+    file = tmp_path / "test.h5"
+    znh5md.write(file, images)
+    atoms = znh5md.read(file)
+    assert atoms == images[-1]

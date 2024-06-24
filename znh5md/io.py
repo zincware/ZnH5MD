@@ -10,7 +10,6 @@ import ase
 import h5py
 import numpy as np
 from ase.calculators.calculator import all_properties
-from ase.calculators.singlepoint import SinglePointCalculator
 
 import znh5md.format as fmt
 from znh5md import utils
@@ -106,7 +105,7 @@ class IO(MutableSequence):
 
             self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
 
-        structures = self._build_structures(
+        structures = utils.build_structures(
             atomic_numbers,
             positions,
             cell,
@@ -140,44 +139,6 @@ class IO(MutableSequence):
                     info_data[key] = fmt.get_property(
                         f["observables"], self.particle_group, key, index
                     )
-
-    def _build_structures(  # noqa: C901
-        self,
-        atomic_numbers,
-        positions,
-        cell,
-        pbc,
-        velocities,
-        arrays_data,
-        calc_data,
-        info_data,
-    ):
-        structures = []
-        if atomic_numbers is not None:
-            for idx in range(len(atomic_numbers)):
-                atoms = ase.Atoms(symbols=utils.remove_nan_rows(atomic_numbers[idx]))
-                if positions is not None:
-                    atoms.positions = utils.remove_nan_rows(positions[idx])
-                if cell is not None:
-                    atoms.cell = cell[idx]
-                if velocities is not None:
-                    atoms.set_velocities(utils.remove_nan_rows(velocities[idx]))
-                if pbc is not None:
-                    atoms.pbc = pbc[idx] if isinstance(pbc[0], np.ndarray) else pbc
-
-                for key, value in arrays_data.items():
-                    atoms.new_array(key, utils.remove_nan_rows(value[idx]))
-
-                if calc_data:
-                    atoms.calc = SinglePointCalculator(atoms)
-                    for key, value in calc_data.items():
-                        atoms.calc.results[key] = utils.remove_nan_rows(value[idx])
-
-                for key, value in info_data.items():
-                    atoms.info[key] = utils.remove_nan_rows(value[idx])
-
-                structures.append(atoms)
-        return structures
 
     def extend(self, images: List[ase.Atoms]):
         if self.filename is not None and not self.filename.exists():

@@ -1,4 +1,6 @@
+import ase
 import numpy as np
+from ase.calculators.singlepoint import SinglePointCalculator
 
 
 def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
@@ -120,3 +122,59 @@ def fill_dataset(dataset, new_data):
 
     # Append the new data to the dataset
     dataset[old_shape[0] :] = padded_new_data
+
+
+def build_atoms(
+    atomic_numbers, positions, velocities, cell, pbc, calc_data, info_data, arrays_data
+) -> ase.Atoms:
+    atoms = ase.Atoms(
+        symbols=atomic_numbers,
+        positions=positions,
+        velocities=velocities,
+        pbc=pbc,
+        cell=cell,
+    )
+    atoms.arrays.update(arrays_data)
+    atoms.info.update(info_data)
+
+    if calc_data is not None:
+        atoms.calc = SinglePointCalculator(atoms=atoms)
+        atoms.calc.results = calc_data
+
+    return atoms
+
+
+def build_structures(
+    atomic_numbers,
+    positions,
+    cell,
+    pbc,
+    velocities,
+    arrays_data,
+    calc_data,
+    info_data,
+) -> list[ase.Atoms]:
+    structures = []
+    if atomic_numbers is not None:
+        for idx in range(len(atomic_numbers)):
+            # ruff thinks, this is less complex than doing it in place ... ??
+            atoms = build_atoms(
+                atomic_numbers=remove_nan_rows(atomic_numbers[idx]),
+                positions=remove_nan_rows(positions[idx])
+                if positions is not None
+                else None,
+                velocities=remove_nan_rows(velocities[idx])
+                if velocities is not None
+                else None,
+                cell=cell[idx] if cell is not None else None,
+                pbc=pbc[idx] if isinstance(pbc[0], np.ndarray) else pbc,
+                arrays_data={
+                    k: remove_nan_rows(v[idx]) for k, v in arrays_data.items()
+                },
+                calc_data={k: remove_nan_rows(v[idx]) for k, v in calc_data.items()}
+                if calc_data is not None
+                else None,
+                info_data={k: remove_nan_rows(v[idx]) for k, v in info_data.items()},
+            )
+            structures.append(atoms)
+    return structures

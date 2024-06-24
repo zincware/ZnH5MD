@@ -32,3 +32,21 @@ def test_IO_append(tmp_path):
     for a, b in zip(images + [images[0]], io[:]):
         assert np.array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
         assert np.allclose(a.get_positions(), b.get_positions())
+
+
+def test_author_creater(tmp_path):
+    io = znh5md.IO(
+        tmp_path / "test.h5",
+        author="Fabian",
+        author_email="email@uni-stuttgart.de",
+        creator="ZnH5MD",
+        creator_version="V0.3",
+    )
+    io.extend(list(ase.collections.s22))
+
+    io2 = znh5md.IO(tmp_path / "test.h5")
+
+    assert io2.author == "Fabian"
+    assert io2.author_email == "email@uni-stuttgart.de"
+    assert io2.creator == "ZnH5MD"
+    assert io2.creator_version == "V0.3"

@@ -52,6 +52,7 @@ class IO(MutableSequence):
         if self.filename is not None:
             self.filename = pathlib.Path(self.filename)
         self._set_particle_group()
+        self._read_author_creator()
 
     def _set_particle_group(self):
         if self.particle_group is not None:
@@ -67,6 +68,18 @@ class IO(MutableSequence):
                 self.particle_group = next(iter(f["particles"].keys()))
         else:
             self.particle_group = "atoms"
+
+    def _read_author_creator(self):
+        with contextlib.suppress(FileNotFoundError, KeyError):
+            # FileNotFoundError if the filename does not exist
+            # KeyError if the file has not yet been initalized as H5MD
+            #   or the keys are not provided, which is officially
+            #   not allowed in H5MD.
+            with _open_file(self.filename, self.file_handle, mode="r") as f:
+                self.author = f["h5md"]["author"].attrs["name"]
+                self.author_email = f["h5md"]["author"].attrs["email"]
+                self.creator = f["h5md"]["creator"].attrs["name"]
+                self.creator_version = f["h5md"]["creator"].attrs["version"]
 
     def create_file(self):
         with _open_file(self.filename, self.file_handle, mode="w") as f:

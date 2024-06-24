@@ -15,8 +15,6 @@ import znh5md.format as fmt
 from znh5md import utils
 
 # TODO: use pint to convert the units in the h5md file to ase units
-# TODO: allow to keep the file open when extending / appending to the file
-# TODO: allow external file handles instead of providing filename
 
 
 @contextlib.contextmanager

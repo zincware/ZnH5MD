@@ -13,6 +13,7 @@ import znh5md
         "s22_all_properties",
         "s22_info_arrays_calc",
         "s22_mixed_pbc_cell",
+        # "s22_illegal_calc_results",
         "water",
     ],
 )
@@ -64,6 +65,8 @@ def test_datasets_h5py(tmp_path, dataset, request):
         assert "particles/atoms/species/value" in f
         assert "particles/atoms/force/value" in f
         assert "observables/atoms/force/value" not in f
+        assert "particles/atoms/velocity/value" in f
+        assert "observables/atoms/velocity/value" not in f
 
         assert "particles/atoms/energy/value" not in f
         assert "observables/atoms/energy/value" in f
@@ -74,6 +77,10 @@ def test_datasets_h5py(tmp_path, dataset, request):
         assert "observables/atoms/mlip_energy/value" in f
         assert "observables/atoms/mlip_energy_2/value" in f
         assert "observables/atoms/mlip_stress/value" in f
+
+        assert f["particles/atoms/velocity/value"].attrs["unit"] == "Angstrom/fs"
+        assert f["particles/atoms/force/value"].attrs["unit"] == "eV/Angstrom"
+        # assert f["observables/atoms/energy/value"].attrs["unit"] == "eV"
 
         npt.assert_array_equal(
             f["particles/atoms/box"].attrs["boundary"], ["none", "none", "none"]

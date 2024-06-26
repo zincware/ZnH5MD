@@ -109,6 +109,7 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
     )
 
 
+# TODO highlight that an additional dimension is added to ASEData here
 def combine_asedata(data: List[ASEData]) -> ASEData:
     """Combine multiple ASEData objects into one."""
     atomic_numbers = concatenate_varying_shape_arrays([x.atomic_numbers for x in data])

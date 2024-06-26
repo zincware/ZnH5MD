@@ -155,6 +155,9 @@ def build_structures(
     info_data,
 ) -> list[ase.Atoms]:
     structures = []
+    # ASE does not store "velocity" but only "momenta"
+    if "velocity" in arrays_data:
+        del arrays_data["velocity"]
     if atomic_numbers is not None:
         for idx in range(len(atomic_numbers)):
             # ruff thinks, this is less complex than doing it in place ... ??

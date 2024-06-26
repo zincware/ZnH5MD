@@ -170,7 +170,7 @@ class IO(MutableSequence):
             else:
                 self._extend_existing_data(f, combined_data)
 
-    def _create_particle_group(self, f, data):
+    def _create_particle_group(self, f, data: fmt.ASEData):
         g_particle_grp = f["particles"].create_group(self.particle_group)
         self._create_group(g_particle_grp, "species", data.atomic_numbers)
         self._create_group(g_particle_grp, "position", data.positions, "Angstrom")

@@ -174,8 +174,6 @@ class IO(MutableSequence):
 
     def _create_particle_group(self, f, data: fmt.ASEData):
         g_particle_grp = f["particles"].create_group(self.particle_group)
-        self._create_group(g_particle_grp, "species", data.atomic_numbers)
-        self._create_group(g_particle_grp, "position", data.positions, "Angstrom")
         self._create_group(g_particle_grp, "box/edges", data.cell)
         g_particle_grp["box"].attrs["dimension"] = 3
         g_particle_grp["box"].attrs["boundary"] = [
@@ -184,10 +182,9 @@ class IO(MutableSequence):
 
         if self.pbc_group and data.pbc is not None:
             self._create_group(g_particle_grp, "box/pbc", data.pbc)
-        self._create_group(g_particle_grp, "velocity", data.velocities, "Angstrom/fs")
         for key, value in data.particles.items():
             self._create_group(
-                g_particle_grp, key, value, "eV/Angstrom" if key == "force" else None
+                g_particle_grp, key, value, data.metadata.get(key, {}).get("unit")
             )
         self._create_observables(f, data.observables)
 
@@ -227,12 +224,9 @@ class IO(MutableSequence):
 
     def _extend_existing_data(self, f, data: fmt.ASEData):
         g_particle_grp = f["particles"][self.particle_group]
-        self._extend_group(g_particle_grp, "species", data.atomic_numbers)
-        self._extend_group(g_particle_grp, "position", data.positions)
         self._extend_group(g_particle_grp, "box/edges", data.cell)
         if self.pbc_group and data.pbc is not None:
             self._extend_group(g_particle_grp, "box/pbc", data.pbc)
-        self._extend_group(g_particle_grp, "velocity", data.velocities)
         for key, value in data.particles.items():
             self._extend_group(g_particle_grp, key, value)
         self._extend_observables(f, data.observables)

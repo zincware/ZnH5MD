@@ -81,8 +81,8 @@ def get_pbc(group, name: str, index) -> np.ndarray:
 
 ASE_TO_H5MD = bidict(
     {
-        "numbers": "species",
-        "positions": "position",
+        "numbers": "species",  # remove
+        "positions": "position",  # remove
         "cell": "box",
     }
 )

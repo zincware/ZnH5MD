@@ -134,7 +134,13 @@ class IO(MutableSequence):
     def _extract_additional_data(self, f, index, arrays_data, calc_data, info_data):
         for key in f["particles"][self.particle_group].keys():
             if key not in fmt.ASE_TO_H5MD.inverse:
-                if key in all_properties or key == "force":
+                if (
+                    f["particles"][self.particle_group][key]["value"].attrs.get(
+                        "ASE_CALCULATOR_RESULT"
+                    )
+                    or key in all_properties
+                    or key == "force"
+                ):
                     calc_data[key if key != "force" else "forces"] = fmt.get_property(
                         f["particles"], self.particle_group, key, index
                     )
@@ -144,7 +150,12 @@ class IO(MutableSequence):
                     )
         if f"observables/{self.particle_group}" in f:
             for key in f[f"observables/{self.particle_group}"].keys():
-                if key in all_properties:
+                if (
+                    f["observables"][self.particle_group][key]["value"].attrs.get(
+                        "ASE_CALCULATOR_RESULT"
+                    )
+                    or key in all_properties
+                ):
                     calc_data[key] = fmt.get_property(
                         f["observables"], self.particle_group, key, index
                     )
@@ -184,11 +195,26 @@ class IO(MutableSequence):
             self._create_group(g_particle_grp, "box/pbc", data.pbc)
         for key, value in data.particles.items():
             self._create_group(
-                g_particle_grp, key, value, data.metadata.get(key, {}).get("unit")
+                g_particle_grp,
+                key,
+                value,
+                data.metadata.get(key, {}).get("unit"),
+                calc=data.metadata.get(key, {}).get("calc"),
             )
-        self._create_observables(f, data.observables)
+        self._create_observables(
+            f,
+            data.observables,
+            data.metadata,
+        )
 
-    def _create_group(self, parent_grp, name, data, unit=None):
+    def _create_group(
+        self,
+        parent_grp,
+        name,
+        data,
+        unit: Optional[str] = None,
+        calc: Optional[bool] = None,
+    ):
         if data is not None:
             g_grp = parent_grp.create_group(name)
             ds_value = g_grp.create_dataset(
@@ -198,6 +224,8 @@ class IO(MutableSequence):
                 chunks=True,
                 maxshape=([None] * data.ndim),
             )
+            if calc is not None:
+                ds_value.attrs["ASE_CALCULATOR_RESULT"] = calc
             if unit and self.save_units:
                 ds_value.attrs["unit"] = unit
             self._add_time_and_step(g_grp, len(data))
@@ -207,19 +235,28 @@ class IO(MutableSequence):
         ds_time.attrs["unit"] = "fs"
         grp.create_dataset("step", dtype=int, data=np.arange(length))
 
-    def _create_observables(self, f, info_data):
+    def _create_observables(
+        self,
+        f,
+        info_data,
+        metadata: dict,
+    ):
         if info_data:
             g_observables = f.require_group("observables")
             g_info = g_observables.require_group(self.particle_group)
             for key, value in info_data.items():
                 g_observable = g_info.create_group(key)
-                _ = g_observable.create_dataset(
+                ds_value = g_observable.create_dataset(
                     "value",
                     data=value,
                     dtype=np.float64,
                     chunks=True,
                     maxshape=([None] * value.ndim),
                 )
+                if metadata.get(key, {}).get("calc") is not None:
+                    ds_value.attrs["ASE_CALCULATOR_RESULT"] = metadata[key]["calc"]
+                if metadata.get(key, {}).get("unit") and self.save_units:
+                    ds_value.attrs["unit"] = metadata[key]["unit"]
                 self._add_time_and_step(g_observable, len(value))
 
     def _extend_existing_data(self, f, data: fmt.ASEData):

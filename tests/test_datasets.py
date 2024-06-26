@@ -13,7 +13,7 @@ import znh5md
         "s22_all_properties",
         "s22_info_arrays_calc",
         "s22_mixed_pbc_cell",
-        # "s22_illegal_calc_results",
+        "s22_illegal_calc_results",
         "water",
     ],
 )

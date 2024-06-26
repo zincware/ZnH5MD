@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TypedDict
 
 import ase
 import numpy as np
@@ -9,17 +9,34 @@ from bidict import bidict
 from .utils import concatenate_varying_shape_arrays
 
 
+class ASEKeyMetaData(TypedDict):
+    unit: Optional[str]
+    calc: Optional[bool]
+
+
 @dataclasses.dataclass
 class ASEData:
     """A dataclass for storing ASE Atoms data."""
 
-    atomic_numbers: Optional[np.ndarray]
-    positions: Optional[np.ndarray]
     cell: Optional[np.ndarray]
     pbc: np.ndarray
-    velocities: Optional[np.ndarray]
-    info_data: Dict[str, np.ndarray]
-    arrays_data: Dict[str, np.ndarray]
+    observables: Dict[str, np.ndarray]
+    particles: Dict[str, np.ndarray]
+    metadata: Optional[Dict[str, ASEKeyMetaData]] = None
+
+    def __post_init__(self):
+        if self.metadata is None:
+            self.metadata = {}
+
+        for name in all_properties:
+            self.metadata[name] = {"unit": None, "calc": True}
+
+        self.metadata.pop("forces")  # is called 'force' in h5md
+        self.metadata["force"] = {"unit": "eV/Angstrom", "calc": True}
+
+        self.metadata["energy"]["unit"] = "eV"
+        self.metadata["velocity"] = {"unit": "Angstrom/fs", "calc": False}
+        self.metadata["position"] = {"unit": "angstrom", "calc": False}
 
 
 def get_property(group, name: str, prop: str, index) -> Optional[np.ndarray]:
@@ -64,8 +81,8 @@ def get_pbc(group, name: str, index) -> np.ndarray:
 
 ASE_TO_H5MD = bidict(
     {
-        "numbers": "species",
-        "positions": "position",
+        "numbers": "species",  # remove
+        "positions": "position",  # remove
         "cell": "box",
     }
 )
@@ -80,13 +97,19 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
     velocities = atoms.get_velocities() if "momenta" in atoms.arrays else None
 
     info_data = {}
-    arrays_data = {}
+    particles = {"species": atomic_numbers, "position": positions}
+    if velocities is not None:
+        particles["velocity"] = velocities
+    # save keys gathered from the calculator
+    uses_calc: list[str] = []
 
     if atoms.calc is not None:
         for key, result in atoms.calc.results.items():
+            if key not in all_properties:
+                uses_calc.append(key)
             value = np.array(result) if isinstance(result, (int, float)) else result
             if value.ndim > 1 and value.shape[0] == len(atomic_numbers):
-                arrays_data[key if key != "forces" else "force"] = value
+                particles[key if key != "forces" else "force"] = value
             else:
                 info_data[key] = value
 
@@ -96,41 +119,34 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
 
     for key, value in atoms.arrays.items():
         if key not in all_properties and key not in ASE_TO_H5MD:
-            arrays_data[key] = value
+            particles[key] = value
 
     return ASEData(
-        atomic_numbers=atomic_numbers,
-        positions=positions,
         cell=cell,
         pbc=pbc,
-        velocities=velocities,
-        info_data=info_data,
-        arrays_data=arrays_data,
+        observables=info_data,
+        particles=particles,
+        metadata={key: {"unit": None, "calc": True} for key in uses_calc},
     )
 
 
 # TODO highlight that an additional dimension is added to ASEData here
 def combine_asedata(data: List[ASEData]) -> ASEData:
     """Combine multiple ASEData objects into one."""
-    atomic_numbers = concatenate_varying_shape_arrays([x.atomic_numbers for x in data])
-    positions = _combine_property([x.positions for x in data])
     cell = _combine_property([x.cell for x in data])
     pbc = np.array(
         [x.pbc if x.pbc is not None else [False, False, False] for x in data]
     )
-    velocities = _combine_property([x.velocities for x in data])
 
-    info_data = _combine_dicts([x.info_data for x in data])
-    arrays_data = _combine_dicts([x.arrays_data for x in data])
+    observables = _combine_dicts([x.observables for x in data])
+    particles = _combine_dicts([x.particles for x in data])
 
     return ASEData(
-        atomic_numbers=atomic_numbers,
-        positions=positions,
         cell=cell,
         pbc=pbc,
-        velocities=velocities,
-        info_data=info_data,
-        arrays_data=arrays_data,
+        observables=observables,
+        particles=particles,
+        metadata=data[0].metadata,  # we assume they are all equal
     )
 
 

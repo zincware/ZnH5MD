@@ -106,7 +106,7 @@ class IO(MutableSequence):
         info_data = {}
 
         with _open_file(self.filename, self.file_handle, mode="r") as f:
-            atomic_numbers = fmt.get_atomic_numbers(
+            arrays_data["species"] = fmt.get_atomic_numbers(
                 f["particles"], self.particle_group, index
             )
             positions = fmt.get_positions(f["particles"], self.particle_group, index)
@@ -122,7 +122,6 @@ class IO(MutableSequence):
             self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
 
         structures = utils.build_structures(
-            atomic_numbers,
             cell,
             pbc,
             arrays_data,

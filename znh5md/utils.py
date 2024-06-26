@@ -145,7 +145,6 @@ def build_atoms(
 
 
 def build_structures(
-    atomic_numbers,
     cell,
     pbc,
     arrays_data,
@@ -156,6 +155,7 @@ def build_structures(
 
     positions = arrays_data.pop("positions", None)
     velocities = arrays_data.pop("velocity", None)
+    atomic_numbers = arrays_data.pop("species")
     if atomic_numbers is not None:
         for idx in range(len(atomic_numbers)):
             # ruff thinks, this is less complex than doing it in place ... ??

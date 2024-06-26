@@ -148,22 +148,21 @@ def build_structures(
     atomic_numbers,
     cell,
     pbc,
-    velocities,
     arrays_data,
     calc_data,
     info_data,
 ) -> list[ase.Atoms]:
     structures = []
-    # ASE does not store "velocity" but only "momenta"
-    if "velocity" in arrays_data:
-        del arrays_data["velocity"]
+
+    positions = arrays_data.pop("positions", None)
+    velocities = arrays_data.pop("velocity", None)
     if atomic_numbers is not None:
         for idx in range(len(atomic_numbers)):
             # ruff thinks, this is less complex than doing it in place ... ??
             atoms = build_atoms(
                 atomic_numbers=remove_nan_rows(atomic_numbers[idx]),
-                positions=remove_nan_rows(arrays_data["positions"][idx])
-                if "positions" in arrays_data
+                positions=remove_nan_rows(positions[idx])
+                if positions is not None
                 else None,
                 velocities=remove_nan_rows(velocities[idx])
                 if velocities is not None

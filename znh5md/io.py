@@ -109,12 +109,15 @@ class IO(MutableSequence):
             atomic_numbers = fmt.get_atomic_numbers(
                 f["particles"], self.particle_group, index
             )
-            arrays_data["positions"] = fmt.get_positions(
-                f["particles"], self.particle_group, index
-            )
+            positions = fmt.get_positions(f["particles"], self.particle_group, index)
+            if positions is not None:
+                arrays_data["positions"] = positions
             cell = fmt.get_box(f["particles"], self.particle_group, index)
             pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
+
             velocities = fmt.get_velocities(f["particles"], self.particle_group, index)
+            if velocities is not None:
+                arrays_data["velocity"] = velocities
 
             self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
 
@@ -122,7 +125,6 @@ class IO(MutableSequence):
             atomic_numbers,
             cell,
             pbc,
-            velocities,
             arrays_data,
             calc_data,
             info_data,

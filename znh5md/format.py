@@ -30,14 +30,13 @@ class ASEData:
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
-        
+
         for name in all_properties:
             self.metadata[name] = {"unit": None, "calc": True}
-        
+
         self.metadata["energy"]["unit"] = "eV"
         self.metadata["forces"]["unit"] = "eV/angstrom"
         self.metadata["velocity"] = {"unit": "angstrom/fs", "calc": False}
-    
 
 
 def get_property(group, name: str, prop: str, index) -> Optional[np.ndarray]:

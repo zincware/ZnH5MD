@@ -70,7 +70,7 @@ class IO(MutableSequence):
     def _read_author_creator(self):
         with contextlib.suppress(FileNotFoundError, KeyError):
             # FileNotFoundError if the filename does not exist
-            # KeyError if the file has not yet been initalized as H5MD
+            # KeyError if the file has not yet been initialized as H5MD
             #   or the keys are not provided, which is officially
             #   not allowed in H5MD.
             with _open_file(self.filename, self.file_handle, mode="r") as f:

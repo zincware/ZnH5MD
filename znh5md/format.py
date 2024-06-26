@@ -105,6 +105,8 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
 
     if atoms.calc is not None:
         for key, result in atoms.calc.results.items():
+            if key not in all_properties:
+                uses_calc.append(key)
             value = np.array(result) if isinstance(result, (int, float)) else result
             if value.ndim > 1 and value.shape[0] == len(atomic_numbers):
                 particles[key if key != "forces" else "force"] = value
@@ -124,6 +126,7 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
         pbc=pbc,
         observables=info_data,
         particles=particles,
+        metadata={key: {"unit": None, "calc": True} for key in uses_calc},
     )
 
 
@@ -143,6 +146,7 @@ def combine_asedata(data: List[ASEData]) -> ASEData:
         pbc=pbc,
         observables=observables,
         particles=particles,
+        metadata=data[0].metadata,  # we assume they are all equal
     )
 
 

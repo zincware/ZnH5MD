@@ -183,11 +183,11 @@ class IO(MutableSequence):
         if self.pbc_group and data.pbc is not None:
             self._create_group(g_particle_grp, "box/pbc", data.pbc)
         self._create_group(g_particle_grp, "velocity", data.velocities, "Angstrom/fs")
-        for key, value in data.arrays_data.items():
+        for key, value in data.particles.items():
             self._create_group(
                 g_particle_grp, key, value, "eV/Angstrom" if key == "force" else None
             )
-        self._create_observables(f, data.info_data)
+        self._create_observables(f, data.observables)
 
     def _create_group(self, parent_grp, name, data, unit=None):
         if data is not None:
@@ -223,7 +223,7 @@ class IO(MutableSequence):
                 )
                 self._add_time_and_step(g_observable, len(value))
 
-    def _extend_existing_data(self, f, data):
+    def _extend_existing_data(self, f, data: fmt.ASEData):
         g_particle_grp = f["particles"][self.particle_group]
         self._extend_group(g_particle_grp, "species", data.atomic_numbers)
         self._extend_group(g_particle_grp, "position", data.positions)
@@ -231,9 +231,9 @@ class IO(MutableSequence):
         if self.pbc_group and data.pbc is not None:
             self._extend_group(g_particle_grp, "box/pbc", data.pbc)
         self._extend_group(g_particle_grp, "velocity", data.velocities)
-        for key, value in data.arrays_data.items():
+        for key, value in data.particles.items():
             self._extend_group(g_particle_grp, key, value)
-        self._extend_observables(f, data.info_data)
+        self._extend_observables(f, data.observables)
 
     def _extend_group(self, parent_grp, name, data):
         if data is not None and name in parent_grp:

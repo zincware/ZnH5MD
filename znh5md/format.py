@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TypedDict
 
 import ase
 import numpy as np
@@ -7,6 +7,11 @@ from ase.calculators.calculator import all_properties
 from bidict import bidict
 
 from .utils import concatenate_varying_shape_arrays
+
+
+class ASEKeyMetaData(TypedDict):
+    unit: Optional[str]
+    calc: Optional[bool]
 
 
 @dataclasses.dataclass
@@ -18,8 +23,21 @@ class ASEData:
     cell: Optional[np.ndarray]
     pbc: np.ndarray
     velocities: Optional[np.ndarray]
-    info_data: Dict[str, np.ndarray]
-    arrays_data: Dict[str, np.ndarray]
+    observables: Dict[str, np.ndarray]
+    particles: Dict[str, np.ndarray]
+    metadata: Optional[Dict[str, ASEKeyMetaData]] = None
+
+    def __post_init__(self):
+        if self.metadata is None:
+            self.metadata = {}
+        
+        for name in all_properties:
+            self.metadata[name] = {"unit": None, "calc": True}
+        
+        self.metadata["energy"]["unit"] = "eV"
+        self.metadata["forces"]["unit"] = "eV/angstrom"
+        self.metadata["velocity"] = {"unit": "angstrom/fs", "calc": False}
+    
 
 
 def get_property(group, name: str, prop: str, index) -> Optional[np.ndarray]:
@@ -80,13 +98,15 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
     velocities = atoms.get_velocities() if "momenta" in atoms.arrays else None
 
     info_data = {}
-    arrays_data = {}
+    particles = {}
+    # save keys gathered from the calculator
+    uses_calc: list[str] = []
 
     if atoms.calc is not None:
         for key, result in atoms.calc.results.items():
             value = np.array(result) if isinstance(result, (int, float)) else result
             if value.ndim > 1 and value.shape[0] == len(atomic_numbers):
-                arrays_data[key if key != "forces" else "force"] = value
+                particles[key if key != "forces" else "force"] = value
             else:
                 info_data[key] = value
 
@@ -96,7 +116,7 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
 
     for key, value in atoms.arrays.items():
         if key not in all_properties and key not in ASE_TO_H5MD:
-            arrays_data[key] = value
+            particles[key] = value
 
     return ASEData(
         atomic_numbers=atomic_numbers,
@@ -104,8 +124,8 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
         cell=cell,
         pbc=pbc,
         velocities=velocities,
-        info_data=info_data,
-        arrays_data=arrays_data,
+        observables=info_data,
+        particles=particles,
     )
 
 
@@ -120,8 +140,8 @@ def combine_asedata(data: List[ASEData]) -> ASEData:
     )
     velocities = _combine_property([x.velocities for x in data])
 
-    info_data = _combine_dicts([x.info_data for x in data])
-    arrays_data = _combine_dicts([x.arrays_data for x in data])
+    observables = _combine_dicts([x.observables for x in data])
+    particles = _combine_dicts([x.particles for x in data])
 
     return ASEData(
         atomic_numbers=atomic_numbers,
@@ -129,8 +149,8 @@ def combine_asedata(data: List[ASEData]) -> ASEData:
         cell=cell,
         pbc=pbc,
         velocities=velocities,
-        info_data=info_data,
-        arrays_data=arrays_data,
+        observables=observables,
+        particles=particles,
     )
 
 

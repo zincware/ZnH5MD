@@ -15,8 +15,8 @@ def view(file: str):
 
     typer.echo(f"Loading atoms from {file}")
 
-    data = znh5md.ASEH5MD(file)
-    ase.visualize.view(data.get_atoms_list())
+    io = znh5md.IO(file)
+    ase.visualize.view(io[:])
 
 
 @app.command()
@@ -24,8 +24,8 @@ def export(file: str, output: str):
     """Export a H5MD File into the output file."""
     import znh5md
 
-    data = znh5md.ASEH5MD(file)
-    for atom in tqdm.tqdm(data.get_atoms_list(), ncols=120):
+    data = znh5md.IO(file)
+    for atom in tqdm.tqdm(data[:], ncols=120):
         ase.io.write(output, atom, append=True)
 
 
@@ -34,8 +34,8 @@ def convert(file: str, db_file: str):
     """Save a trajectory as H5MD File."""
     import znh5md
 
-    db = znh5md.io.DataWriter(db_file)
-    db.add(znh5md.io.ASEFileReader(file))
+    atoms = ase.io.read(file, ":")
+    znh5md.write(db_file, atoms)
 
 
 def version_callback(value: bool) -> None:
@@ -51,7 +51,5 @@ def main(
         None, "--version", callback=version_callback, is_eager=True
     ),
 ) -> None:
-    """Dask4DVC CLI callback.
-    Run the DVC graph or DVC experiments in parallel using dask.
-    """
+    """ZnH5MD: A H5MD file viewer and converter."""
     _ = version  # this would be greyed out otherwise

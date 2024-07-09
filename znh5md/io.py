@@ -227,6 +227,7 @@ class IO(MutableSequence):
             self._add_time_and_step(g_grp, len(data))
 
     def _add_time_and_step(self, grp, length):
+        # TODO: support custom time units
         ds_time = grp.create_dataset("time", dtype=int, data=np.arange(length))
         ds_time.attrs["unit"] = "fs"
         grp.create_dataset("step", dtype=int, data=np.arange(length))
@@ -267,6 +268,7 @@ class IO(MutableSequence):
     def _extend_group(self, parent_grp, name, data):
         if data is not None and name in parent_grp:
             g_grp = parent_grp[name]
+            # TODO: what happens to "step" and "time" here?
             utils.fill_dataset(g_grp["value"], data)
 
     def _extend_observables(self, f, info_data):
@@ -275,6 +277,7 @@ class IO(MutableSequence):
             for key, value in info_data.items():
                 if key in g_observables:
                     g_val = g_observables[key]
+                    # TODO: what happens to "step" and "time" here?
                     utils.fill_dataset(g_val["value"], value)
 
     def append(self, atoms: ase.Atoms):

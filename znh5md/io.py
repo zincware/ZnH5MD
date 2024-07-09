@@ -43,6 +43,7 @@ class IO(MutableSequence):
     particle_group: Optional[str] = None
     compression: Optional[str] = "gzip"
     compression_opts: Optional[int] = None
+    timestep: float = 1.0
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -118,6 +119,7 @@ class IO(MutableSequence):
             pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
 
             self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
+            self._update_info_data_with_time_and_step(info_data, f, index)
 
         structures = utils.build_structures(
             cell,
@@ -128,6 +130,15 @@ class IO(MutableSequence):
         )
 
         return structures[0] if single_item else structures
+
+    def _update_info_data_with_time_and_step(self, info_data, f, index):
+        # we use the time value from `species` because it is guaranteed to exist
+        time = fmt.get_time(f["particles"], self.particle_group, index)
+        step = fmt.get_step(f["particles"], self.particle_group, index)
+        if any(key in info_data for key in fmt.CustomINFOData.__members__):
+            raise ValueError("key is already present in the info data.")
+        info_data[fmt.CustomINFOData.h5md_time.name] = time
+        info_data[fmt.CustomINFOData.h5md_step.name] = step
 
     def _extract_additional_data(self, f, index, arrays_data, calc_data, info_data):
         for key in f["particles"][self.particle_group].keys():
@@ -231,11 +242,10 @@ class IO(MutableSequence):
             self._add_time_and_step(g_grp, len(data))
 
     def _add_time_and_step(self, grp, length):
-        # TODO: support custom time units
         ds_time = grp.create_dataset(
             "time",
             dtype=int,
-            data=np.arange(length),
+            data=np.arange(length) * self.timestep,
             compression=self.compression,
             compression_opts=self.compression_opts,
         )

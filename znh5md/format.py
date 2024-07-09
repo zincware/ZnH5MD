@@ -1,4 +1,5 @@
 import dataclasses
+import enum
 from typing import Dict, List, Optional, TypedDict
 
 import ase
@@ -12,6 +13,13 @@ from .utils import concatenate_varying_shape_arrays
 class ASEKeyMetaData(TypedDict):
     unit: Optional[str]
     calc: Optional[bool]
+
+
+class CustomINFOData(str, enum.Enum):
+    """Custom INFO data that is not stored in the particles group."""
+
+    h5md_step = "step"
+    h5md_time = "time"
 
 
 @dataclasses.dataclass
@@ -79,6 +87,17 @@ def get_pbc(group, name: str, index) -> np.ndarray:
             return np.array([False, False, False])
 
 
+def get_time(group, name: str, index) -> np.ndarray:
+    """Retrieve time from an HDF5 group."""
+    # TODO: support fixted timestep
+    return group[name]["species"]["time"][index]
+
+
+def get_step(group, name: str, index) -> np.ndarray:
+    """Retrieve step from an HDF5 group."""
+    return group[name]["species"]["step"][index]
+
+
 ASE_TO_H5MD = bidict(
     {
         "numbers": "species",  # remove
@@ -114,7 +133,11 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
                 info_data[key] = value
 
     for key, value in atoms.info.items():
-        if key not in all_properties and key not in ASE_TO_H5MD:
+        if (
+            key not in all_properties
+            and key not in ASE_TO_H5MD
+            and key not in CustomINFOData.__members__
+        ):
             info_data[key] = value
 
     for key, value in atoms.arrays.items():

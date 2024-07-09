@@ -11,11 +11,13 @@ def read(filename, index: int | slice | list[int] = -1) -> ase.Atoms:
     return io[index]
 
 
-def write(filename, images, append: bool = True) -> None:
+def write(filename, images: ase.Atoms | list[ase.Atoms], append: bool = True) -> None:
     if not append and pathlib.Path(filename).exists():
         raise FileExistsError(
             f"{filename} already exists. Remove it or set append=True."
         )
+    if isinstance(images, ase.Atoms):
+        images = [images]
     io = IO(filename)
     io.extend(images)
 

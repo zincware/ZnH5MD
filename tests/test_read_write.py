@@ -6,6 +6,13 @@ import pytest
 import znh5md
 
 
+def test_write_single(tmp_path):
+    atoms = ase.Atoms("H2O", positions=np.random.rand(3, 3))
+    file = tmp_path / "test.h5"
+    znh5md.write(file, atoms)
+    assert file.exists()
+
+
 def test_read_write(tmp_path, s22_all_properties):
     file = tmp_path / "test.h5"
     znh5md.write(file, s22_all_properties)

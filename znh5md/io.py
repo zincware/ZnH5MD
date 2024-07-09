@@ -248,6 +248,7 @@ class IO(MutableSequence):
             data=np.arange(length) * self.timestep,
             compression=self.compression,
             compression_opts=self.compression_opts,
+            maxshape=(None,),
         )
         ds_time.attrs["unit"] = "fs"
         grp.create_dataset(
@@ -256,6 +257,7 @@ class IO(MutableSequence):
             data=np.arange(length),
             compression=self.compression,
             compression_opts=self.compression_opts,
+            maxshape=(None,),
         )
 
     def _create_observables(
@@ -296,8 +298,14 @@ class IO(MutableSequence):
     def _extend_group(self, parent_grp, name, data):
         if data is not None and name in parent_grp:
             g_grp = parent_grp[name]
-            # TODO: what happens to "step" and "time" here?
             utils.fill_dataset(g_grp["value"], data)
+
+            last_time = g_grp["time"][-1]
+            last_step = g_grp["step"][-1]
+            utils.fill_dataset(
+                g_grp["time"], np.arange(1, len(data) + 1) * self.timestep + last_time
+            )
+            utils.fill_dataset(g_grp["step"], np.arange(1, len(data) + 1) + last_step)
 
     def _extend_observables(self, f, info_data):
         if f"observables/{self.particle_group}" in f:
@@ -307,6 +315,13 @@ class IO(MutableSequence):
                     g_val = g_observables[key]
                     # TODO: what happens to "step" and "time" here?
                     utils.fill_dataset(g_val["value"], value)
+
+                    last_time = g_val["time"][-1]
+                    last_step = g_val["step"][-1]
+                    utils.fill_dataset(
+                        g_val["time"], np.arange(len(value)) * self.timestep + last_time
+                    )
+                    utils.fill_dataset(g_val["step"], np.arange(len(value)) + last_step)
 
     def append(self, atoms: ase.Atoms):
         self.extend([atoms])

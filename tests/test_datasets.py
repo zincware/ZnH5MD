@@ -161,7 +161,10 @@ def test_save_load_save_load(tmp_path, s22_mixed_pbc_cell):
 def test_time_step(tmp_path, s22_mixed_pbc_cell, timestep):
     io = znh5md.IO(tmp_path / "test.h5", timestep=timestep)
     io.extend(s22_mixed_pbc_cell)
+    # Do it twice, to check for appending
+    io.extend(s22_mixed_pbc_cell)
     images = io[:]
+    assert len(images) == len(s22_mixed_pbc_cell) * 2
     for idx, atoms in enumerate(images):
         assert atoms.info["h5md_step"] == idx
         assert atoms.info["h5md_time"] == idx * timestep

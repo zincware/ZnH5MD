@@ -53,7 +53,7 @@ def test_bm_write_size(tmp_path, benchmark, atoms, size, count=100):
 
 @pytest.mark.benchmark(group="read-count")
 @pytest.mark.parametrize("count", [100 * x for x in range(1, 11)])
-def test_bm_read_count(tmp_path, benchmark, atoms, size, count):
+def test_bm_read_count(tmp_path, benchmark, atoms, count, size=100):
     images = atoms(count, size)
     filename = tmp_path / f"{uuid.uuid4()}.h5md"
     znh5md.write(filename, images, compression="gzip")

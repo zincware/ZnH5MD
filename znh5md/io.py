@@ -44,6 +44,7 @@ class IO(MutableSequence):
     compression: Optional[str] = "gzip"
     compression_opts: Optional[int] = None
     timestep: float = 1.0
+    store: t.Literal["time", "linear"] = "time"
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -251,7 +252,7 @@ class IO(MutableSequence):
             maxshape=(None,),
         )
         ds_time.attrs["unit"] = "fs"
-        grp.create_dataset(
+        ds_step = grp.create_dataset(
             "step",
             dtype=int,
             data=np.arange(length),
@@ -259,6 +260,9 @@ class IO(MutableSequence):
             compression_opts=self.compression_opts,
             maxshape=(None,),
         )
+        if self.store == "linear":
+            ds_time[()] = self.timestep
+            ds_step[()] = 1
 
     def _create_observables(
         self,
@@ -299,13 +303,16 @@ class IO(MutableSequence):
         if data is not None and name in parent_grp:
             g_grp = parent_grp[name]
             utils.fill_dataset(g_grp["value"], data)
-
-            last_time = g_grp["time"][-1]
-            last_step = g_grp["step"][-1]
-            utils.fill_dataset(
-                g_grp["time"], np.arange(1, len(data) + 1) * self.timestep + last_time
-            )
-            utils.fill_dataset(g_grp["step"], np.arange(1, len(data) + 1) + last_step)
+            if self.store == "time":
+                last_time = g_grp["time"][-1]
+                last_step = g_grp["step"][-1]
+                utils.fill_dataset(
+                    g_grp["time"],
+                    np.arange(1, len(data) + 1) * self.timestep + last_time,
+                )
+                utils.fill_dataset(
+                    g_grp["step"], np.arange(1, len(data) + 1) + last_step
+                )
 
     def _extend_observables(self, f, info_data):
         if f"observables/{self.particle_group}" in f:
@@ -313,15 +320,17 @@ class IO(MutableSequence):
             for key, value in info_data.items():
                 if key in g_observables:
                     g_val = g_observables[key]
-                    # TODO: what happens to "step" and "time" here?
                     utils.fill_dataset(g_val["value"], value)
-
-                    last_time = g_val["time"][-1]
-                    last_step = g_val["step"][-1]
-                    utils.fill_dataset(
-                        g_val["time"], np.arange(len(value)) * self.timestep + last_time
-                    )
-                    utils.fill_dataset(g_val["step"], np.arange(len(value)) + last_step)
+                    if self.store == "time":
+                        last_time = g_val["time"][-1]
+                        last_step = g_val["step"][-1]
+                        utils.fill_dataset(
+                            g_val["time"],
+                            np.arange(len(value)) * self.timestep + last_time,
+                        )
+                        utils.fill_dataset(
+                            g_val["step"], np.arange(len(value)) + last_step
+                        )
 
     def append(self, atoms: ase.Atoms):
         self.extend([atoms])

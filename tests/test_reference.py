@@ -198,10 +198,11 @@ def test_pyh5md_ASEH5MD(md, tmp_path, store):
         npt.assert_array_equal(a.get_cell(), b.get_cell())
 
 
-def test_DataWriter_pyh5md(md, tmp_path):
+@pytest.mark.parametrize("store", ["time", "linear"])
+def test_DataWriter_pyh5md(md, tmp_path, store):
     """Test reading DataWriter with pyh5md."""
     path = tmp_path / "db.h5"
-    io = znh5md.IO(path, timestep=0.1)
+    io = znh5md.IO(path, timestep=0.1, store=store)
     io.extend(md)
 
     with File(path, "r") as f:
@@ -223,5 +224,9 @@ def test_DataWriter_pyh5md(md, tmp_path):
         npt.assert_array_equal(forces[idx], atoms.get_forces())
         npt.assert_array_equal(energy[idx], atoms.get_potential_energy())
         npt.assert_array_equal(cell[idx], atoms.get_cell())
-        assert p_time[idx] == idx * 0.1
-        assert p_step[idx] == idx
+        if store == "time":
+            assert p_time[idx] == idx * 0.1
+            assert p_step[idx] == idx
+        elif store == "linear":
+            assert p_time[idx] == 0.1
+            assert p_step[idx] == 1

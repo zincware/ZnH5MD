@@ -100,10 +100,89 @@ def ase_to_pyh5md(structures, path):
             at.box.edges.append(atoms.get_cell().diagonal(), idx, idx * time_delta)
 
 
-def test_pyh5md_ASEH5MD(md, tmp_path):
+def ase_to_pyh5md_fixed_time(structures, path):
+    time_delta = 0.1
+    step_delta = 1
+
+    with File(path, "w") as f:
+        at = f.particles_group("atoms")
+
+        at_pos = element(
+            at,
+            "position",
+            store="linear",
+            time=time_delta,
+            step=step_delta,
+            shape=(len(structures[0]), 3),
+            dtype=np.float64,
+        )
+
+        at.create_box(
+            dimension=3,
+            boundary=["periodic"] * 3,
+            store="linear",
+            shape=(3,),
+            dtype=np.float64,
+            time=time_delta,
+            step=step_delta,
+        )
+
+        at_species = element(
+            at,
+            "species",
+            store="linear",
+            time=time_delta,
+            step=step_delta,
+            shape=(len(structures[0]),),
+            dtype=np.int32,
+        )
+
+        at_v = element(
+            at,
+            "velocity",
+            store="linear",
+            time=time_delta,
+            step=step_delta,
+            shape=(len(structures[0]), 3),
+            dtype=np.float64,
+        )
+        at_f = element(
+            at,
+            "forces",
+            store="linear",
+            shape=(len(structures[0]), 3),
+            dtype=np.float64,
+            time=time_delta,
+            step=step_delta,
+        )
+
+        obs_at_e = element(
+            f,
+            "observables/atoms/energy",
+            store="linear",
+            shape=(1,),
+            dtype=np.float64,
+            time=time_delta,
+            step=step_delta,
+        )
+
+        for atoms in structures:
+            at_pos.append(atoms.get_positions())
+            at_species.append(atoms.get_atomic_numbers())
+            at_v.append(atoms.get_velocities())
+            obs_at_e.append(atoms.get_potential_energy())
+            at_f.append(atoms.get_forces())
+            at.box.edges.append(atoms.get_cell().diagonal())
+
+
+@pytest.mark.parametrize("store", ["time", "linear"])
+def test_pyh5md_ASEH5MD(md, tmp_path, store):
     """Read pyh5md file with ASEH5MD."""
     path = tmp_path / "db.h5"
-    ase_to_pyh5md(md, path)
+    if store == "time":
+        ase_to_pyh5md(md, path)
+    elif store == "linear":
+        ase_to_pyh5md_fixed_time(md, path)
     io = znh5md.IO(path)
     structures = io[:]
     assert len(structures) == len(md)
@@ -122,12 +201,14 @@ def test_pyh5md_ASEH5MD(md, tmp_path):
 def test_DataWriter_pyh5md(md, tmp_path):
     """Test reading DataWriter with pyh5md."""
     path = tmp_path / "db.h5"
-    io = znh5md.IO(path)
+    io = znh5md.IO(path, timestep=0.1)
     io.extend(md)
 
     with File(path, "r") as f:
         g = f.particles_group("atoms")
         position = element(g, "position").value[:]
+        p_time = element(g, "position").time[:]
+        p_step = element(g, "position").step[:]
         species = element(g, "species").value[:]
         velocities = element(g, "velocity").value[:]
         forces = element(g, "force").value[:]
@@ -142,3 +223,5 @@ def test_DataWriter_pyh5md(md, tmp_path):
         npt.assert_array_equal(forces[idx], atoms.get_forces())
         npt.assert_array_equal(energy[idx], atoms.get_potential_energy())
         npt.assert_array_equal(cell[idx], atoms.get_cell())
+        assert p_time[idx] == idx * 0.1
+        assert p_step[idx] == idx

@@ -137,8 +137,8 @@ class IO(MutableSequence):
         step = fmt.get_step(f["particles"], self.particle_group, index)
         if any(key in info_data for key in fmt.CustomINFOData.__members__):
             raise ValueError("key is already present in the info data.")
-        info_data[fmt.CustomINFOData.h5md_time.name] = time
-        info_data[fmt.CustomINFOData.h5md_step.name] = step
+        info_data[fmt.CustomINFOData.h5md_time.name] = time.tolist()
+        info_data[fmt.CustomINFOData.h5md_step.name] = step.tolist()
 
     def _extract_additional_data(self, f, index, arrays_data, calc_data, info_data):
         for key in f["particles"][self.particle_group].keys():

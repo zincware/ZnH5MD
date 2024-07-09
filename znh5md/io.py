@@ -41,6 +41,7 @@ class IO(MutableSequence):
     creator: str = "N/A"
     creator_version: str = "N/A"
     particle_group: Optional[str] = None
+    compression: Optional[str] = "gzip"
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -219,6 +220,7 @@ class IO(MutableSequence):
                 dtype=np.float64,
                 chunks=True,
                 maxshape=([None] * data.ndim),
+                compression=self.compression,
             )
             if calc is not None:
                 ds_value.attrs["ASE_CALCULATOR_RESULT"] = calc
@@ -228,9 +230,13 @@ class IO(MutableSequence):
 
     def _add_time_and_step(self, grp, length):
         # TODO: support custom time units
-        ds_time = grp.create_dataset("time", dtype=int, data=np.arange(length))
+        ds_time = grp.create_dataset(
+            "time", dtype=int, data=np.arange(length), compression=self.compression
+        )
         ds_time.attrs["unit"] = "fs"
-        grp.create_dataset("step", dtype=int, data=np.arange(length))
+        grp.create_dataset(
+            "step", dtype=int, data=np.arange(length), compression=self.compression
+        )
 
     def _create_observables(
         self,
@@ -249,6 +255,7 @@ class IO(MutableSequence):
                     dtype=np.float64,
                     chunks=True,
                     maxshape=([None] * value.ndim),
+                    compression=self.compression,
                 )
                 if metadata.get(key, {}).get("calc") is not None:
                     ds_value.attrs["ASE_CALCULATOR_RESULT"] = metadata[key]["calc"]

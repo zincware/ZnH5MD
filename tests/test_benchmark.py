@@ -30,12 +30,13 @@ def atoms():
 @pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("count", [100, 1000])
 @pytest.mark.parametrize("size", [10, 100, 1000])
-def test_bm_write(tmp_path, benchmark, atoms, count, size):
+@pytest.mark.parametrize("compression", [None, "gzip"])
+def test_bm_write(tmp_path, benchmark, atoms, count, size, compression):
     images = atoms(count, size)
 
     def _write():
         filename = tmp_path / f"{uuid.uuid4()}.h5md"
-        znh5md.write(filename, images)
+        znh5md.write(filename, images, compression=compression)
 
     benchmark(_write)
 

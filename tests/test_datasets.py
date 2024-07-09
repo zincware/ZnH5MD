@@ -155,3 +155,13 @@ def test_save_load_save_load(tmp_path, s22_mixed_pbc_cell):
     images2 = io2[:]
 
     assert len(images) == len(images2)
+
+
+@pytest.mark.parametrize("timestep", [0.5, 1.0])
+def test_time_step(tmp_path, s22_mixed_pbc_cell, timestep):
+    io = znh5md.IO(tmp_path / "test.h5", timestep=timestep)
+    io.extend(s22_mixed_pbc_cell)
+    images = io[:]
+    for idx, atoms in enumerate(images):
+        assert atoms.info["h5md_step"] == idx
+        assert atoms.info["h5md_time"] == idx * timestep

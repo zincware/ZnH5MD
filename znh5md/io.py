@@ -244,7 +244,7 @@ class IO(MutableSequence):
     def _add_time_and_step(self, grp, length):
         ds_time = grp.create_dataset(
             "time",
-            dtype=int,
+            dtype=np.float64,
             data=np.arange(length) * self.timestep,
             compression=self.compression,
             compression_opts=self.compression_opts,

@@ -44,7 +44,7 @@ class IO(MutableSequence):
     compression: Optional[str] = "gzip"
     compression_opts: Optional[int] = None
     timestep: float = 1.0
-    store: t.Literal["time", "linear"] = "time"
+    store: t.Literal["time", "linear"] = "linear"
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:

@@ -16,7 +16,7 @@ def test_mda_read(tmp_path):
     water.calc = SinglePointCalculator(
         water, forces=np.random.rand(*water.positions.shape)
     )
-    io = znh5md.IO(tmp_path / "test.h5", save_units=False)
+    io = znh5md.IO(tmp_path / "test.h5", save_units=False, store="time")
     io.append(water)
     io.append(water)
 
@@ -32,7 +32,7 @@ def test_mda_read(tmp_path):
 
 def test_mda_read_convert(tmp_path):
     water = ase.build.molecule("H2O")
-    io = znh5md.IO(tmp_path / "test.h5")
+    io = znh5md.IO(tmp_path / "test.h5", store="time")
     io.append(water)
     io.append(water)
     u = mda.Universe.empty(3, trajectory=True)

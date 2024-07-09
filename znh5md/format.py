@@ -103,14 +103,21 @@ def get_species_aux_data(
         value_shape = group[name]["species"]["value"].shape
         if isinstance(index, slice):
             value_length = len(range(*index.indices(value_shape[0])))
+            value_start = index.start if index.start is not None else 0
         elif isinstance(index, list):
+            if not sorted(index) == index:
+                raise ValueError("Indices must be sorted")
             value_length = len(index)
+            value_start = index[0]
         elif isinstance(index, int):
             value_length = 1
+            value_start = index
         else:
             raise TypeError("Unsupported index type")
 
-        data = np.full(value_length, scalar_data)
+        # data should be (start * scalar_data, end * scalar_data, step * scalar_data)
+        data = np.arange(value_start, value_start + value_length) * scalar_data
+
     return data
 
 

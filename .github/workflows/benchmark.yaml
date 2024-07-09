@@ -32,7 +32,10 @@ jobs:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo '# Benchmark' >> report.md
-          echo '## READ' >> report.md
-          echo '![](./benchmark-write.svg "Write benchmark")' >> report.md
-          echo '![](./benchmark-read.svg "Read benchmark")' >> report.md
+          echo '![](./benchmark-write-count.svg "Write benchmark, varying count")' >> report.md
+          echo '![](./benchmark-write-size.svg "Write benchmark, varying size")' >> report.md
+
+          echo '![](./benchmark-read-count.svg "Read benchmark, varying count")' >> report.md
+          echo '![](./benchmark-read-size.svg "Read benchmark, varying size")' >> report.md
+
           cml comment update report.md

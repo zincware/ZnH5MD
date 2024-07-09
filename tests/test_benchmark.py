@@ -27,27 +27,50 @@ def atoms():
     return _create_atoms
 
 
-@pytest.mark.benchmark(group="write")
-@pytest.mark.parametrize("count", [100, 1000])
-@pytest.mark.parametrize("size", [10, 100, 1000])
-@pytest.mark.parametrize("compression", [None, "gzip"])
-def test_bm_write(tmp_path, benchmark, atoms, count, size, compression):
+@pytest.mark.benchmark(group="write-count")
+@pytest.mark.parametrize("count", [100 * x for x in range(1, 11)])
+def test_bm_write_count(tmp_path, benchmark, atoms, count, size=100):
     images = atoms(count, size)
 
     def _write():
         filename = tmp_path / f"{uuid.uuid4()}.h5md"
-        znh5md.write(filename, images, compression=compression)
+        znh5md.write(filename, images, compression=None)
 
     benchmark(_write)
 
 
-@pytest.mark.benchmark(group="read")
-@pytest.mark.parametrize("count", [100, 1000])
-@pytest.mark.parametrize("size", [10, 100, 1000])
-def test_bm_read(tmp_path, benchmark, atoms, count, size):
+@pytest.mark.benchmark(group="write-size")
+@pytest.mark.parametrize("size", [100 * x for x in range(1, 11)])
+def test_bm_write_size(tmp_path, benchmark, atoms, size, count=100):
+    images = atoms(count, size)
+
+    def _write():
+        filename = tmp_path / f"{uuid.uuid4()}.h5md"
+        znh5md.write(filename, images, compression=None)
+
+    benchmark(_write)
+
+
+@pytest.mark.benchmark(group="read-count")
+@pytest.mark.parametrize("count", [100 * x for x in range(1, 11)])
+def test_bm_read_count(tmp_path, benchmark, atoms, size, count):
     images = atoms(count, size)
     filename = tmp_path / f"{uuid.uuid4()}.h5md"
-    znh5md.write(filename, images)
+    znh5md.write(filename, images, compression="gzip")
+
+    def _read():
+        io = znh5md.IO(filename)
+        _ = io[:]
+
+    benchmark(_read)
+
+
+@pytest.mark.benchmark(group="read-size")
+@pytest.mark.parametrize("size", [100 * x for x in range(1, 11)])
+def test_bm_read_size(tmp_path, benchmark, atoms, size, count=100):
+    images = atoms(count, size)
+    filename = tmp_path / f"{uuid.uuid4()}.h5md"
+    znh5md.write(filename, images, compression="gzip")
 
     def _read():
         io = znh5md.IO(filename)

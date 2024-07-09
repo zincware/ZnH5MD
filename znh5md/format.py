@@ -106,7 +106,7 @@ def get_species_aux_data(
             value_start = index.start if index.start is not None else 0
         elif isinstance(index, list):
             if not sorted(index) == index:
-                raise ValueError("Indicies must be sorted")
+                raise ValueError("Indices must be sorted")
             value_length = len(index)
             value_start = index[0]
         elif isinstance(index, int):

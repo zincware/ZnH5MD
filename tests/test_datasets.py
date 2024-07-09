@@ -168,3 +168,41 @@ def test_time_step(tmp_path, s22_mixed_pbc_cell, timestep):
     for idx, atoms in enumerate(images):
         assert atoms.info["h5md_step"] == idx
         assert atoms.info["h5md_time"] == idx * timestep
+
+
+def test_slicing(tmp_path, s22_mixed_pbc_cell):
+    # Create an instance of znh5md.IO and extend it with the test data
+    io = znh5md.IO(tmp_path / "test.h5")
+    io.extend(s22_mixed_pbc_cell)
+
+    # Ensure the length of the io object matches the input data
+    assert len(io) == len(s22_mixed_pbc_cell)
+
+    # Test various slicing cases
+
+    # Single element access
+    assert io[0] == s22_mixed_pbc_cell[0]
+    assert io[len(io) - 1] == s22_mixed_pbc_cell[len(s22_mixed_pbc_cell) - 1]
+
+    # Simple slices
+    assert io[:10] == s22_mixed_pbc_cell[:10]
+    assert io[10:20] == s22_mixed_pbc_cell[10:20]
+    assert io[-10:] == s22_mixed_pbc_cell[-10:]
+    assert io[:-10] == s22_mixed_pbc_cell[:-10]
+
+    # Step slices
+    assert io[::2] == s22_mixed_pbc_cell[::2]
+    assert io[1::2] == s22_mixed_pbc_cell[1::2]
+    # not allowed in h5py
+    # assert io[::-1] == s22_mixed_pbc_cell[::-1]  # Reverse
+
+    # Complex slices
+    assert io[5:20:3] == s22_mixed_pbc_cell[5:20:3]
+    assert io[-20:-5:2] == s22_mixed_pbc_cell[-20:-5:2]
+
+    # Empty slices
+    assert io[5:5] == s22_mixed_pbc_cell[5:5]
+    assert io[-5:-5] == s22_mixed_pbc_cell[-5:-5]
+
+    # Ensure slicing does not affect original length
+    assert len(io) == len(s22_mixed_pbc_cell)

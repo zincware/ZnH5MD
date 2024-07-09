@@ -1,8 +1,9 @@
 import dataclasses
 import enum
-from typing import Dict, List, Optional, TypedDict
+from typing import Dict, List, Optional, TypedDict, Union
 
 import ase
+import h5py
 import numpy as np
 from ase.calculators.calculator import all_properties
 from bidict import bidict
@@ -87,15 +88,44 @@ def get_pbc(group, name: str, index) -> np.ndarray:
             return np.array([False, False, False])
 
 
-def get_time(group, name: str, index) -> np.ndarray:
+def get_species_aux_data(
+    group: h5py.Group, name: str, field: str, index: Union[int, list[int], slice]
+) -> np.ndarray:
+    """Helper function to retrieve data from an HDF5 group."""
+    try:
+        # Attempt to retrieve the data using the provided index
+        data = group[name]["species"][field][index]
+    except ValueError:
+        # Backwards compatibility: Handle case where the data is stored as a scalar
+        scalar_data = group[name]["species"][field][()]
+
+        # Calculate the length of the indexed data without loading the actual data
+        value_shape = group[name]["species"]["value"].shape
+        if isinstance(index, slice):
+            value_length = len(range(*index.indices(value_shape[0])))
+        elif isinstance(index, list):
+            value_length = len(index)
+        elif isinstance(index, int):
+            value_length = 1
+        else:
+            raise TypeError("Unsupported index type")
+
+        data = np.full(value_length, scalar_data)
+    return data
+
+
+def get_time(
+    group: h5py.Group, name: str, index: Union[int, list[int], slice]
+) -> np.ndarray:
     """Retrieve time from an HDF5 group."""
-    # TODO: support fixted timestep
-    return group[name]["species"]["time"][index]
+    return get_species_aux_data(group, name, "time", index)
 
 
-def get_step(group, name: str, index) -> np.ndarray:
+def get_step(
+    group: h5py.Group, name: str, index: Union[int, list[int], slice]
+) -> np.ndarray:
     """Retrieve step from an HDF5 group."""
-    return group[name]["species"]["step"][index]
+    return get_species_aux_data(group, name, "step", index)
 
 
 ASE_TO_H5MD = bidict(

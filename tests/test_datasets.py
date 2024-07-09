@@ -44,7 +44,8 @@ def test_datasets(tmp_path, dataset, request):
         for key in a.arrays:
             npt.assert_array_equal(a.arrays[key], b.arrays[key])
 
-        assert set(a.info) == set(b.info)
+        # h5md keys are added to info automatically
+        assert set(b.info) == set(a.info) | {"h5md_step", "h5md_time"}
         for key in a.info:
             npt.assert_array_equal(a.info[key], b.info[key])
 
@@ -141,3 +142,29 @@ def test_pbc(tmp_path, s22_mixed_pbc_cell):
             # Do we want to rename "pbc" to "boundary" and make if "none"
             # or "periodic" as well? This should only exist if requested
             npt.assert_array_equal(f["particles/atoms/box/pbc/value"][idx], atom.pbc)
+
+
+def test_save_load_save_load(tmp_path, s22_mixed_pbc_cell):
+    io1 = znh5md.IO(tmp_path / "test_1.h5")
+    io1.extend(s22_mixed_pbc_cell)
+
+    images = io1[:]
+    io2 = znh5md.IO(tmp_path / "test_2.h5")
+    io2.extend(images)
+
+    images2 = io2[:]
+
+    assert len(images) == len(images2)
+
+
+@pytest.mark.parametrize("timestep", [0.5, 1.0])
+def test_time_step(tmp_path, s22_mixed_pbc_cell, timestep):
+    io = znh5md.IO(tmp_path / "test.h5", timestep=timestep)
+    io.extend(s22_mixed_pbc_cell)
+    # Do it twice, to check for appending
+    io.extend(s22_mixed_pbc_cell)
+    images = io[:]
+    assert len(images) == len(s22_mixed_pbc_cell) * 2
+    for idx, atoms in enumerate(images):
+        assert atoms.info["h5md_step"] == idx
+        assert atoms.info["h5md_time"] == idx * timestep

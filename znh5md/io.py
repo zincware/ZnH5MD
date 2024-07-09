@@ -43,6 +43,7 @@ class IO(MutableSequence):
     particle_group: Optional[str] = None
     compression: Optional[str] = "gzip"
     compression_opts: Optional[int] = None
+    timestep: float = 1.0
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -118,6 +119,7 @@ class IO(MutableSequence):
             pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
 
             self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
+            self._update_info_data_with_time_and_step(info_data, f, index)
 
         structures = utils.build_structures(
             cell,
@@ -128,6 +130,15 @@ class IO(MutableSequence):
         )
 
         return structures[0] if single_item else structures
+
+    def _update_info_data_with_time_and_step(self, info_data, f, index):
+        # we use the time value from `species` because it is guaranteed to exist
+        time = fmt.get_time(f["particles"], self.particle_group, index)
+        step = fmt.get_step(f["particles"], self.particle_group, index)
+        if any(key in info_data for key in fmt.CustomINFOData.__members__):
+            raise ValueError("key is already present in the info data.")
+        info_data[fmt.CustomINFOData.h5md_time.name] = time
+        info_data[fmt.CustomINFOData.h5md_step.name] = step
 
     def _extract_additional_data(self, f, index, arrays_data, calc_data, info_data):
         for key in f["particles"][self.particle_group].keys():
@@ -231,13 +242,13 @@ class IO(MutableSequence):
             self._add_time_and_step(g_grp, len(data))
 
     def _add_time_and_step(self, grp, length):
-        # TODO: support custom time units
         ds_time = grp.create_dataset(
             "time",
-            dtype=int,
-            data=np.arange(length),
+            dtype=np.float64,
+            data=np.arange(length) * self.timestep,
             compression=self.compression,
             compression_opts=self.compression_opts,
+            maxshape=(None,),
         )
         ds_time.attrs["unit"] = "fs"
         grp.create_dataset(
@@ -246,6 +257,7 @@ class IO(MutableSequence):
             data=np.arange(length),
             compression=self.compression,
             compression_opts=self.compression_opts,
+            maxshape=(None,),
         )
 
     def _create_observables(
@@ -286,8 +298,14 @@ class IO(MutableSequence):
     def _extend_group(self, parent_grp, name, data):
         if data is not None and name in parent_grp:
             g_grp = parent_grp[name]
-            # TODO: what happens to "step" and "time" here?
             utils.fill_dataset(g_grp["value"], data)
+
+            last_time = g_grp["time"][-1]
+            last_step = g_grp["step"][-1]
+            utils.fill_dataset(
+                g_grp["time"], np.arange(1, len(data) + 1) * self.timestep + last_time
+            )
+            utils.fill_dataset(g_grp["step"], np.arange(1, len(data) + 1) + last_step)
 
     def _extend_observables(self, f, info_data):
         if f"observables/{self.particle_group}" in f:
@@ -297,6 +315,13 @@ class IO(MutableSequence):
                     g_val = g_observables[key]
                     # TODO: what happens to "step" and "time" here?
                     utils.fill_dataset(g_val["value"], value)
+
+                    last_time = g_val["time"][-1]
+                    last_step = g_val["step"][-1]
+                    utils.fill_dataset(
+                        g_val["time"], np.arange(len(value)) * self.timestep + last_time
+                    )
+                    utils.fill_dataset(g_val["step"], np.arange(len(value)) + last_step)
 
     def append(self, atoms: ase.Atoms):
         self.extend([atoms])

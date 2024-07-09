@@ -50,15 +50,16 @@ def test_datasets(tmp_path, dataset, request):
             npt.assert_array_equal(a.info[key], b.info[key])
 
 
+@pytest.mark.parametrize("store", ["time", "linear"])
 @pytest.mark.parametrize(
     "dataset",
     [
         "s22_info_arrays_calc",
     ],
 )
-def test_datasets_h5py(tmp_path, dataset, request):
+def test_datasets_h5py(tmp_path, dataset, request, store):
     images = request.getfixturevalue(dataset)
-    io = znh5md.IO(tmp_path / "test.h5")
+    io = znh5md.IO(tmp_path / "test.h5", store=store, timestep=0.5)
     io.extend(images)
 
     with h5py.File(tmp_path / "test.h5", "r") as f:
@@ -81,6 +82,14 @@ def test_datasets_h5py(tmp_path, dataset, request):
 
         assert f["particles/atoms/velocity/value"].attrs["unit"] == "Angstrom/fs"
         assert f["particles/atoms/force/value"].attrs["unit"] == "eV/Angstrom"
+
+        if store == "time":
+            assert f["observables/atoms/energy/time"].shape == (len(images),)
+            assert f["observables/atoms/energy/step"].shape == (len(images),)
+        if store == "linear":
+            assert f["observables/atoms/energy/time"][()] == 0.5
+            assert f["observables/atoms/energy/step"][()] == 1
+
         # assert f["observables/atoms/energy/value"].attrs["unit"] == "eV"
 
         npt.assert_array_equal(
@@ -88,8 +97,9 @@ def test_datasets_h5py(tmp_path, dataset, request):
         )
 
 
-def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell):
-    io_a = znh5md.IO(tmp_path / "test.h5", particle_group="a")
+@pytest.mark.parametrize("store", ["time", "linear"])
+def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
+    io_a = znh5md.IO(tmp_path / "test.h5", particle_group="a", store=store)
     io_b = znh5md.IO(tmp_path / "test.h5", particle_group="b")
     io_a.extend(s22_all_properties)
     io_b.extend(s22_mixed_pbc_cell)
@@ -105,10 +115,11 @@ def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell):
         npt.assert_array_equal(a.get_positions(), b.get_positions())
 
 
-def test_two_datasets_external(tmp_path, s22_all_properties, s22_mixed_pbc_cell):
+@pytest.mark.parametrize("store", ["time", "linear"])
+def test_two_datasets_external(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
     with h5py.File(tmp_path / "test.h5", "w") as f:
         io_a = znh5md.IO(file_handle=f, particle_group="a")
-        io_b = znh5md.IO(file_handle=f, particle_group="b")
+        io_b = znh5md.IO(file_handle=f, particle_group="b", store=store)
 
         io_a.extend(s22_all_properties)
         io_b.extend(s22_mixed_pbc_cell)

@@ -208,8 +208,12 @@ def test_DataWriter_pyh5md(md, tmp_path, store):
     with File(path, "r") as f:
         g = f.particles_group("atoms")
         position = element(g, "position").value[:]
-        p_time = element(g, "position").time[:]
-        p_step = element(g, "position").step[:]
+        if store == "time":
+            p_time = element(g, "position").time[:]
+            p_step = element(g, "position").step[:]
+        elif store == "linear":
+            p_time = element(g, "position").time[()]
+            p_step = element(g, "position").step[()]
         species = element(g, "species").value[:]
         velocities = element(g, "velocity").value[:]
         forces = element(g, "force").value[:]
@@ -228,5 +232,5 @@ def test_DataWriter_pyh5md(md, tmp_path, store):
             assert p_time[idx] == idx * 0.1
             assert p_step[idx] == idx
         elif store == "linear":
-            assert p_time[idx] == 0.1
-            assert p_step[idx] == 1
+            assert p_time == 0.1
+            assert p_step == 1

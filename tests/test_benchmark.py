@@ -56,7 +56,7 @@ def test_bm_write_size(tmp_path, benchmark, atoms, size, count=100):
 def test_bm_read_count(tmp_path, benchmark, atoms, count, size=100):
     images = atoms(count, size)
     filename = tmp_path / f"{uuid.uuid4()}.h5md"
-    znh5md.write(filename, images, compression="gzip")
+    znh5md.write(filename, images, compression="gzip", store="linear")
 
     def _read():
         io = znh5md.IO(filename)
@@ -70,7 +70,7 @@ def test_bm_read_count(tmp_path, benchmark, atoms, count, size=100):
 def test_bm_read_size(tmp_path, benchmark, atoms, size, count=100):
     images = atoms(count, size)
     filename = tmp_path / f"{uuid.uuid4()}.h5md"
-    znh5md.write(filename, images, compression="gzip")
+    znh5md.write(filename, images, compression="gzip", store="linear")
 
     def _read():
         io = znh5md.IO(filename)

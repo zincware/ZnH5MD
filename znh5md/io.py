@@ -243,24 +243,36 @@ class IO(MutableSequence):
             self._add_time_and_step(g_grp, len(data))
 
     def _add_time_and_step(self, grp, length):
-        ds_time = grp.create_dataset(
-            "time",
-            dtype=np.float64,
-            data=np.arange(length) * self.timestep,
-            compression=self.compression,
-            compression_opts=self.compression_opts,
-            maxshape=(None,),
-        )
-        ds_time.attrs["unit"] = "fs"
-        ds_step = grp.create_dataset(
-            "step",
-            dtype=int,
-            data=np.arange(length),
-            compression=self.compression,
-            compression_opts=self.compression_opts,
-            maxshape=(None,),
-        )
-        if self.store == "linear":
+        if self.store == "time":
+            ds_time = grp.create_dataset(
+                "time",
+                dtype=np.float64,
+                data=np.arange(length) * self.timestep,
+                compression=self.compression,
+                compression_opts=self.compression_opts,
+                maxshape=(None,),
+            )
+            ds_time.attrs["unit"] = "fs"
+            ds_step = grp.create_dataset(
+                "step",
+                dtype=int,
+                data=np.arange(length),
+                compression=self.compression,
+                compression_opts=self.compression_opts,
+                maxshape=(None,),
+            )
+        elif self.store == "linear":
+            ds_time = grp.create_dataset(
+                "time",
+                dtype=np.float64,
+                data=self.timestep,
+            )
+            ds_time.attrs["unit"] = "fs"
+            ds_step = grp.create_dataset(
+                "step",
+                dtype=int,
+                data=1,
+            )
             ds_time[()] = self.timestep
             ds_step[()] = 1
 

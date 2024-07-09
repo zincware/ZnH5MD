@@ -115,10 +115,6 @@ class IO(MutableSequence):
             cell = fmt.get_box(f["particles"], self.particle_group, index)
             pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
 
-            velocities = fmt.get_velocities(f["particles"], self.particle_group, index)
-            if velocities is not None:
-                arrays_data["velocity"] = velocities
-
             self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
 
         structures = utils.build_structures(

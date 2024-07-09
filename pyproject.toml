@@ -21,6 +21,7 @@ ruff = "^0.4"
 mdanalysis = "^2.7.0"
 coverage = "^7.5.3"
 pyh5md = "^1.0.0"
+pytest-benchmark = {extras = ["histogram"], version = "^4.0.0"}
 
 
 [tool.poetry.group.benchmark.dependencies]
@@ -43,3 +44,6 @@ extend-ignore = [
 
 [tool.codespell]
 skip = "poetry.lock,*.ipynb"
+
+[tool.pytest.ini_options]
+addopts = "-m 'not benchmark'"

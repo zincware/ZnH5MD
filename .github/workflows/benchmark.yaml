@@ -1,0 +1,31 @@
+name: benchmark
+
+on:
+    push:
+jobs:
+  train-and-report:
+    runs-on: ubuntu-latest
+    container: docker://ghcr.io/iterative/cml:0-dvc2-base1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Install package
+        run: |
+          poetry install --no-interaction
+      - name: Run pytest
+        run: |
+          poetry run python --version
+          poetry run pytest --benchmark-histogram benchmark -m benchmark
+      - name: Create report
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo '# Benchmark' >> report.md
+          echo '## READ' >> report.md
+          echo '![](./benchmark-write.svg "Write benchmark")' >> report.md
+          echo '![](./benchmark-read.svg "Read benchmark")' >> report.md
+          cml comment create report.md

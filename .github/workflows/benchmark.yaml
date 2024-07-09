@@ -24,7 +24,6 @@ jobs:
         run: |
           poetry run python --version
           poetry run pytest --benchmark-histogram benchmark -m benchmark
-          ls -la
       - name: Create report
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -33,4 +32,6 @@ jobs:
           echo '## READ' >> report.md
           echo '![](./benchmark-write.svg "Write benchmark")' >> report.md
           echo '![](./benchmark-read.svg "Read benchmark")' >> report.md
+          cat report.md
+          ls -la
           cml comment create report.md

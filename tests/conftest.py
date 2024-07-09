@@ -14,7 +14,7 @@ def s22_energy() -> list[ase.Atoms]:
     images = []
     for atoms in ase.collections.s22:
         calc = SinglePointCalculator(atoms, energy=np.random.rand())
-        atoms.set_calculator(calc)
+        atoms.calc = calc
         images.append(atoms)
     return images
 
@@ -79,7 +79,7 @@ def s22_info_arrays_calc() -> list[ase.Atoms]:
         calc = SinglePointCalculator(
             atoms, energy=np.random.rand(), forces=np.random.rand(len(atoms), 3)
         )
-        atoms.set_calculator(calc)
+        atoms.calc = calc
         images.append(atoms)
     return images
 

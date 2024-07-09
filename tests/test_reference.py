@@ -37,11 +37,10 @@ def md() -> list[ase.Atoms]:
     for _ in range(10):
         dyn.run(1)
         structures.append(atoms.copy())
-        structures[-1].set_calculator(
-            SinglePointCalculator(
-                atoms, energy=atoms.get_potential_energy(), forces=atoms.get_forces()
-            )
+        structures[-1].calc = SinglePointCalculator(
+            atoms, energy=atoms.get_potential_energy(), forces=atoms.get_forces()
         )
+
     return structures
 
 

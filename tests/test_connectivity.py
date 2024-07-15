@@ -18,8 +18,7 @@ def build_graph(atoms: ase.Atoms) -> nx.Graph:
         cutoffs = np.array(natural_cutoffs(atoms_copy, mult=cutoff))
         cutoffs = cutoffs[:, None] + cutoffs[None, :]
         connectivity_matrix[distance_matrix <= cutoffs] += 1
-    G = nx.from_numpy_array(connectivity_matrix)
-    return G
+    return nx.from_numpy_array(connectivity_matrix)
 
 
 def set_connectivity(atoms: ase.Atoms, graph: nx.Graph):

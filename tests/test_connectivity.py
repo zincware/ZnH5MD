@@ -1,8 +1,8 @@
-import pytest
 import ase.build
 import networkx as nx
-from ase.neighborlist import natural_cutoffs
 import numpy as np
+import pytest
+from ase.neighborlist import natural_cutoffs
 
 
 def build_graph(atoms: ase.Atoms) -> nx.Graph:

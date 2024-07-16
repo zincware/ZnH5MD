@@ -1,47 +1,50 @@
 [tool.poetry]
 name = "znh5md"
-version = "0.2.1"
-description = "High Performance Interface for H5MD Trajectories"
+version = "0.3.0a3"
+description = "ASE Interface for the H5MD format."
 authors = ["zincwarecode <zincwarecode@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 h5py = "^3"
-dask = {extras = ["array"], version = "^2022", optional = true}
-ase = "^3.22.1"
+ase = "^3.22"
 tqdm = "^4"
-chemfiles = "^0.10"
 typer = {extras = ["all"], version = "^0"}
+bidict = "^0.23.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
-graphviz = "^0.20.1" # WHY?
 pre-commit = "^2.20.0"
-coverage = "^7.1.0"
-pytest-profiling = "^1.7.0"
-pytest-benchmark = "^4.0.0"
-mdanalysis = "^2"
+ruff = "^0.4"
+mdanalysis = "^2.7.0"
+coverage = "^7.5.3"
 pyh5md = "^1.0.0"
-ruff = "^0.4.8"
+pytest-benchmark = {extras = ["histogram"], version = "^4.0.0"}
+networkx = "^3.3"
 
-[tool.poetry.group.notebook.dependencies]
-jupyterlab = "^4"
+
+[tool.poetry.group.benchmark.dependencies]
+pandas = "^2.2.2"
+chemfiles = "^0.10.4"
+mdtraj = "^1.10.0"
 
 [tool.poetry.scripts]
 znh5md = 'znh5md.cli:app'
-
-[tool.poetry.extras]
-dask = ["dask"]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff.lint]
-
-select = ["E", "F", "D", "N", "C", "I"]
+select = ["E", "F", "N", "C", "I"]
 extend-ignore = [
     "D213", "D203", "N802", "N801"
 ]
+
+[tool.codespell]
+skip = "poetry.lock,*.ipynb"
+
+[tool.pytest.ini_options]
+addopts = "-m 'not benchmark'"

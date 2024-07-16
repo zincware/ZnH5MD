@@ -3,85 +3,57 @@
 [![PyPI version](https://badge.fury.io/py/znh5md.svg)](https://badge.fury.io/py/znh5md)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/zincware/ZnH5MD/HEAD)
 
-# ZnH5MD - High Performance Interface for H5MD Trajectories
+# ZnH5MD - ASE Interface for the H5MD format.
 
-ZnH5MD allows easy access to simulation results from H5MD trajectories. It
-provides a Python interface and can convert existing data to H5MD files as well
-as export to other formats.
-
-```
-pip install znh5md["dask"]
-```
-
-## Example
-
-In the following example we investigate an H5MD dump from LAMMPS with 1000 atoms
-and 201 configurations:
+ZnH5MD provides and interface from \[ASE\] to \[H5MD\] and vice versa. Install
+via `pip install znh5md`. Similar to ASE ZnH5MD provides `read` and `write`
+functionality:
 
 ```python
 import znh5md
+from ase.collections import s22
 
-traj = znh5md.DaskH5MD("file.h5", time_chunk_size=500, species_chunk_size=100)
-
-print(traj.file.time_dependent_groups)
-# ['edges', 'force', 'image', 'position', 'species', 'velocity']
-
-print(traj.force)
-# DaskDataSet(value=dask.array<array, shape=(201, 1000, 3), ...)
-
-print(traj.velocity.slice_by_species(species=1))
-# DaskDataSet(value=dask.array<reshape, shape=(201, 500, 3), ...)
-
-print(traj.position.value)
-# dask.array<array, shape=(201, 1000, 3), dtype=float64, chunksize=(100, 500, 3), ...>
-
-# You can iterate through the data
-for item in traj.position.batch(size=27, axis=0):
-    for x in item.batch(size=17, axis=1):
-        print(x.value.compute())
+znh5md.write("s22.h5", list(s22))
+print(list(zn5hmd.iread("s22.h5")))
+# list[ase.Atoms]
 ```
 
-## ASE Atoms
-
-You can use ZnH5MD to store ASE Atoms objects in the H5MD format.
-
-> ZnH5MD does not support all features of ASE Atoms objects. It s important to
-> note that unsupported parts are silently ignored and no error is raised.
-
-> The ASEH5MD interface will not provide any time and step information.
-
-> If you have a list of Atoms with different PBC values, you can use
-> `znh5md.io.AtomsReader(atoms, use_pbc_group=True)`. This will create a `pbc`
-> group in `box/` that also contains `step` and `time`. This is not an official
-> H5MD specification so it can cause issues with other tools. If you don't
-> specify this, the pbc of the first atoms in the list will be applied.
+Further, you can access any data from within the entire dataset through the
+`znh5md.IO` class which provides a `MutableSequence`-like interface.
 
 ```python
 import znh5md
-import ase
+from ase.collections import s22
 
-atoms: list[ase.Atoms]
+io = znh5md.IO("s22.h5", particle_group="s22")
+io.extend(list(s22))
 
-db = znh5md.io.DataWriter(filename="db.h5")
-
-db.add(znh5md.io.AtomsReader(atoms)) # or znh5md.io.ChemfilesReader
-
-data = znh5md.ASEH5MD("db.h5")
-data.get_atoms_list() == atoms
+print(io[5:10])
+# list[ase.Atoms]
 ```
 
-## CLI
+## Extended H5MD Format
 
-ZnH5MD provides a small set of CLI tools:
+ZnH5MD circumvents two current limitations of the H5MD standard.
 
-- `znh5md view <file.h5>` to view the File using `ase.visualize`
-- `znh5md export <file.h5> <file.xyz>` to export the file to `.xyz` or any other
-  supported file format
-- `znh5md convert <file.xyz> <file.h5>` to save a `file.xyz` as `file.h5` in the
-  H5MD standard.
+- support `images` with varying particle counts by padding the dataset with
+  `np.nan`. Using varying species counts might break the compatibility with
+  other H5MD tools.
+- support varying `pbc` within a single particle group by introducing
+  `particles/<group>/box/pbc/value` in addition to the `particles/<group>/box`
+  attributes. By default, this is enabled via `IO(pbc_group=True)`. The
+  `particles/<group>/box` attribute will be set to the PBC conditions of the
+  first frame. Using this feature will not typically not break ompatibility with
+  other H5MD tools but can lead to unexpected behaviour.
 
-## More examples
+## Current limitations
 
-A complete documentation is still work in progress. In the meantime, I can
-recommend looking at the tests, especially `test_znh5md.py` to learn more about
-slicing and batching.
+This is a not necessarily complete list of Limitations that will be fixed
+eventually. Any contributions are welcome.
+
+- Time/Step: ZnH5MD assumes a fixed timestamp and time interval of 1. This is
+  primarily, because ASE does not include time data by default.
+- Units: There is no automatic unit conversion through e.g. the pint package
+- performance tweaks: there are many places in ZnH5MD that can be optimized
+  w.r.t to better performance. Currently most of the values are hard-coded. This
+  affects e.g. chunk size.

@@ -1,108 +1,111 @@
-import pathlib
-import random
-
-import ase.build
-import ase.calculators.singlepoint
 import ase.collections
-import ase.io
-import h5py
 import numpy as np
 import pytest
+from ase.calculators.singlepoint import SinglePointCalculator
 
 
 @pytest.fixture
-def example_h5(tmp_path) -> pathlib.Path:
-    filename = tmp_path / "example.h5"
-
-    n_steps = 100
-    n_particles = 10
-
-    with h5py.File(filename, "w") as file:
-        h5md = file.create_group("h5md")
-        h5md.attrs["version"] = np.array([1, 1])
-        author = h5md.create_group("author")
-        author.attrs["name"] = "N/A"
-        creator = h5md.create_group("creator")
-        creator.attrs["name"] = "ZnH5MD"
-        particles = file.create_group("particles")
-        atoms = particles.create_group("atoms")
-        position = atoms.create_group("position")
-        position.create_dataset(
-            "value",
-            data=np.arange(n_steps * n_particles * 3).reshape(
-                (n_steps, n_particles, 3)
-            ),
-        )
-        position.create_dataset("time", data=np.linspace(0, 1, n_steps))
-        position.create_dataset("step", data=np.arange(n_steps))
-
-        species = atoms.create_group("species")
-        species.create_dataset(
-            "value",
-            data=np.concatenate(
-                [
-                    np.ones((n_steps, int(n_particles / 2))),
-                    2 * np.ones((n_steps, int(n_particles / 2))),
-                ],
-                axis=1,
-            ),
-        )
-        species.create_dataset("time", data=np.linspace(0, 1, n_steps))
-        species.create_dataset("step", data=np.arange(n_steps))
-
-    return filename
+def s22() -> list[ase.Atoms]:
+    return list(ase.collections.s22)
 
 
 @pytest.fixture
-def atoms_list(request) -> list[ase.Atoms]:
-    """Generate ase.Atoms objects with random positions and increasing energy
-    and random force values
+def s22_energy() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        calc = SinglePointCalculator(atoms, energy=np.random.rand())
+        atoms.calc = calc
+        images.append(atoms)
+    return images
 
-    Parameters
-    ----------
-    request
-        pytest request object. Possible values for the "param" attribute are:
-        - None: use default values
-        - "vary_size": use ase.collections.g2
-        - "no_stress": do not set stress
-        - "vary_size_vary_pbc": use ase.collections.g2 and vary pbc
 
-    """
-    if getattr(request, "param", "").startswith("vary_size"):
-        atoms = [ase.build.molecule(x) for x in ase.collections.g2.names]
-        for atom in atoms:
-            atom.set_velocities(np.random.rand(len(atom), 3))
+@pytest.fixture
+def s22_all_properties() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        # shapes taken from https://gitlab.com/ase/ase/-/blob/master/ase/outputs.py
+        energy = np.random.rand()
+        energies = np.random.rand(len(atoms))
+        free_energy = np.random.rand()
 
-    else:
-        random.seed(1234)
-        atoms = [
-            ase.Atoms(
-                "CO",
-                positions=[(0, 0, 0), (0, 0, random.random())],
-                cell=(1, 1, 1),
-                pbc=True,
-            )
-            for _ in range(21)
-        ]
+        forces = np.random.rand(len(atoms), 3)
+        stress = np.random.rand(6)
+        stresses = np.random.rand(len(atoms), 6)
 
-    if getattr(request, "param", "").endswith("vary_pbc"):
-        atoms[0].pbc = np.array([True, True, False])
-        atoms[1].pbc = np.array([True, False, True])
-        atoms[2].pbc = False
+        dipole = np.random.rand(3)
+        magmom = np.random.rand()
+        magmoms = np.random.rand(len(atoms))
 
-    for idx, atom in enumerate(atoms):
-        stress = (
-            np.random.rand(6)
-            if getattr(request, "param", None) != "no_stress"
-            else None
-        )
-        atom.calc = ase.calculators.singlepoint.SinglePointCalculator(
-            atoms=atom,
-            energy=idx / 21,
-            forces=np.random.rand(len(atom), 3),
+        dielectric_tensor = np.random.rand(3, 3)
+        born_effective_charges = np.random.rand(len(atoms), 3, 3)
+        polarization = np.random.rand(3)
+
+        calc = SinglePointCalculator(
+            atoms,
+            energy=energy,
+            energies=energies,
+            free_energy=free_energy,
+            forces=forces,
             stress=stress,
+            stresses=stresses,
+            dipole=dipole,
+            magmom=magmom,
+            magmoms=magmoms,
+            dielectric_tensor=dielectric_tensor,
+            born_effective_charges=born_effective_charges,
+            polarization=polarization,
         )
-        atom.calc.results["predicted_forces"] = np.random.rand(len(atom), 3)
-        atom.calc.results["predicted_energy"] = idx / 21 + 0.5
 
-    return atoms
+        atoms.calc = calc
+        images.append(atoms)
+    return images
+
+
+@pytest.fixture
+def s22_info_arrays_calc() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        atoms: ase.Atoms
+        atoms.info.update(
+            {
+                "mlip_energy": np.random.rand(),
+                "mlip_energy_2": np.random.rand(),
+                "mlip_stress": np.random.rand(6),
+            }
+        )
+        atoms.new_array("mlip_forces", np.random.rand(len(atoms), 3))
+        atoms.new_array("mlip_forces_2", np.random.rand(len(atoms), 3))
+        atoms.set_velocities(np.random.rand(len(atoms), 3))
+        calc = SinglePointCalculator(
+            atoms, energy=np.random.rand(), forces=np.random.rand(len(atoms), 3)
+        )
+        atoms.calc = calc
+        images.append(atoms)
+    return images
+
+
+@pytest.fixture
+def s22_mixed_pbc_cell() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        atoms.set_pbc(np.random.rand(3) > 0.5)
+        atoms.set_cell(np.random.rand(3, 3))
+        images.append(atoms)
+    return images
+
+
+@pytest.fixture
+def s22_illegal_calc_results() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        atoms.calc = SinglePointCalculator(atoms)
+        atoms.calc.results["mlip_energy"] = np.random.rand()
+
+        images.append(atoms)
+    return images
+
+
+@pytest.fixture
+def water() -> list[ase.Atoms]:
+    """Get a dataset without positions."""
+    return [ase.Atoms("H2O")]

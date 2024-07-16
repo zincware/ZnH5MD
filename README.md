@@ -52,9 +52,8 @@ ZnH5MD circumvents two current limitations of the H5MD standard.
 This is a not necessarily complete list of Limitations that will be fixed
 eventually. Any contributions are welcome.
 
-- Time/Step: ZnH5MD assumes a fixed timestamp and time interval of 1. This is
-  primarily, because ASE does not include time data by default.
+- Step: ZnH5MD assumes a fixed time interval of 1.
 - Units: There is no automatic unit conversion through e.g. the pint package
 - performance tweaks: there are many places in ZnH5MD that can be optimized
-  w.r.t to better performance. Currently most of the values are hard-coded. This
-  affects e.g. chunk size.
+  for better performance. Currently most of the values are hard-coded, such as chunk size.
+  Nevertheless, ZnH5MD outperforms most other packages w.r.t. read and write speed.

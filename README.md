@@ -54,6 +54,7 @@ eventually. Any contributions are welcome.
 
 - Step: ZnH5MD assumes a fixed time interval of 1.
 - Units: There is no automatic unit conversion through e.g. the pint package
-- performance tweaks: there are many places in ZnH5MD that can be optimized
-  for better performance. Currently most of the values are hard-coded, such as chunk size.
-  Nevertheless, ZnH5MD outperforms most other packages w.r.t. read and write speed.
+- performance tweaks: there are many places in ZnH5MD that can be optimized for
+  better performance. Currently most of the values are hard-coded, such as chunk
+  size. Nevertheless, ZnH5MD outperforms most other packages w.r.t. read and
+  write speed.

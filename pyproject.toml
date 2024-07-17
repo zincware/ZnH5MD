@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "znh5md"
-version = "0.3.0"
+version = "0.3.1"
 description = "ASE Interface for the H5MD format."
 authors = ["zincwarecode <zincwarecode@gmail.com>"]
 license = "Apache-2.0"
@@ -12,7 +12,6 @@ h5py = "^3"
 ase = "^3.22"
 tqdm = "^4"
 typer = {extras = ["all"], version = "^0"}
-bidict = "^0.23.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"

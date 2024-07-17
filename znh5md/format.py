@@ -6,7 +6,6 @@ import ase
 import h5py
 import numpy as np
 from ase.calculators.calculator import all_properties
-from bidict import bidict
 
 from .utils import concatenate_varying_shape_arrays
 
@@ -135,13 +134,11 @@ def get_step(
     return get_species_aux_data(group, name, "step", index)
 
 
-ASE_TO_H5MD = bidict(
-    {
-        "numbers": "species",  # remove
-        "positions": "position",  # remove
-        "cell": "box",
-    }
-)
+ASE_TO_H5MD = {
+    "numbers": "species",  # remove
+    "positions": "position",  # remove
+    "cell": "box",
+}
 
 
 def extract_atoms_data(atoms: ase.Atoms) -> ASEData:

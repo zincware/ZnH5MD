@@ -143,7 +143,7 @@ class IO(MutableSequence):
 
     def _extract_additional_data(self, f, index, arrays_data, calc_data, info_data):
         for key in f["particles"][self.particle_group].keys():
-            if key not in fmt.ASE_TO_H5MD.inverse:
+            if key not in list(fmt.ASE_TO_H5MD.values()):
                 if (
                     f["particles"][self.particle_group][key]["value"].attrs.get(
                         "ASE_CALCULATOR_RESULT"

@@ -160,7 +160,7 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
         for key, result in atoms.calc.results.items():
             if key not in all_properties:
                 uses_calc.append(key)
-            value = np.array(result) if isinstance(result, (int, float)) else result
+            value = np.array(result) if isinstance(result, (int, float, list)) else result
             if value.ndim > 1 and value.shape[0] == len(atomic_numbers):
                 particles[key if key != "forces" else "force"] = value
             else:

@@ -1,7 +1,9 @@
-import znh5md
 import numpy as np
 import numpy.testing as npt
 from ase.build import molecule
+
+import znh5md
+
 
 def test_high_dim_data_arrays(tmp_path):
     water = molecule("H2O")
@@ -14,6 +16,7 @@ def test_high_dim_data_arrays(tmp_path):
     water2 = io2[0]
 
     npt.assert_array_equal(water.arrays["descriptor"], water2.arrays["descriptor"])
+
 
 def test_high_dim_data_info(tmp_path):
     water = molecule("H2O")

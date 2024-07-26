@@ -20,7 +20,7 @@ from znh5md import utils
 # TODO: use pint to convert the units in the h5md file to ase units
 
 
-def process_batch(self, batch_slice, index):
+def _process_batch(self, batch_slice, index):
     tmp_images = _getitem(self, batch_slice)
     return [
         (idx + batch_slice.start, image)
@@ -29,13 +29,13 @@ def process_batch(self, batch_slice, index):
     ]
 
 
-def get_images(self, index, chunk_size):
+def _get_images(self, index, chunk_size):
     images = []
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = []
         for batch in range(0, len(self), chunk_size):
             batch_slice = slice(batch, batch + chunk_size)
-            futures.append(executor.submit(process_batch, self, batch_slice, index))
+            futures.append(executor.submit(_process_batch, self, batch_slice, index))
 
         for future in tqdm(
             concurrent.futures.as_completed(futures),
@@ -173,7 +173,7 @@ class IO(MutableSequence):
         self, index: Union[int, slice]
     ) -> Union[ase.Atoms, List[ase.Atoms]]:
         if isinstance(index, list) and self.experimental_fancy_loading:
-            return get_images(self, index, chunk_size=self._read_chunk_size())
+            return _get_images(self, index, chunk_size=self._read_chunk_size())
         else:
             return _getitem(self, index)
 

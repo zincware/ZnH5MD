@@ -1,3 +1,4 @@
+import concurrent.futures
 import contextlib
 import dataclasses
 import os
@@ -19,6 +20,35 @@ from znh5md import utils
 # TODO: use pint to convert the units in the h5md file to ase units
 
 
+def _process_batch(self, batch_slice, index):
+    tmp_images = _getitem(self, batch_slice)
+    return [
+        (idx + batch_slice.start, image)
+        for idx, image in enumerate(tmp_images)
+        if idx + batch_slice.start in index
+    ]
+
+
+def _get_images(self, index, chunk_size):
+    images = []
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = []
+        for batch in range(0, len(self), chunk_size):
+            batch_slice = slice(batch, batch + chunk_size)
+            futures.append(executor.submit(_process_batch, self, batch_slice, index))
+
+        for future in tqdm(
+            concurrent.futures.as_completed(futures),
+            total=len(futures),
+            ncols=120,
+            desc="Iterating all data",
+            disable=len(futures) < self.tqdm_limit if self.tqdm_limit > 0 else True,
+        ):
+            images.extend(future.result())
+
+    return [image for idx, image in sorted(images)]
+
+
 @contextlib.contextmanager
 def _open_file(
     filename: str | os.PathLike | None, file_handle: h5py.File | None, **kwargs
@@ -28,6 +58,38 @@ def _open_file(
     else:
         with h5py.File(filename, **kwargs) as f:
             yield f
+
+
+def _getitem(self, index: Union[int, slice]) -> Union[ase.Atoms, List[ase.Atoms]]:
+    single_item = isinstance(index, int)
+    index = [index] if single_item else index
+
+    arrays_data = {}
+    calc_data = {}
+    info_data = {}
+
+    with _open_file(self.filename, self.file_handle, mode="r") as f:
+        arrays_data["species"] = fmt.get_atomic_numbers(
+            f["particles"], self.particle_group, index
+        )
+        positions = fmt.get_positions(f["particles"], self.particle_group, index)
+        if positions is not None:
+            arrays_data["positions"] = positions
+        cell = fmt.get_box(f["particles"], self.particle_group, index)
+        pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
+
+        self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
+        self._update_info_data_with_time_and_step(info_data, f, index)
+
+    structures = utils.build_structures(
+        cell,
+        pbc,
+        arrays_data,
+        calc_data,
+        info_data,
+    )
+
+    return structures[0] if single_item else structures
 
 
 @dataclasses.dataclass
@@ -47,6 +109,7 @@ class IO(MutableSequence):
     compression_opts: Optional[int] = None
     timestep: float = 1.0
     store: t.Literal["time", "linear"] = "linear"
+    experimental_fancy_loading: bool = False
     tqdm_limit: int = 100
 
     def __post_init__(self):
@@ -56,6 +119,8 @@ class IO(MutableSequence):
             raise ValueError("Only one of filename or file_handle can be provided")
         if self.filename is not None:
             self.filename = pathlib.Path(self.filename)
+        if self.experimental_fancy_loading and self.file_handle is not None:
+            raise ValueError("Fancy loading is not supported with file handles")
         self._set_particle_group()
         self._read_author_creator()
 
@@ -86,6 +151,10 @@ class IO(MutableSequence):
                 self.creator = f["h5md"]["creator"].attrs["name"]
                 self.creator_version = f["h5md"]["creator"].attrs["version"]
 
+    def _read_chunk_size(self) -> int:
+        with _open_file(self.filename, self.file_handle, mode="r") as f:
+            return f["particles"][self.particle_group]["species"]["value"].chunks[0]
+
     def create_file(self):
         with _open_file(self.filename, self.file_handle, mode="w") as f:
             g_h5md = f.create_group("h5md")
@@ -105,35 +174,10 @@ class IO(MutableSequence):
     def __getitem__(
         self, index: Union[int, slice]
     ) -> Union[ase.Atoms, List[ase.Atoms]]:
-        single_item = isinstance(index, int)
-        index = [index] if single_item else index
-
-        arrays_data = {}
-        calc_data = {}
-        info_data = {}
-
-        with _open_file(self.filename, self.file_handle, mode="r") as f:
-            arrays_data["species"] = fmt.get_atomic_numbers(
-                f["particles"], self.particle_group, index
-            )
-            positions = fmt.get_positions(f["particles"], self.particle_group, index)
-            if positions is not None:
-                arrays_data["positions"] = positions
-            cell = fmt.get_box(f["particles"], self.particle_group, index)
-            pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
-
-            self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
-            self._update_info_data_with_time_and_step(info_data, f, index)
-
-        structures = utils.build_structures(
-            cell,
-            pbc,
-            arrays_data,
-            calc_data,
-            info_data,
-        )
-
-        return structures[0] if single_item else structures
+        if isinstance(index, list) and self.experimental_fancy_loading:
+            return _get_images(self, index, chunk_size=self._read_chunk_size())
+        else:
+            return _getitem(self, index)
 
     def _update_info_data_with_time_and_step(self, info_data, f, index):
         # we use the time value from `species` because it is guaranteed to exist

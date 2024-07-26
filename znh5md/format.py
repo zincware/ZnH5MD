@@ -31,6 +31,8 @@ class ASEData:
     observables: Dict[str, np.ndarray]
     particles: Dict[str, np.ndarray]
     metadata: Optional[Dict[str, ASEKeyMetaData]] = None
+    time: Optional[np.ndarray] = None
+    step: Optional[np.ndarray] = None
 
     def __post_init__(self):
         if self.metadata is None:

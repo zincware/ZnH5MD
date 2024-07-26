@@ -240,14 +240,16 @@ class IO(MutableSequence):
                 ds_value.attrs["ASE_CALCULATOR_RESULT"] = calc
             if unit and self.save_units:
                 ds_value.attrs["unit"] = unit
-            self._add_time_and_step(g_grp, len(data))
+            time = np.arange(len(data)) * self.timestep
+            step = np.arange(len(data))
+            self._add_time_and_step(g_grp, step, time)
 
-    def _add_time_and_step(self, grp, length):
+    def _add_time_and_step(self, grp, step: np.ndarray, time: np.ndarray):
         if self.store == "time":
             ds_time = grp.create_dataset(
                 "time",
                 dtype=np.float64,
-                data=np.arange(length) * self.timestep,
+                data=time,
                 compression=self.compression,
                 compression_opts=self.compression_opts,
                 maxshape=(None,),
@@ -256,7 +258,7 @@ class IO(MutableSequence):
             ds_step = grp.create_dataset(
                 "step",
                 dtype=int,
-                data=np.arange(length),
+                data=step,
                 compression=self.compression,
                 compression_opts=self.compression_opts,
                 maxshape=(None,),
@@ -300,33 +302,56 @@ class IO(MutableSequence):
                     ds_value.attrs["ASE_CALCULATOR_RESULT"] = metadata[key]["calc"]
                 if metadata.get(key, {}).get("unit") and self.save_units:
                     ds_value.attrs["unit"] = metadata[key]["unit"]
-                self._add_time_and_step(g_observable, len(value))
+                time = np.arange(len(value)) * self.timestep
+                step = np.arange(len(value))
+                self._add_time_and_step(g_observable, step, time)
 
     def _extend_existing_data(self, f, data: fmt.ASEData):
         g_particle_grp = f["particles"][self.particle_group]
-        self._extend_group(g_particle_grp, "box/edges", data.cell)
+        self._extend_group(
+            g_particle_grp, "box/edges", data.cell, step=data.step, time=data.time
+        )
         if self.pbc_group and data.pbc is not None:
-            self._extend_group(g_particle_grp, "box/pbc", data.pbc)
+            self._extend_group(
+                g_particle_grp, "box/pbc", data.pbc, step=data.step, time=data.time
+            )
         for key, value in data.particles.items():
-            self._extend_group(g_particle_grp, key, value)
-        self._extend_observables(f, data.observables)
+            self._extend_group(
+                g_particle_grp, key, value, step=data.step, time=data.time
+            )
+        self._extend_observables(f, data.observables, step=data.step, time=data.time)
 
-    def _extend_group(self, parent_grp, name, data):
+    def _extend_group(
+        self,
+        parent_grp,
+        name,
+        data,
+        step: np.ndarray | None = None,
+        time: np.ndarray | None = None,
+    ):
         if data is not None and name in parent_grp:
             g_grp = parent_grp[name]
             utils.fill_dataset(g_grp["value"], data)
             if self.store == "time":
-                last_time = g_grp["time"][-1]
-                last_step = g_grp["step"][-1]
+                if time is None:
+                    last_time = g_grp["time"][-1]
+                    time = np.arange(len(data)) * self.timestep + last_time
+                if step is None:
+                    last_step = g_grp["step"][-1]
+                    step = np.arange(len(data)) + last_step
                 utils.fill_dataset(
                     g_grp["time"],
-                    np.arange(1, len(data) + 1) * self.timestep + last_time,
+                    time,
                 )
-                utils.fill_dataset(
-                    g_grp["step"], np.arange(1, len(data) + 1) + last_step
-                )
+                utils.fill_dataset(g_grp["step"], step)
 
-    def _extend_observables(self, f, info_data):
+    def _extend_observables(
+        self,
+        f,
+        info_data,
+        step: np.ndarray | None = None,
+        time: np.ndarray | None = None,
+    ):
         if f"observables/{self.particle_group}" in f:
             g_observables = f[f"observables/{self.particle_group}"]
             for key, value in info_data.items():
@@ -334,15 +359,17 @@ class IO(MutableSequence):
                     g_val = g_observables[key]
                     utils.fill_dataset(g_val["value"], value)
                     if self.store == "time":
-                        last_time = g_val["time"][-1]
-                        last_step = g_val["step"][-1]
+                        if time is None:
+                            last_time = g_val["time"][-1]
+                            time = np.arange(len(value)) * self.timestep + last_time
+                        if step is None:
+                            last_step = g_val["step"][-1]
+                            step = np.arange(len(value)) + last_step
                         utils.fill_dataset(
                             g_val["time"],
-                            np.arange(len(value)) * self.timestep + last_time,
+                            time,
                         )
-                        utils.fill_dataset(
-                            g_val["step"], np.arange(len(value)) + last_step
-                        )
+                        utils.fill_dataset(g_val["step"], step)
 
     def append(self, atoms: ase.Atoms):
         self.extend([atoms])

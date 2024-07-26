@@ -117,6 +117,8 @@ class IO(MutableSequence):
             raise ValueError("Only one of filename or file_handle can be provided")
         if self.filename is not None:
             self.filename = pathlib.Path(self.filename)
+        if self.experimental_fancy_loading and self.file_handle is not None:
+            raise ValueError("Fancy loading is not supported with file handles")
         self._set_particle_group()
         self._read_author_creator()
 

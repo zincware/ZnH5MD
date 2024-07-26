@@ -29,6 +29,38 @@ def _open_file(
         with h5py.File(filename, **kwargs) as f:
             yield f
 
+def _getitem(
+    self, index: Union[int, slice]
+) -> Union[ase.Atoms, List[ase.Atoms]]:
+    single_item = isinstance(index, int)
+    index = [index] if single_item else index
+
+    arrays_data = {}
+    calc_data = {}
+    info_data = {}
+
+    with _open_file(self.filename, self.file_handle, mode="r") as f:
+        arrays_data["species"] = fmt.get_atomic_numbers(
+            f["particles"], self.particle_group, index
+        )
+        positions = fmt.get_positions(f["particles"], self.particle_group, index)
+        if positions is not None:
+            arrays_data["positions"] = positions
+        cell = fmt.get_box(f["particles"], self.particle_group, index)
+        pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
+
+        self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
+        self._update_info_data_with_time_and_step(info_data, f, index)
+
+    structures = utils.build_structures(
+        cell,
+        pbc,
+        arrays_data,
+        calc_data,
+        info_data,
+    )
+
+    return structures[0] if single_item else structures
 
 @dataclasses.dataclass
 class IO(MutableSequence):
@@ -47,6 +79,7 @@ class IO(MutableSequence):
     compression_opts: Optional[int] = None
     timestep: float = 1.0
     store: t.Literal["time", "linear"] = "linear"
+    experimental_fancy_loading: bool = False
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -104,35 +137,17 @@ class IO(MutableSequence):
     def __getitem__(
         self, index: Union[int, slice]
     ) -> Union[ase.Atoms, List[ase.Atoms]]:
-        single_item = isinstance(index, int)
-        index = [index] if single_item else index
-
-        arrays_data = {}
-        calc_data = {}
-        info_data = {}
-
-        with _open_file(self.filename, self.file_handle, mode="r") as f:
-            arrays_data["species"] = fmt.get_atomic_numbers(
-                f["particles"], self.particle_group, index
-            )
-            positions = fmt.get_positions(f["particles"], self.particle_group, index)
-            if positions is not None:
-                arrays_data["positions"] = positions
-            cell = fmt.get_box(f["particles"], self.particle_group, index)
-            pbc = fmt.get_pbc(f["particles"], self.particle_group, index)
-
-            self._extract_additional_data(f, index, arrays_data, calc_data, info_data)
-            self._update_info_data_with_time_and_step(info_data, f, index)
-
-        structures = utils.build_structures(
-            cell,
-            pbc,
-            arrays_data,
-            calc_data,
-            info_data,
-        )
-
-        return structures[0] if single_item else structures
+        if isinstance(index, list) and self.experimental_fancy_loading:
+            images = []
+            batch_size = int(len(self) / 10)
+            for batch in tqdm(range(0, len(self), batch_size), ncols=120, desc="Iterating all data"):
+                tmp_images = _getitem(self, slice(batch, batch + batch_size))
+                for idx, image in enumerate(tmp_images):
+                    if idx + batch in index:
+                        images.append(image)
+            return images
+        else:
+            return _getitem(self, index)
 
     def _update_info_data_with_time_and_step(self, info_data, f, index):
         # we use the time value from `species` because it is guaranteed to exist

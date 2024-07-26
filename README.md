@@ -15,7 +15,7 @@ import znh5md
 from ase.collections import s22
 
 znh5md.write("s22.h5", list(s22))
-print(list(zn5hmd.iread("s22.h5")))
+print(list(znh5md.iread("s22.h5")))
 # list[ase.Atoms]
 ```
 

@@ -60,10 +60,9 @@ def test_wrong_store(tmp_path):
     atoms.info["h5md_step"] = 1
     atoms.info["h5md_time"] = 0.1
 
-    with pytest.warns(
-        UserWarning, match="time is ignored in 'linear' storage mode"
-    ):
+    with pytest.warns(UserWarning, match="time is ignored in 'linear' storage mode"):
         io.append(atoms)
+
 
 def test_no_warn_correct(tmp_path):
     io = znh5md.IO(tmp_path / "test_wrong_store.h5", store="linear")
@@ -72,5 +71,5 @@ def test_no_warn_correct(tmp_path):
     # Ensure no warning is issued
     with pytest.warns(None) as record:
         io.append(atoms)
-    
+
     assert len(record) == 0

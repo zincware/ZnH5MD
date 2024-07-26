@@ -215,7 +215,7 @@ class IO(MutableSequence):
             self._create_group(
                 g_particle_grp, "box/pbc", data.pbc, time=data.time, step=data.step
             )
-        
+
         _disable_tqdm = len(data) < self.tqdm_limit if self.tqdm_limit > 0 else True
         for key, value in tqdm(
             data.particles.items(),

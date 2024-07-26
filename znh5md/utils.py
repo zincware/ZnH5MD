@@ -58,33 +58,6 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
     return array[~np.isnan(array).all(axis=tuple(range(1, array.ndim)))]
 
 
-def split_varying_shape_array(array: np.ndarray) -> list[np.ndarray]:
-    """Split a numpy array into a list of 1D arrays.
-
-    NaN values are removed to yield arrays of varying lengths.
-
-    Parameters
-    ----------
-        array (numpy.array): At least 2D numpy array.
-
-    Returns
-    -------
-        list of numpy.array: A list of numpy arrays where
-        each array corresponds to a row in the input array.
-
-    Example:
-    >>> split_varying_shape_array(np.array([[ 1.,  2., np.nan], [ 3.,  4.,  5.]]))
-    [array([1., 2.]), array([3., 4., 5.])]
-
-    """
-    arrays = []
-    for row in array:
-        valid_elements = remove_nan_rows(row)
-        arrays.append(valid_elements)
-
-    return arrays
-
-
 def fill_dataset(dataset, new_data):
     # Axis 0 is the configuration axis
     # Axis 1 is the number of particles axis
@@ -124,9 +97,31 @@ def fill_dataset(dataset, new_data):
     dataset[old_shape[0] :] = padded_new_data
 
 
-def build_atoms(
-    atomic_numbers, positions, velocities, cell, pbc, calc_data, info_data, arrays_data
-) -> ase.Atoms:
+def build_atoms(args) -> ase.Atoms:
+    (
+        atomic_numbers,
+        positions,
+        velocities,
+        cell,
+        pbc,
+        calc_data,
+        info_data,
+        arrays_data,
+    ) = args
+    atomic_numbers = remove_nan_rows(atomic_numbers)
+    if positions is not None:
+        positions = remove_nan_rows(positions)
+    if velocities is not None:
+        velocities = remove_nan_rows(velocities)
+    if calc_data is not None:
+        calc_data = {key: remove_nan_rows(value) for key, value in calc_data.items()}
+    if arrays_data is not None:
+        arrays_data = {
+            key: remove_nan_rows(value) for key, value in arrays_data.items()
+        }
+    if info_data is not None:
+        info_data = {key: remove_nan_rows(value) for key, value in info_data.items()}
+
     atoms = ase.Atoms(
         symbols=atomic_numbers,
         positions=positions,
@@ -157,25 +152,18 @@ def build_structures(
     velocities = arrays_data.pop("velocity", None)
     atomic_numbers = arrays_data.pop("species")
     if atomic_numbers is not None:
+        # could use ThreadPoolExecutor here
+        # but there is no performance gain
         for idx in range(len(atomic_numbers)):
-            # ruff thinks, this is less complex than doing it in place ... ??
-            atoms = build_atoms(
-                atomic_numbers=remove_nan_rows(atomic_numbers[idx]),
-                positions=remove_nan_rows(positions[idx])
-                if positions is not None
-                else None,
-                velocities=remove_nan_rows(velocities[idx])
-                if velocities is not None
-                else None,
-                cell=cell[idx] if cell is not None else None,
-                pbc=pbc[idx] if isinstance(pbc[0], np.ndarray) else pbc,
-                arrays_data={
-                    k: remove_nan_rows(v[idx]) for k, v in arrays_data.items()
-                },
-                calc_data={k: remove_nan_rows(v[idx]) for k, v in calc_data.items()}
-                if calc_data is not None
-                else None,
-                info_data={k: remove_nan_rows(v[idx]) for k, v in info_data.items()},
+            args = (
+                atomic_numbers[idx],
+                positions[idx] if positions is not None else None,
+                velocities[idx] if velocities is not None else None,
+                cell[idx] if cell is not None else None,
+                pbc[idx] if isinstance(pbc[0], np.ndarray) else pbc,
+                {key: value[idx] for key, value in calc_data.items()},
+                {key: value[idx] for key, value in info_data.items()},
+                {key: value[idx] for key, value in arrays_data.items()},
             )
-            structures.append(atoms)
+            structures.append(build_atoms(args))
     return structures

@@ -48,6 +48,9 @@ class ASEData:
         self.metadata["velocity"] = {"unit": "Angstrom/fs", "calc": False}
         self.metadata["position"] = {"unit": "angstrom", "calc": False}
 
+    def __len__(self):
+        return len(self.particles["species"])
+
 
 def get_property(group, name: str, prop: str, index) -> Optional[np.ndarray]:
     """Retrieve a property from an HDF5 group."""

@@ -11,6 +11,7 @@ import ase
 import h5py
 import numpy as np
 from ase.calculators.calculator import all_properties
+from tqdm import tqdm
 
 import znh5md.format as fmt
 from znh5md import utils
@@ -185,7 +186,11 @@ class IO(MutableSequence):
             if needs_creation:
                 self.create_file()
 
-        data = [fmt.extract_atoms_data(atoms) for atoms in images]
+        data = []
+        for atoms in tqdm(
+            images, ncols=120, desc="Preparing data", disable=len(images) < 100
+        ):
+            data.append(fmt.extract_atoms_data(atoms))
         combined_data = fmt.combine_asedata(data)
 
         with _open_file(self.filename, self.file_handle, mode="a") as f:
@@ -208,7 +213,12 @@ class IO(MutableSequence):
             self._create_group(
                 g_particle_grp, "box/pbc", data.pbc, time=data.time, step=data.step
             )
-        for key, value in data.particles.items():
+        for key, value in tqdm(
+            data.particles.items(),
+            ncols=120,
+            desc="Creating groups",
+            disable=len(data) < 100,
+        ):
             self._create_group(
                 g_particle_grp,
                 key,
@@ -253,8 +263,12 @@ class IO(MutableSequence):
                 ds_value.attrs["unit"] = unit
             if time is None:
                 time = np.arange(len(data)) * self.timestep
+            elif self.store == "linear":
+                warnings.warn("time is ignored in 'linear' storage mode")
             if step is None:
                 step = np.arange(len(data))
+            elif self.store == "linear":
+                warnings.warn("step is ignored in 'linear' storage mode")
             self._add_time_and_step(g_grp, step, time)
 
     def _add_time_and_step(self, grp, step: np.ndarray, time: np.ndarray):
@@ -277,8 +291,6 @@ class IO(MutableSequence):
                 maxshape=(None,),
             )
         elif self.store == "linear":
-            if time is not None or step is not None:
-                warnings.warn("time and step are ignored in 'linear' storage mode")
             ds_time = grp.create_dataset(
                 "time",
                 dtype=np.float64,
@@ -321,8 +333,12 @@ class IO(MutableSequence):
                     ds_value.attrs["unit"] = metadata[key]["unit"]
                 if time is None:
                     time = np.arange(len(value)) * self.timestep
+                elif self.store == "linear":
+                    warnings.warn("time is ignored in 'linear' storage mode")
                 if step is None:
                     step = np.arange(len(value))
+                elif self.store == "linear":
+                    warnings.warn("step is ignored in 'linear' storage mode")
                 self._add_time_and_step(g_observable, step, time)
 
     def _extend_existing_data(self, f, data: fmt.ASEData):
@@ -334,7 +350,12 @@ class IO(MutableSequence):
             self._extend_group(
                 g_particle_grp, "box/pbc", data.pbc, step=data.step, time=data.time
             )
-        for key, value in data.particles.items():
+        for key, value in tqdm(
+            data.particles.items(),
+            ncols=120,
+            desc="Extending groups",
+            disable=len(data) < 100,
+        ):
             self._extend_group(
                 g_particle_grp, key, value, step=data.step, time=data.time
             )

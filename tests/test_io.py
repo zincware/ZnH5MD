@@ -1,8 +1,9 @@
-import ase.collections
-import numpy as np
-import h5py
-import pytest
 from unittest.mock import patch
+
+import ase.collections
+import h5py
+import numpy as np
+import pytest
 
 import znh5md
 
@@ -69,10 +70,11 @@ def test_experimental_fancy_loading(tmp_path):
             assert np.array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
             assert np.allclose(a.get_positions(), b.get_positions())
 
+
 def test_experimental_fancy_loading_file_handle(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(list(ase.collections.s22))
-    
+
     with pytest.raises(ValueError):
         with h5py.File(tmp_path / "test.h5", "r") as f:
             znh5md.IO(file_handle=f, experimental_fancy_loading=True)

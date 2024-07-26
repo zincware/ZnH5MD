@@ -263,8 +263,12 @@ class IO(MutableSequence):
                 ds_value.attrs["unit"] = unit
             if time is None:
                 time = np.arange(len(data)) * self.timestep
+            elif self.store == "linear":
+                warnings.warn("time is ignored in 'linear' storage mode")
             if step is None:
                 step = np.arange(len(data))
+            elif self.store == "linear":
+                warnings.warn("step is ignored in 'linear' storage mode")
             self._add_time_and_step(g_grp, step, time)
 
     def _add_time_and_step(self, grp, step: np.ndarray, time: np.ndarray):
@@ -287,8 +291,6 @@ class IO(MutableSequence):
                 maxshape=(None,),
             )
         elif self.store == "linear":
-            if time is not None or step is not None:
-                warnings.warn("time and step are ignored in 'linear' storage mode")
             ds_time = grp.create_dataset(
                 "time",
                 dtype=np.float64,
@@ -331,8 +333,12 @@ class IO(MutableSequence):
                     ds_value.attrs["unit"] = metadata[key]["unit"]
                 if time is None:
                     time = np.arange(len(value)) * self.timestep
+                elif self.store == "linear":
+                    warnings.warn("time is ignored in 'linear' storage mode")
                 if step is None:
                     step = np.arange(len(value))
+                elif self.store == "linear":
+                    warnings.warn("step is ignored in 'linear' storage mode")
                 self._add_time_and_step(g_observable, step, time)
 
     def _extend_existing_data(self, f, data: fmt.ASEData):

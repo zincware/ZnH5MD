@@ -54,13 +54,23 @@ def test_inconsistent_step(tmp_path):
         io.extend(images)
 
 
-def test_wrong_store(tmp_path, capsys):
+def test_wrong_store(tmp_path):
     io = znh5md.IO(tmp_path / "test_wrong_store.h5", store="linear")
     atoms = ase.build.molecule("H2O")
     atoms.info["h5md_step"] = 1
     atoms.info["h5md_time"] = 0.1
 
     with pytest.warns(
-        UserWarning, match="time and step are ignored in 'linear' storage mode"
+        UserWarning, match="time is ignored in 'linear' storage mode"
     ):
         io.append(atoms)
+
+def test_no_warn_correct(tmp_path):
+    io = znh5md.IO(tmp_path / "test_wrong_store.h5", store="linear")
+    atoms = ase.build.molecule("H2O")
+
+    # Ensure no warning is issued
+    with pytest.warns(None) as record:
+        io.append(atoms)
+    
+    assert len(record) == 0

@@ -6,6 +6,7 @@ import typing as t
 import warnings
 from collections.abc import MutableSequence
 from typing import List, Optional, Union
+import concurrent.futures
 
 import ase
 import h5py
@@ -17,6 +18,23 @@ import znh5md.format as fmt
 from znh5md import utils
 
 # TODO: use pint to convert the units in the h5md file to ase units
+
+def process_batch(self, batch_slice, index):
+    tmp_images = _getitem(self, batch_slice)
+    return [(idx + batch_slice.start, image) for idx, image in enumerate(tmp_images) if idx + batch_slice.start in index]
+
+def get_images(self, index, chunk_size):
+    images = []
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = []
+        for batch in range(0, len(self), chunk_size):
+            batch_slice = slice(batch, batch + chunk_size)
+            futures.append(executor.submit(process_batch, self, batch_slice, index))
+        
+        for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), ncols=120, desc="Iterating all data"):
+            images.extend(future.result())
+    
+    return [image for idx, image in sorted(images)]
 
 
 @contextlib.contextmanager
@@ -117,6 +135,10 @@ class IO(MutableSequence):
                 self.author_email = f["h5md"]["author"].attrs["email"]
                 self.creator = f["h5md"]["creator"].attrs["name"]
                 self.creator_version = f["h5md"]["creator"].attrs["version"]
+    
+    def _read_chunk_size(self) -> int:
+        with _open_file(self.filename, self.file_handle, mode="r") as f:
+            return f["particles"][self.particle_group]["species"]["value"].chunks[0]
 
     def create_file(self):
         with _open_file(self.filename, self.file_handle, mode="w") as f:
@@ -138,14 +160,7 @@ class IO(MutableSequence):
         self, index: Union[int, slice]
     ) -> Union[ase.Atoms, List[ase.Atoms]]:
         if isinstance(index, list) and self.experimental_fancy_loading:
-            images = []
-            batch_size = int(len(self) / 10)
-            for batch in tqdm(range(0, len(self), batch_size), ncols=120, desc="Iterating all data"):
-                tmp_images = _getitem(self, slice(batch, batch + batch_size))
-                for idx, image in enumerate(tmp_images):
-                    if idx + batch in index:
-                        images.append(image)
-            return images
+            return get_images(self, index, chunk_size=self._read_chunk_size())
         else:
             return _getitem(self, index)
 

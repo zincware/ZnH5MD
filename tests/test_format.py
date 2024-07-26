@@ -1,5 +1,6 @@
-from znh5md.format import extract_atoms_data, ASEData, combine_asedata
 from ase.build import molecule
+
+from znh5md.format import ASEData, combine_asedata, extract_atoms_data
 
 
 def test_extract_atoms_data():

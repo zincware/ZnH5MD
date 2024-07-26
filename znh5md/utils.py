@@ -58,33 +58,6 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
     return array[~np.isnan(array).all(axis=tuple(range(1, array.ndim)))]
 
 
-def split_varying_shape_array(array: np.ndarray) -> list[np.ndarray]:
-    """Split a numpy array into a list of 1D arrays.
-
-    NaN values are removed to yield arrays of varying lengths.
-
-    Parameters
-    ----------
-        array (numpy.array): At least 2D numpy array.
-
-    Returns
-    -------
-        list of numpy.array: A list of numpy arrays where
-        each array corresponds to a row in the input array.
-
-    Example:
-    >>> split_varying_shape_array(np.array([[ 1.,  2., np.nan], [ 3.,  4.,  5.]]))
-    [array([1., 2.]), array([3., 4., 5.])]
-
-    """
-    arrays = []
-    for row in array:
-        valid_elements = remove_nan_rows(row)
-        arrays.append(valid_elements)
-
-    return arrays
-
-
 def fill_dataset(dataset, new_data):
     # Axis 0 is the configuration axis
     # Axis 1 is the number of particles axis

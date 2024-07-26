@@ -3,6 +3,7 @@ import dataclasses
 import os
 import pathlib
 import typing as t
+import warnings
 from collections.abc import MutableSequence
 from typing import List, Optional, Union
 
@@ -276,6 +277,8 @@ class IO(MutableSequence):
                 maxshape=(None,),
             )
         elif self.store == "linear":
+            if time is not None or step is not None:
+                warnings.warn("time and step are ignored in 'linear' storage mode")
             ds_time = grp.create_dataset(
                 "time",
                 dtype=np.float64,

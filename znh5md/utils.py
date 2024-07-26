@@ -180,6 +180,8 @@ def build_structures(
     velocities = arrays_data.pop("velocity", None)
     atomic_numbers = arrays_data.pop("species")
     if atomic_numbers is not None:
+        # could use ThreadPoolExecutor here
+        # but there is no performance gain
         for idx in range(len(atomic_numbers)):
             args = (
                 atomic_numbers[idx],

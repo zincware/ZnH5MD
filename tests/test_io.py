@@ -51,6 +51,7 @@ def test_author_creater(tmp_path):
     assert io2.creator == "ZnH5MD"
     assert io2.creator_version == "V0.3"
 
+
 def test_experimental_fancy_loading(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5", experimental_fancy_loading=True)
     images = list(ase.collections.s22)

@@ -1,6 +1,7 @@
 import ase
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
+import concurrent.futures
 
 
 def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
@@ -125,8 +126,20 @@ def fill_dataset(dataset, new_data):
 
 
 def build_atoms(
-    atomic_numbers, positions, velocities, cell, pbc, calc_data, info_data, arrays_data
-) -> ase.Atoms:
+    atomic_numbers, positions, velocities, cell, pbc, calc_data, info_data, arrays_data, index
+) -> tuple[ase.Atoms, int]:
+    atomic_numbers = remove_nan_rows(atomic_numbers)
+    if positions is not None:
+        positions = remove_nan_rows(positions)
+    if velocities is not None:
+        velocities = remove_nan_rows(velocities)
+    if calc_data is not None:
+        calc_data = {key: remove_nan_rows(value) for key, value in calc_data.items()}
+    if arrays_data is not None:
+        arrays_data = {key: remove_nan_rows(value) for key, value in arrays_data.items()}
+    if info_data is not None:
+        info_data = {key: remove_nan_rows(value) for key, value in info_data.items()}
+
     atoms = ase.Atoms(
         symbols=atomic_numbers,
         positions=positions,
@@ -141,7 +154,7 @@ def build_atoms(
         atoms.calc = SinglePointCalculator(atoms=atoms)
         atoms.calc.results = calc_data
 
-    return atoms
+    return atoms, index
 
 
 def build_structures(
@@ -157,25 +170,19 @@ def build_structures(
     velocities = arrays_data.pop("velocity", None)
     atomic_numbers = arrays_data.pop("species")
     if atomic_numbers is not None:
+        # with concurrent.futures.ProcessPoolExecutor() as executor:
         for idx in range(len(atomic_numbers)):
             # ruff thinks, this is less complex than doing it in place ... ??
-            atoms = build_atoms(
-                atomic_numbers=remove_nan_rows(atomic_numbers[idx]),
-                positions=remove_nan_rows(positions[idx])
-                if positions is not None
-                else None,
-                velocities=remove_nan_rows(velocities[idx])
-                if velocities is not None
-                else None,
+            atoms, _ = build_atoms(
+                atomic_numbers=atomic_numbers[idx],
+                positions=positions[idx] if positions is not None else None,
+                velocities=velocities[idx] if velocities is not None else None,
                 cell=cell[idx] if cell is not None else None,
                 pbc=pbc[idx] if isinstance(pbc[0], np.ndarray) else pbc,
-                arrays_data={
-                    k: remove_nan_rows(v[idx]) for k, v in arrays_data.items()
-                },
-                calc_data={k: remove_nan_rows(v[idx]) for k, v in calc_data.items()}
-                if calc_data is not None
-                else None,
-                info_data={k: remove_nan_rows(v[idx]) for k, v in info_data.items()},
+                arrays_data={key: value[idx] for key, value in arrays_data.items()},
+                calc_data={key: value[idx] for key, value in calc_data.items()},
+                info_data={key: value[idx] for key, value in info_data.items()},
+                index=idx,
             )
             structures.append(atoms)
     return structures

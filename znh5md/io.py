@@ -47,6 +47,7 @@ class IO(MutableSequence):
     compression_opts: Optional[int] = None
     timestep: float = 1.0
     store: t.Literal["time", "linear"] = "linear"
+    tqdm_limit: int = 100
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -187,8 +188,9 @@ class IO(MutableSequence):
                 self.create_file()
 
         data = []
+        _disable_tqdm = len(images) < self.tqdm_limit if self.tqdm_limit > 0 else True
         for atoms in tqdm(
-            images, ncols=120, desc="Preparing data", disable=len(images) < 100
+            images, ncols=120, desc="Preparing data", disable=_disable_tqdm
         ):
             data.append(fmt.extract_atoms_data(atoms))
         combined_data = fmt.combine_asedata(data)
@@ -213,11 +215,13 @@ class IO(MutableSequence):
             self._create_group(
                 g_particle_grp, "box/pbc", data.pbc, time=data.time, step=data.step
             )
+        
+        _disable_tqdm = len(data) < self.tqdm_limit if self.tqdm_limit > 0 else True
         for key, value in tqdm(
             data.particles.items(),
             ncols=120,
             desc="Creating groups",
-            disable=len(data) < 100,
+            disable=_disable_tqdm,
         ):
             self._create_group(
                 g_particle_grp,
@@ -350,11 +354,12 @@ class IO(MutableSequence):
             self._extend_group(
                 g_particle_grp, "box/pbc", data.pbc, step=data.step, time=data.time
             )
+        _disable_tqdm = len(data) < self.tqdm_limit if self.tqdm_limit > 0 else True
         for key, value in tqdm(
             data.particles.items(),
             ncols=120,
             desc="Extending groups",
-            disable=len(data) < 100,
+            disable=_disable_tqdm,
         ):
             self._extend_group(
                 g_particle_grp, key, value, step=data.step, time=data.time

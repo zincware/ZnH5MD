@@ -42,6 +42,7 @@ def _get_images(self, index, chunk_size):
             total=len(futures),
             ncols=120,
             desc="Iterating all data",
+            disable=len(futures) < self.tqdm_limit if self.tqdm_limit > 0 else True,
         ):
             images.extend(future.result())
 

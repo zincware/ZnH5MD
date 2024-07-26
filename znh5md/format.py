@@ -55,6 +55,10 @@ def get_property(group, name: str, prop: str, index) -> Optional[np.ndarray]:
         return group[name][prop]["value"][index]
     except KeyError:
         return None
+    except OSError:
+        # h5py raises an OSError if index == len(field)
+        # but we need an IndexError
+        raise IndexError(f"Index {index} out of bounds for property {prop}")
 
 
 def get_atomic_numbers(group, name: str, index) -> Optional[np.ndarray]:

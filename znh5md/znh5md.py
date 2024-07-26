@@ -26,5 +26,5 @@ def write(
 
 def iread(filename) -> t.Iterable[ase.Atoms]:
     io = IO(filename)
-    for atoms in io[:]:
+    for atoms in io:
         yield atoms

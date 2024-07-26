@@ -31,7 +31,7 @@ def test_read_write(tmp_path, s22_all_properties):
 def test_iread(tmp_path, s22_all_properties):
     file = tmp_path / "test.h5"
     znh5md.write(file, s22_all_properties)
-    
+
     assert len(list(znh5md.iread(file))) == len(s22_all_properties)
     assert len(list(znh5md.IO(file))) == len(s22_all_properties)
 

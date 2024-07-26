@@ -1,4 +1,3 @@
-
 import ase
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator

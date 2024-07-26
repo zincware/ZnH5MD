@@ -182,12 +182,17 @@ def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
         if key not in all_properties and key not in ASE_TO_H5MD:
             particles[key] = value
 
+    time = atoms.info.get(CustomINFOData.h5md_time.name, None)
+    step = atoms.info.get(CustomINFOData.h5md_step.name, None)
+
     return ASEData(
         cell=cell,
         pbc=pbc,
         observables=info_data,
         particles=particles,
         metadata={key: {"unit": None, "calc": True} for key in uses_calc},
+        time=time,
+        step=step,
     )
 
 
@@ -202,12 +207,30 @@ def combine_asedata(data: List[ASEData]) -> ASEData:
     observables = _combine_dicts([x.observables for x in data])
     particles = _combine_dicts([x.particles for x in data])
 
+    time_occurrences = sum([x.time is not None for x in data])
+    step_occurrences = sum([x.step is not None for x in data])
+    if time_occurrences == len(data):
+        time = np.array([x.time for x in data])
+    elif time_occurrences == 0:
+        time = None
+    else:
+        raise ValueError("Time is not consistent across data objects")
+
+    if step_occurrences == len(data):
+        step = np.array([x.step for x in data])
+    elif step_occurrences == 0:
+        step = None
+    else:
+        raise ValueError("Step is not consistent across data objects")
+
     return ASEData(
         cell=cell,
         pbc=pbc,
         observables=observables,
         particles=particles,
         metadata=data[0].metadata,  # we assume they are all equal
+        time=time,
+        step=step,
     )
 
 

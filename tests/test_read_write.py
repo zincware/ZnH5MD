@@ -33,6 +33,7 @@ def test_iread(tmp_path, s22_all_properties):
     znh5md.write(file, s22_all_properties)
     
     assert len(list(znh5md.iread(file))) == len(s22_all_properties)
+    assert len(list(znh5md.IO(file))) == len(s22_all_properties)
 
     for a, b in zip(s22_all_properties, znh5md.iread(file)):
         npt.assert_array_equal(a.get_positions(), b.get_positions())

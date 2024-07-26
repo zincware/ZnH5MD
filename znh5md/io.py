@@ -3,6 +3,7 @@ import dataclasses
 import os
 import pathlib
 import typing as t
+from tqdm import tqdm
 import warnings
 from collections.abc import MutableSequence
 from typing import List, Optional, Union
@@ -185,7 +186,9 @@ class IO(MutableSequence):
             if needs_creation:
                 self.create_file()
 
-        data = [fmt.extract_atoms_data(atoms) for atoms in images]
+        data = []
+        for atoms in tqdm(images, ncols=120, desc="Preparing data", disable=len(images) < 100):
+            data.append(fmt.extract_atoms_data(atoms))
         combined_data = fmt.combine_asedata(data)
 
         with _open_file(self.filename, self.file_handle, mode="a") as f:
@@ -208,7 +211,7 @@ class IO(MutableSequence):
             self._create_group(
                 g_particle_grp, "box/pbc", data.pbc, time=data.time, step=data.step
             )
-        for key, value in data.particles.items():
+        for key, value in tqdm(data.particles.items(), ncols=120, desc="Creating groups", disable=len(data) < 100):
             self._create_group(
                 g_particle_grp,
                 key,
@@ -334,7 +337,7 @@ class IO(MutableSequence):
             self._extend_group(
                 g_particle_grp, "box/pbc", data.pbc, step=data.step, time=data.time
             )
-        for key, value in data.particles.items():
+        for key, value in tqdm(data.particles.items(), ncols=120, desc="Extending groups", disable=len(data) < 100):
             self._extend_group(
                 g_particle_grp, key, value, step=data.step, time=data.time
             )

@@ -50,3 +50,13 @@ def test_author_creater(tmp_path):
     assert io2.author_email == "email@uni-stuttgart.de"
     assert io2.creator == "ZnH5MD"
     assert io2.creator_version == "V0.3"
+
+def test_experimental_fancy_loading(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5", experimental_fancy_loading=True)
+    images = list(ase.collections.s22)
+    io.extend(images)
+
+    assert len(io[[1, 3, 5, 7, 9]]) == 5
+    for a, b in zip([images[i] for i in [1, 3, 5, 7, 9]], io[[1, 3, 5, 7, 9]]):
+        assert np.array_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
+        assert np.allclose(a.get_positions(), b.get_positions())

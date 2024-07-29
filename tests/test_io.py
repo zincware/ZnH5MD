@@ -57,6 +57,7 @@ def test_extend_empty(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(list(ase.collections.s22))
 
+    assert len(io) == 22
     with pytest.warns(UserWarning, match="No data provided"):
         io.extend([])
     assert len(io) == 22

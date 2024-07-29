@@ -1,5 +1,6 @@
 import ase.collections
 import numpy as np
+import pytest
 
 import znh5md
 
@@ -50,3 +51,11 @@ def test_author_creater(tmp_path):
     assert io2.author_email == "email@uni-stuttgart.de"
     assert io2.creator == "ZnH5MD"
     assert io2.creator_version == "V0.3"
+
+def test_extend_empty(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    io.extend(list(ase.collections.s22))
+
+    with pytest.warns(UserWarning, match="No data provided"):
+        io.extend([])
+    assert len(io) == 22

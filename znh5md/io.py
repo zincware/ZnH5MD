@@ -178,6 +178,9 @@ class IO(MutableSequence):
                     )
 
     def extend(self, images: List[ase.Atoms]):
+        if len(images) == 0:
+            warnings.warn("No data provided")
+            return
         if self.filename is not None and not self.filename.exists():
             self.create_file()
         if self.file_handle is not None:

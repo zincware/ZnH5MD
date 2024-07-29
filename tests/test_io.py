@@ -52,6 +52,7 @@ def test_author_creater(tmp_path):
     assert io2.creator == "ZnH5MD"
     assert io2.creator_version == "V0.3"
 
+
 def test_extend_empty(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(list(ase.collections.s22))

@@ -1,5 +1,5 @@
-import ase.collections
 import ase.build
+import ase.collections
 import numpy as np
 import pytest
 
@@ -62,6 +62,7 @@ def test_extend_empty(tmp_path):
     with pytest.warns(UserWarning, match="No data provided"):
         io.extend([])
     assert len(io) == 22
+
 
 def test_extend_single(tmp_path):
     vectors = np.random.rand(3, 3, 2, 3)

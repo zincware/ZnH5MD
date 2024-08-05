@@ -63,6 +63,7 @@ def test_extend_empty(tmp_path):
         io.extend([])
     assert len(io) == 22
 
+
 def test_inplace_change(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     H2O = ase.build.molecule("H2O")

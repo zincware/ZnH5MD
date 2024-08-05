@@ -369,6 +369,13 @@ class IO(MutableSequence):
             )
         self._extend_observables(f, data.observables, step=data.step, time=data.time)
 
+    def _modify_group(self, f, data: fmt.ASEData, index: int):
+        g_particle_grp = f["particles"][self.particle_group]
+        for key, value in data.particles.items():
+            g_particle_grp[f"{key}/value"][index] = value
+        for key, value in data.observables.items():
+            f[f"observables/{self.particle_group}/{key}/value"][index] = value
+
     def _extend_group(
         self,
         parent_grp,
@@ -425,8 +432,9 @@ class IO(MutableSequence):
     def __delitem__(self, index):
         raise NotImplementedError("Deleting items is not supported")
 
-    def __setitem__(self, index, value):
-        raise NotImplementedError("Setting items is not supported")
+    def __setitem__(self, index, value: ase.Atoms):
+        with _open_file(self.filename, self.file_handle, mode="a") as f:
+            self._modify_group(f, fmt.extract_atoms_data(value), index)
 
     def insert(self, index, value):
         raise NotImplementedError("Inserting items is not supported")

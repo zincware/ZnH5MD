@@ -1,3 +1,4 @@
+import ase.build
 import ase.collections
 import numpy as np
 import pytest
@@ -61,3 +62,26 @@ def test_extend_empty(tmp_path):
     with pytest.warns(UserWarning, match="No data provided"):
         io.extend([])
     assert len(io) == 22
+
+def test_inplace_change(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    H2O = ase.build.molecule("H2O")
+    H2S = ase.build.molecule("SH2")
+
+    io.append(H2O)
+    assert len(io) == 1
+    assert io[0] == H2O
+
+    io[0] = H2S
+    assert len(io) == 1
+    assert io[0] == H2S
+    # images = list(ase.collections.s22)
+    # io.extend(images)
+
+    # assert io[0] == images[0]
+    # assert len(io) == len(images)
+
+    # io[0] = ase.build.molecule("H2O")
+    # assert io[0] != images[0]
+    # assert io[0] == ase.build.molecule("H2O")
+    # assert len(io) == len(images) # No change in length

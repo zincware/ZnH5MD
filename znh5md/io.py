@@ -48,6 +48,7 @@ class IO(MutableSequence):
     timestep: float = 1.0
     store: t.Literal["time", "linear"] = "linear"
     tqdm_limit: int = 100
+    chunk_size: Optional[int] = 1
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -259,7 +260,7 @@ class IO(MutableSequence):
                 "value",
                 data=data,
                 dtype=np.float64,
-                chunks=True,
+                chunks=True if self.chunk_size is None else tuple([self.chunk_size] * data.ndim),
                 maxshape=([None] * data.ndim),
                 compression=self.compression,
                 compression_opts=self.compression_opts,
@@ -287,6 +288,7 @@ class IO(MutableSequence):
                 compression=self.compression,
                 compression_opts=self.compression_opts,
                 maxshape=(None,),
+                chunks=True if self.chunk_size is None else (self.chunk_size,),
             )
             ds_time.attrs["unit"] = "fs"
             ds_step = grp.create_dataset(
@@ -296,6 +298,7 @@ class IO(MutableSequence):
                 compression=self.compression,
                 compression_opts=self.compression_opts,
                 maxshape=(None,),
+                chunks=True if self.chunk_size is None else (self.chunk_size,),
             )
         elif self.store == "linear":
             ds_time = grp.create_dataset(
@@ -329,7 +332,7 @@ class IO(MutableSequence):
                     "value",
                     data=value,
                     dtype=np.float64,
-                    chunks=True,
+                    chunks=True if self.chunk_size is None else tuple([self.chunk_size] * value.ndim),
                     maxshape=([None] * value.ndim),
                     compression=self.compression,
                     compression_opts=self.compression_opts,

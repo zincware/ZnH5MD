@@ -133,8 +133,9 @@ def build_atoms(args) -> ase.Atoms:
     atoms.info.update(info_data)
 
     if calc_data is not None:
-        atoms.calc = SinglePointCalculator(atoms=atoms)
-        atoms.calc.results = calc_data
+        if len(calc_data) > 0:
+            atoms.calc = SinglePointCalculator(atoms=atoms)
+            atoms.calc.results = calc_data
 
     return atoms
 

@@ -49,6 +49,7 @@ class IO(MutableSequence):
     store: t.Literal["time", "linear"] = "linear"
     tqdm_limit: int = 100
     chunk_size: Optional[int] = None
+    use_ase_calc: bool = True
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -148,7 +149,7 @@ class IO(MutableSequence):
     def _extract_additional_data(self, f, index, arrays_data, calc_data, info_data):
         for key in f["particles"][self.particle_group].keys():
             if key not in list(fmt.ASE_TO_H5MD.values()):
-                if (
+                if self.use_ase_calc and  (
                     f["particles"][self.particle_group][key]["value"].attrs.get(
                         "ASE_CALCULATOR_RESULT"
                     )
@@ -159,12 +160,12 @@ class IO(MutableSequence):
                         f["particles"], self.particle_group, key, index
                     )
                 else:
-                    arrays_data[key] = fmt.get_property(
+                    arrays_data[key if key != "force" else "forces"] = fmt.get_property(
                         f["particles"], self.particle_group, key, index
                     )
         if f"observables/{self.particle_group}" in f:
             for key in f[f"observables/{self.particle_group}"].keys():
-                if (
+                if self.use_ase_calc and (
                     f["observables"][self.particle_group][key]["value"].attrs.get(
                         "ASE_CALCULATOR_RESULT"
                     )

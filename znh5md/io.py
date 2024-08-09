@@ -260,7 +260,9 @@ class IO(MutableSequence):
                 "value",
                 data=data,
                 dtype=np.float64,
-                chunks=True if self.chunk_size is None else tuple([self.chunk_size] * data.ndim),
+                chunks=True
+                if self.chunk_size is None
+                else tuple([self.chunk_size] * data.ndim),
                 maxshape=([None] * data.ndim),
                 compression=self.compression,
                 compression_opts=self.compression_opts,
@@ -332,7 +334,9 @@ class IO(MutableSequence):
                     "value",
                     data=value,
                     dtype=np.float64,
-                    chunks=True if self.chunk_size is None else tuple([self.chunk_size] * value.ndim),
+                    chunks=True
+                    if self.chunk_size is None
+                    else tuple([self.chunk_size] * value.ndim),
                     maxshape=([None] * value.ndim),
                     compression=self.compression,
                     compression_opts=self.compression_opts,

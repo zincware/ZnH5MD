@@ -48,7 +48,7 @@ class IO(MutableSequence):
     timestep: float = 1.0
     store: t.Literal["time", "linear"] = "linear"
     tqdm_limit: int = 100
-    chunk_size: Optional[int] = 1
+    chunk_size: Optional[int] = None
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -262,7 +262,7 @@ class IO(MutableSequence):
                 dtype=np.float64,
                 chunks=True
                 if self.chunk_size is None
-                else tuple([self.chunk_size] * data.ndim),
+                else tuple([self.chunk_size] + list(data.shape[1:])),
                 maxshape=([None] * data.ndim),
                 compression=self.compression,
                 compression_opts=self.compression_opts,
@@ -336,7 +336,7 @@ class IO(MutableSequence):
                     dtype=np.float64,
                     chunks=True
                     if self.chunk_size is None
-                    else tuple([self.chunk_size] * value.ndim),
+                    else tuple([self.chunk_size] + list(value.shape[1:])),
                     maxshape=([None] * value.ndim),
                     compression=self.compression,
                     compression_opts=self.compression_opts,

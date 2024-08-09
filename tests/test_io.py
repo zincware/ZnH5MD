@@ -62,17 +62,18 @@ def test_extend_empty(tmp_path):
         io.extend([])
     assert len(io) == 22
 
+
 def test_use_ase_calc(tmp_path, s22_all_properties):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(s22_all_properties)
 
     new_io = znh5md.IO(tmp_path / "test.h5", use_ase_calc=False)
-    
+
     atoms = new_io[0]
     assert atoms.calc is None
     for key, val in s22_all_properties[0].info.items():
         assert atoms.info[key] == val
-    
+
     for key, val in s22_all_properties[0].arrays.items():
         assert np.allclose(atoms.arrays[key], val)
 

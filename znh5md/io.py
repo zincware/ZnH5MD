@@ -197,7 +197,7 @@ class IO(MutableSequence):
         for atoms in tqdm(
             images, ncols=120, desc="Preparing data", disable=_disable_tqdm
         ):
-            data.append(fmt.extract_atoms_data(atoms))
+            data.append(fmt.extract_atoms_data(atoms, use_ase_calc=self.use_ase_calc))
         combined_data = fmt.combine_asedata(data)
 
         with _open_file(self.filename, self.file_handle, mode="a") as f:
@@ -233,7 +233,7 @@ class IO(MutableSequence):
                 key,
                 value,
                 data.metadata.get(key, {}).get("unit"),
-                calc=data.metadata.get(key, {}).get("calc"),
+                calc=data.metadata.get(key, {}).get("calc") if self.use_ase_calc else None,
                 time=data.time,
                 step=data.step,
             )
@@ -342,7 +342,7 @@ class IO(MutableSequence):
                     compression=self.compression,
                     compression_opts=self.compression_opts,
                 )
-                if metadata.get(key, {}).get("calc") is not None:
+                if self.use_ase_calc and metadata.get(key, {}).get("calc") is not None:
                     ds_value.attrs["ASE_CALCULATOR_RESULT"] = metadata[key]["calc"]
                 if metadata.get(key, {}).get("unit") and self.save_units:
                     ds_value.attrs["unit"] = metadata[key]["unit"]

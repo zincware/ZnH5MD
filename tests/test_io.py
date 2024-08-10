@@ -1,8 +1,11 @@
 import ase.collections
 import numpy as np
 import pytest
+import ase.build
 
 import znh5md
+from ase.calculators.calculator import all_properties
+
 
 
 def test_IO_extend(tmp_path):
@@ -62,7 +65,7 @@ def test_extend_empty(tmp_path):
         io.extend([])
     assert len(io) == 22
 
-def test_use_ase_calc(tmp_path, s22_all_properties):
+def test_not_use_ase_calc_read(tmp_path, s22_all_properties):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(s22_all_properties)
 
@@ -81,3 +84,75 @@ def test_use_ase_calc(tmp_path, s22_all_properties):
             assert np.allclose(atoms.arrays[key], val)
         else:
             assert np.allclose(atoms.info[key], val)
+
+@pytest.mark.parametrize("key", all_properties + ["dummy"])
+def test_not_use_ase_calc_write_arrays(tmp_path, key):
+    water = ase.build.molecule("H2O")
+    # When ignoreing the `use_calc` the info/arrays split
+    # is not depenend on the type so we use dummy data for each
+    water.arrays[key] = np.random.rand(len(water), 3)
+    assert key in water.arrays
+
+    io = znh5md.IO(tmp_path / "test.h5", use_ase_calc=False)
+    io.append(water)
+
+    assert io[0].calc is None
+    assert key in io[0].arrays
+    assert np.allclose(io[0].arrays[key], water.arrays[key])
+
+@pytest.mark.parametrize("key", all_properties + ["dummy"])
+def test_not_use_ase_calc_write_info(tmp_path, key):
+    water = ase.build.molecule("H2O")
+    # When ignoreing the `use_calc` the info/arrays split
+    # is not depenend on the type so we use dummy data for each
+    water.info[key] = np.random.rand()
+    assert key in water.info
+
+    io = znh5md.IO(tmp_path / "test.h5", use_ase_calc=False)
+    io.append(water)
+
+    assert io[0].calc is None
+    assert key in io[0].info
+    assert np.allclose(io[0].info[key], water.info[key])
+
+
+@pytest.mark.parametrize("info_key", all_properties + ["dummy"])
+@pytest.mark.parametrize("arrays_key", all_properties + ["dummy"])
+def test_not_use_ase_calc_write_info_arrays(tmp_path, info_key, arrays_key):
+    water = ase.build.molecule("H2O")
+    # When ignoreing the `use_calc` the info/arrays split
+    # is not depenend on the type so we use dummy data for each
+    water.info[info_key] = np.random.rand()
+    water.arrays[arrays_key] = np.random.rand(len(water), 3)
+    assert info_key in water.info
+    assert arrays_key in water.arrays
+
+    io = znh5md.IO(tmp_path / "test.h5", use_ase_calc=False)
+    io.append(water)
+
+    assert io[0].calc is None
+    assert info_key in io[0].info
+    assert arrays_key in io[0].arrays
+    assert np.allclose(io[0].info[info_key], water.info[info_key])
+    assert np.allclose(io[0].arrays[arrays_key], water.arrays[arrays_key])
+
+
+@pytest.mark.parametrize("key", all_properties)
+def test_ase_info_key_value_error_info(tmp_path, key):
+    water = ase.build.molecule("H2O")
+    water.info[key] = np.random.rand()
+    assert key in water.info
+
+    io = znh5md.IO(tmp_path / "test.h5")
+    with pytest.raises(ValueError):
+        io.append(water)
+
+@pytest.mark.parametrize("key", all_properties)
+def test_ase_info_key_value_error_arrays(tmp_path, key):
+    water = ase.build.molecule("H2O")
+    water.arrays[key] = np.random.rand(len(water), 3)
+    assert key in water.arrays
+
+    io = znh5md.IO(tmp_path / "test.h5")
+    with pytest.raises(ValueError):
+        io.append(water)

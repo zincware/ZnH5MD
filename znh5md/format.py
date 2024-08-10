@@ -7,6 +7,10 @@ import h5py
 import numpy as np
 from ase.calculators.calculator import all_properties
 
+from typing import Optional, Dict, Any, List
+import numpy as np
+from ase import Atoms
+
 from .utils import concatenate_varying_shape_arrays
 
 
@@ -21,6 +25,15 @@ class CustomINFOData(str, enum.Enum):
     h5md_step = "step"
     h5md_time = "time"
 
+
+UNIT_MAPPING = {
+    "energy": "eV",
+    "force": "eV/Angstrom",
+    "stress": "eV/Angstrom^3",
+    "velocity": "Angstrom/fs",
+    "position": "Angstrom",
+    "time": "fs",
+}
 
 @dataclasses.dataclass
 class ASEData:
@@ -37,16 +50,10 @@ class ASEData:
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
-
-        for name in all_properties:
-            self.metadata[name] = {"unit": None, "calc": True}
-
-        self.metadata.pop("forces")  # is called 'force' in h5md
-        self.metadata["force"] = {"unit": "eV/Angstrom", "calc": True}
-
-        self.metadata["energy"]["unit"] = "eV"
-        self.metadata["velocity"] = {"unit": "Angstrom/fs", "calc": False}
-        self.metadata["position"] = {"unit": "angstrom", "calc": False}
+        
+        for key in UNIT_MAPPING:
+            if key not in self.metadata:
+                self.metadata[key] = {"unit": UNIT_MAPPING[key], "calc": False}
 
     def __len__(self):
         return len(self.particles["species"])
@@ -149,55 +156,57 @@ ASE_TO_H5MD = {
     "cell": "box",
 }
 
-
-def extract_atoms_data(atoms: ase.Atoms) -> ASEData:
+def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:
     """Extract data from an ASE Atoms object into an ASEData object."""
+    
     atomic_numbers = atoms.get_atomic_numbers()
     positions = atoms.get_positions()
     cell = atoms.get_cell()
     pbc = atoms.get_pbc()
     velocities = atoms.get_velocities() if "momenta" in atoms.arrays else None
 
-    info_data = {}
-    particles = {"species": atomic_numbers, "position": positions}
+    particles: Dict[str, Any] = {
+        "species": atomic_numbers,
+        "position": positions,
+    }
     if velocities is not None:
         particles["velocity"] = velocities
-    # save keys gathered from the calculator
-    uses_calc: list[str] = []
 
-    if atoms.calc is not None:
+    info_data: Dict[str, Any] = {}
+    uses_calc: List[str] = []
+
+    if atoms.calc is not None and use_ase_calc:
         for key, result in atoms.calc.results.items():
-            if key not in all_properties:
-                uses_calc.append(key)
-            value = (
-                np.array(result) if isinstance(result, (int, float, list)) else result
-            )
+            if key == "forces":
+                key = "force"
+            uses_calc.append(key)
+            value = np.array(result) if isinstance(result, (int, float, list)) else result
             if value.ndim > 1 and value.shape[0] == len(atomic_numbers):
-                particles[key if key != "forces" else "force"] = value
+                particles["force" if key == "forces" else key] = value
             else:
                 info_data[key] = value
 
     for key, value in atoms.info.items():
-        if (
-            key not in all_properties
-            and key not in ASE_TO_H5MD
-            and key not in CustomINFOData.__members__
-        ):
+        if use_ase_calc and key in all_properties:
+            raise ValueError(f"key {key} is reserved for ASE calculator results.")
+        if key not in ASE_TO_H5MD and key not in CustomINFOData.__members__:
             info_data[key] = value
 
     for key, value in atoms.arrays.items():
-        if key not in all_properties and key not in ASE_TO_H5MD:
+        if use_ase_calc and key in all_properties:
+            raise ValueError(f"key {key} is reserved for ASE calculator results.")
+        if key not in ASE_TO_H5MD:
             particles[key] = value
 
-    time = atoms.info.get(CustomINFOData.h5md_time.name, None)
-    step = atoms.info.get(CustomINFOData.h5md_step.name, None)
+    time: Optional[float] = atoms.info.get(CustomINFOData.h5md_time.name, None)
+    step: Optional[int] = atoms.info.get(CustomINFOData.h5md_step.name, None)
 
     return ASEData(
         cell=cell,
         pbc=pbc,
         observables=info_data,
         particles=particles,
-        metadata={key: {"unit": None, "calc": True} for key in uses_calc},
+        metadata={key: {"unit": UNIT_MAPPING.get(key), "calc": True} for key in uses_calc},
         time=time,
         step=step,
     )

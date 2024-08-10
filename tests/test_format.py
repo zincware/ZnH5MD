@@ -1,10 +1,10 @@
-from ase.build import molecule
-from ase.calculators.singlepoint import SinglePointCalculator
 import numpy as np
 import pytest
+from ase.build import molecule
+from ase.calculators.calculator import all_properties
+from ase.calculators.singlepoint import SinglePointCalculator
 
 from znh5md.format import ASEData, combine_asedata, extract_atoms_data
-from ase.calculators.calculator import all_properties
 
 
 def test_extract_atoms_data():
@@ -17,6 +17,7 @@ def test_extract_atoms_data():
     assert isinstance(data, ASEData)
     assert len(data) == 2
 
+
 @pytest.mark.parametrize("key", all_properties)
 def test_extract_atoms_data_no_calc_arrays(key):
     water = molecule("H2O")
@@ -28,6 +29,7 @@ def test_extract_atoms_data_no_calc_arrays(key):
     assert key not in data.observables
     assert data.metadata.get(key, {}).get("calc", False) is False
 
+
 @pytest.mark.parametrize("key", all_properties)
 def test_extract_atoms_data_no_calc_info(key):
     water = molecule("H2O")
@@ -38,6 +40,7 @@ def test_extract_atoms_data_no_calc_info(key):
     assert key not in data.particles
     assert data.metadata.get(key, {}).get("calc", False) is False
 
+
 @pytest.mark.parametrize("key", all_properties)
 def test_extract_atoms_data_calc_arrays(key):
     water = molecule("H2O")
@@ -46,6 +49,7 @@ def test_extract_atoms_data_calc_arrays(key):
     with pytest.raises(ValueError):
         extract_atoms_data(water, use_ase_calc=True)
 
+
 @pytest.mark.parametrize("key", all_properties)
 def test_extract_atoms_data_calc_info(key):
     water = molecule("H2O")
@@ -53,6 +57,7 @@ def test_extract_atoms_data_calc_info(key):
 
     with pytest.raises(ValueError):
         extract_atoms_data(water, use_ase_calc=True)
+
 
 @pytest.mark.parametrize("key", all_properties)
 def test_extract_atoms_calc_results(key):

@@ -1,11 +1,10 @@
+import ase.build
 import ase.collections
 import numpy as np
 import pytest
-import ase.build
-
-import znh5md
 from ase.calculators.calculator import all_properties
 
+import znh5md
 
 
 def test_IO_extend(tmp_path):
@@ -65,17 +64,18 @@ def test_extend_empty(tmp_path):
         io.extend([])
     assert len(io) == 22
 
+
 def test_not_use_ase_calc_read(tmp_path, s22_all_properties):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(s22_all_properties)
 
     new_io = znh5md.IO(tmp_path / "test.h5", use_ase_calc=False)
-    
+
     atoms = new_io[0]
     assert atoms.calc is None
     for key, val in s22_all_properties[0].info.items():
         assert atoms.info[key] == val
-    
+
     for key, val in s22_all_properties[0].arrays.items():
         assert np.allclose(atoms.arrays[key], val)
 
@@ -84,6 +84,7 @@ def test_not_use_ase_calc_read(tmp_path, s22_all_properties):
             assert np.allclose(atoms.arrays[key], val)
         else:
             assert np.allclose(atoms.info[key], val)
+
 
 @pytest.mark.parametrize("key", all_properties + ["dummy"])
 def test_not_use_ase_calc_write_arrays(tmp_path, key):
@@ -99,6 +100,7 @@ def test_not_use_ase_calc_write_arrays(tmp_path, key):
     assert io[0].calc is None
     assert key in io[0].arrays
     assert np.allclose(io[0].arrays[key], water.arrays[key])
+
 
 @pytest.mark.parametrize("key", all_properties + ["dummy"])
 def test_not_use_ase_calc_write_info(tmp_path, key):
@@ -146,6 +148,7 @@ def test_ase_info_key_value_error_info(tmp_path, key):
     io = znh5md.IO(tmp_path / "test.h5")
     with pytest.raises(ValueError):
         io.append(water)
+
 
 @pytest.mark.parametrize("key", all_properties)
 def test_ase_info_key_value_error_arrays(tmp_path, key):

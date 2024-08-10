@@ -1,15 +1,11 @@
 import dataclasses
 import enum
-from typing import Dict, List, Optional, TypedDict, Union
+from typing import Any, Dict, List, Optional, TypedDict, Union
 
-import ase
 import h5py
 import numpy as np
-from ase.calculators.calculator import all_properties
-
-from typing import Optional, Dict, Any, List
-import numpy as np
 from ase import Atoms
+from ase.calculators.calculator import all_properties
 
 from .utils import concatenate_varying_shape_arrays
 
@@ -35,6 +31,7 @@ UNIT_MAPPING = {
     "time": "fs",
 }
 
+
 @dataclasses.dataclass
 class ASEData:
     """A dataclass for storing ASE Atoms data."""
@@ -50,7 +47,7 @@ class ASEData:
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
-        
+
         for key in UNIT_MAPPING:
             if key not in self.metadata:
                 self.metadata[key] = {"unit": UNIT_MAPPING[key], "calc": False}
@@ -156,9 +153,10 @@ ASE_TO_H5MD = {
     "cell": "box",
 }
 
+
 def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:
     """Extract data from an ASE Atoms object into an ASEData object."""
-    
+
     atomic_numbers = atoms.get_atomic_numbers()
     positions = atoms.get_positions()
     cell = atoms.get_cell()
@@ -180,7 +178,9 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:
             if key == "forces":
                 key = "force"
             uses_calc.append(key)
-            value = np.array(result) if isinstance(result, (int, float, list)) else result
+            value = (
+                np.array(result) if isinstance(result, (int, float, list)) else result
+            )
             if value.ndim > 1 and value.shape[0] == len(atomic_numbers):
                 particles["force" if key == "forces" else key] = value
             else:
@@ -206,7 +206,9 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:
         pbc=pbc,
         observables=info_data,
         particles=particles,
-        metadata={key: {"unit": UNIT_MAPPING.get(key), "calc": True} for key in uses_calc},
+        metadata={
+            key: {"unit": UNIT_MAPPING.get(key), "calc": True} for key in uses_calc
+        },
         time=time,
         step=step,
     )

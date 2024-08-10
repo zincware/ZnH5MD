@@ -89,8 +89,8 @@ def test_not_use_ase_calc_read(tmp_path, s22_all_properties):
 @pytest.mark.parametrize("key", all_properties + ["dummy"])
 def test_not_use_ase_calc_write_arrays(tmp_path, key):
     water = ase.build.molecule("H2O")
-    # When ignoreing the `use_calc` the info/arrays split
-    # is not depenend on the type so we use dummy data for each
+    # When ignoring the `use_calc` the info/arrays split
+    # is not dependent on the type so we use dummy data for each
     water.arrays[key] = np.random.rand(len(water), 3)
     assert key in water.arrays
 
@@ -105,8 +105,8 @@ def test_not_use_ase_calc_write_arrays(tmp_path, key):
 @pytest.mark.parametrize("key", all_properties + ["dummy"])
 def test_not_use_ase_calc_write_info(tmp_path, key):
     water = ase.build.molecule("H2O")
-    # When ignoreing the `use_calc` the info/arrays split
-    # is not depenend on the type so we use dummy data for each
+    # When ignoring the `use_calc` the info/arrays split
+    # is not dependent on the type so we use dummy data for each
     water.info[key] = np.random.rand()
     assert key in water.info
 
@@ -122,8 +122,8 @@ def test_not_use_ase_calc_write_info(tmp_path, key):
 @pytest.mark.parametrize("arrays_key", all_properties + ["dummy"])
 def test_not_use_ase_calc_write_info_arrays(tmp_path, info_key, arrays_key):
     water = ase.build.molecule("H2O")
-    # When ignoreing the `use_calc` the info/arrays split
-    # is not depenend on the type so we use dummy data for each
+    # When ignoring the `use_calc` the info/arrays split
+    # is not dependent on the type so we use dummy data for each
     water.info[info_key] = np.random.rand()
     water.arrays[arrays_key] = np.random.rand(len(water), 3)
     assert info_key in water.info

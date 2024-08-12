@@ -24,7 +24,7 @@ def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
     """
     if np.shape(arrays[0]) == (1,):
         return np.array(arrays).flatten()
-    if len(np.shape(arrays[0])) == 0 :
+    if len(np.shape(arrays[0])) == 0:
         return np.array(arrays)
     max_n_particles = max(x.shape[0] for x in arrays)
     dimensions = arrays[0].shape[1:]

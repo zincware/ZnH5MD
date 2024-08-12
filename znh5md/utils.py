@@ -22,7 +22,7 @@ def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
            [ 3.,  4.,  5.]])
 
     """
-    if np.shape(arrays[0]) == (1,):
+    if np.shape(arrays[0]) == ():
         return np.array(arrays).flatten()
     if len(np.shape(arrays[0])) == 0:
         return np.array(arrays)

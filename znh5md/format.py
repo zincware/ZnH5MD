@@ -278,7 +278,7 @@ def _combine_dicts(dicts: List[Dict[str, np.ndarray]]) -> Dict[str, np.ndarray]:
     for key in dicts[0]:
         combined[key] = concatenate_varying_shape_arrays(
             [
-                d[key] if isinstance(d[key], np.ndarray) else np.array([d[key]])
+                d[key] if isinstance(d[key], np.ndarray) else np.array(d[key])
                 for d in dicts
             ]
         )

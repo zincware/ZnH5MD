@@ -22,6 +22,8 @@ def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
            [ 3.,  4.,  5.]])
 
     """
+    if np.shape(arrays[0]) == ():
+        return np.array(arrays).flatten()
     if len(np.shape(arrays[0])) == 0:
         return np.array(arrays)
     max_n_particles = max(x.shape[0] for x in arrays)
@@ -133,8 +135,9 @@ def build_atoms(args) -> ase.Atoms:
     atoms.info.update(info_data)
 
     if calc_data is not None:
-        atoms.calc = SinglePointCalculator(atoms=atoms)
-        atoms.calc.results = calc_data
+        if len(calc_data) > 0:
+            atoms.calc = SinglePointCalculator(atoms=atoms)
+            atoms.calc.results = calc_data
 
     return atoms
 

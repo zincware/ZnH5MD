@@ -48,6 +48,8 @@ class IO(MutableSequence):
     timestep: float = 1.0
     store: t.Literal["time", "linear"] = "linear"
     tqdm_limit: int = 100
+    chunk_size: Optional[int] = None
+    use_ase_calc: bool = True
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -147,7 +149,7 @@ class IO(MutableSequence):
     def _extract_additional_data(self, f, index, arrays_data, calc_data, info_data):
         for key in f["particles"][self.particle_group].keys():
             if key not in list(fmt.ASE_TO_H5MD.values()):
-                if (
+                if self.use_ase_calc and (
                     f["particles"][self.particle_group][key]["value"].attrs.get(
                         "ASE_CALCULATOR_RESULT"
                     )
@@ -158,12 +160,12 @@ class IO(MutableSequence):
                         f["particles"], self.particle_group, key, index
                     )
                 else:
-                    arrays_data[key] = fmt.get_property(
+                    arrays_data[key if key != "force" else "forces"] = fmt.get_property(
                         f["particles"], self.particle_group, key, index
                     )
         if f"observables/{self.particle_group}" in f:
             for key in f[f"observables/{self.particle_group}"].keys():
-                if (
+                if self.use_ase_calc and (
                     f["observables"][self.particle_group][key]["value"].attrs.get(
                         "ASE_CALCULATOR_RESULT"
                     )
@@ -195,7 +197,7 @@ class IO(MutableSequence):
         for atoms in tqdm(
             images, ncols=120, desc="Preparing data", disable=_disable_tqdm
         ):
-            data.append(fmt.extract_atoms_data(atoms))
+            data.append(fmt.extract_atoms_data(atoms, use_ase_calc=self.use_ase_calc))
         combined_data = fmt.combine_asedata(data)
 
         with _open_file(self.filename, self.file_handle, mode="a") as f:
@@ -231,7 +233,9 @@ class IO(MutableSequence):
                 key,
                 value,
                 data.metadata.get(key, {}).get("unit"),
-                calc=data.metadata.get(key, {}).get("calc"),
+                calc=data.metadata.get(key, {}).get("calc")
+                if self.use_ase_calc
+                else None,
                 time=data.time,
                 step=data.step,
             )
@@ -259,7 +263,9 @@ class IO(MutableSequence):
                 "value",
                 data=data,
                 dtype=np.float64,
-                chunks=True,
+                chunks=True
+                if self.chunk_size is None
+                else tuple([self.chunk_size] + list(data.shape[1:])),
                 maxshape=([None] * data.ndim),
                 compression=self.compression,
                 compression_opts=self.compression_opts,
@@ -287,6 +293,7 @@ class IO(MutableSequence):
                 compression=self.compression,
                 compression_opts=self.compression_opts,
                 maxshape=(None,),
+                chunks=True if self.chunk_size is None else (self.chunk_size,),
             )
             ds_time.attrs["unit"] = "fs"
             ds_step = grp.create_dataset(
@@ -296,6 +303,7 @@ class IO(MutableSequence):
                 compression=self.compression,
                 compression_opts=self.compression_opts,
                 maxshape=(None,),
+                chunks=True if self.chunk_size is None else (self.chunk_size,),
             )
         elif self.store == "linear":
             ds_time = grp.create_dataset(
@@ -329,12 +337,14 @@ class IO(MutableSequence):
                     "value",
                     data=value,
                     dtype=np.float64,
-                    chunks=True,
+                    chunks=True
+                    if self.chunk_size is None
+                    else tuple([self.chunk_size] + list(value.shape[1:])),
                     maxshape=([None] * value.ndim),
                     compression=self.compression,
                     compression_opts=self.compression_opts,
                 )
-                if metadata.get(key, {}).get("calc") is not None:
+                if self.use_ase_calc and metadata.get(key, {}).get("calc") is not None:
                     ds_value.attrs["ASE_CALCULATOR_RESULT"] = metadata[key]["calc"]
                 if metadata.get(key, {}).get("unit") and self.save_units:
                     ds_value.attrs["unit"] = metadata[key]["unit"]

@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 h5py = "^3"
-ase = "^3.22"
+ase = "^3.23"
 tqdm = "^4"
 typer = {extras = ["all"], version = "^0"}
 

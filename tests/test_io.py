@@ -4,6 +4,7 @@ import ase.io
 import numpy as np
 import pytest
 from ase.calculators.calculator import all_properties
+from ase.calculators.singlepoint import SinglePointCalculator
 
 import znh5md
 
@@ -126,6 +127,9 @@ def test_not_use_ase_calc_write_info_arrays(tmp_path, info_key, arrays_key):
     # When ignoring the `use_calc` the info/arrays split
     # is not dependent on the type so we use dummy data for each
     water.info[info_key] = np.random.rand()
+    water.info[f"{info_key}_arr"] = np.random.rand(
+        1,
+    )
     water.arrays[arrays_key] = np.random.rand(len(water), 3)
     assert info_key in water.info
     assert arrays_key in water.arrays
@@ -138,6 +142,9 @@ def test_not_use_ase_calc_write_info_arrays(tmp_path, info_key, arrays_key):
     assert arrays_key in io[0].arrays
     assert np.allclose(io[0].info[info_key], water.info[info_key])
     assert np.allclose(io[0].arrays[arrays_key], water.arrays[arrays_key])
+    assert isinstance(io[0].info[info_key], float)
+    assert isinstance(io[0].arrays[arrays_key], np.ndarray)
+    assert isinstance(io[0].info[f"{info_key}_arr"], np.ndarray)
 
 
 @pytest.mark.parametrize("key", all_properties)
@@ -182,3 +189,38 @@ def test_convert_extxzy(tmp_path, s22_energy_forces, use_ase_calc):
     else:
         assert "energy" in io[0].info
         assert "forces" in io[0].arrays
+
+
+@pytest.mark.parametrize("expect_float", [True, False])
+@pytest.mark.parametrize("key", all_properties)
+def test_use_ase_calc_write_info_arrays(tmp_path, key, expect_float):
+    water = ase.build.molecule("H2O")
+    # When ignoring the `use_calc` the info/arrays split
+    # is not dependent on the type so we use dummy data for each
+    scalar_property = key in ["energy", "magmom", "free_energy"]
+    if scalar_property:
+        val = (
+            np.random.rand()
+            if expect_float
+            else np.random.rand(
+                1,
+            )
+        )
+        calc = SinglePointCalculator(water, **{key: val})
+    else:
+        val = np.random.rand(len(water), 3)
+        calc = SinglePointCalculator(water, **{key: val})
+    water.calc = calc
+
+    io = znh5md.IO(tmp_path / "test.h5")
+    io.append(water)
+    if scalar_property:
+        assert np.allclose(val, calc.results[key])
+        assert (
+            isinstance(calc.results[key], float)
+            if expect_float
+            else isinstance(calc.results[key], np.ndarray)
+        )
+    else:
+        assert np.allclose(val, calc.results[key])
+        assert isinstance(calc.results[key], np.ndarray)

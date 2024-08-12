@@ -1,5 +1,6 @@
 import ase.build
 import ase.collections
+import ase.io
 import numpy as np
 import pytest
 from ase.calculators.calculator import all_properties
@@ -159,3 +160,24 @@ def test_ase_info_key_value_error_arrays(tmp_path, key):
     io = znh5md.IO(tmp_path / "test.h5")
     with pytest.raises(ValueError):
         io.append(water)
+
+@pytest.mark.parametrize("use_ase_calc", [True, False])
+def test_convert_extxzy(tmp_path, s22_energy_forces, use_ase_calc):
+    extxyz_fle = tmp_path / "test.extxyz"
+    ase.io.write(extxyz_fle, s22_energy_forces)
+
+    atoms = list(ase.io.iread(extxyz_fle))
+    assert len(atoms) == len(s22_energy_forces)
+
+    io = znh5md.IO(tmp_path / "test.h5", use_ase_calc=True)
+    io.extend(atoms)
+
+    # read with and without calc
+    io = znh5md.IO(tmp_path / "test.h5", use_ase_calc=use_ase_calc)
+
+    if use_ase_calc:
+        assert "energy" in io[0].calc.results
+        assert "forces" in io[0].calc.results
+    else:
+        assert "energy" in io[0].info
+        assert "forces" in io[0].arrays

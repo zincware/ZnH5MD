@@ -161,6 +161,7 @@ def test_ase_info_key_value_error_arrays(tmp_path, key):
     with pytest.raises(ValueError):
         io.append(water)
 
+
 @pytest.mark.parametrize("use_ase_calc", [True, False])
 def test_convert_extxzy(tmp_path, s22_energy_forces, use_ase_calc):
     extxyz_fle = tmp_path / "test.extxyz"

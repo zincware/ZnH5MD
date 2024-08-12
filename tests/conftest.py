@@ -18,6 +18,7 @@ def s22_energy() -> list[ase.Atoms]:
         images.append(atoms)
     return images
 
+
 @pytest.fixture
 def s22_energy_forces() -> list[ase.Atoms]:
     images = []
@@ -28,6 +29,7 @@ def s22_energy_forces() -> list[ase.Atoms]:
         atoms.calc = calc
         images.append(atoms)
     return images
+
 
 @pytest.fixture
 def s22_all_properties() -> list[ase.Atoms]:

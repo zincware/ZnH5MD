@@ -154,9 +154,22 @@ ASE_TO_H5MD = {
 }
 
 
-def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:
-    """Extract data from an ASE Atoms object into an ASEData object."""
+def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # noqa: C901
+    """
+    Extract data from an ASE Atoms object and return an ASEData object.
 
+    Args:
+        atoms: ase.Atoms
+            An ASE Atoms object containing the atomic structure.
+        use_ase_calc: bool, optional
+            Whether to include data from the ASE calculator.
+            Defaults to True.
+
+    Returns:
+        ASEData:
+            An object containing the extracted data, including particles'
+            information, observables, metadata, time, and step.
+    """
     atomic_numbers = atoms.get_atomic_numbers()
     positions = atoms.get_positions()
     cell = atoms.get_cell()
@@ -173,28 +186,26 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:
     info_data: Dict[str, Any] = {}
     uses_calc: List[str] = []
 
-    if atoms.calc is not None and use_ase_calc:
-        for key, result in atoms.calc.results.items():
-            if key == "forces":
-                key = "force"
+    if use_ase_calc and atoms.calc is not None:
+        for key, value in atoms.calc.results.items():
+            key = "force" if key == "forces" else key
             uses_calc.append(key)
-            value = (
-                np.array(result) if isinstance(result, (int, float, list)) else result
-            )
+            value = np.array(value) if isinstance(value, (int, float, list)) else value
+
             if value.ndim > 1 and value.shape[0] == len(atomic_numbers):
-                particles["force" if key == "forces" else key] = value
+                particles[key] = value
             else:
                 info_data[key] = value
 
     for key, value in atoms.info.items():
         if use_ase_calc and key in all_properties:
-            raise ValueError(f"key {key} is reserved for ASE calculator results.")
+            raise ValueError(f"Key {key} is reserved for ASE calculator results.")
         if key not in ASE_TO_H5MD and key not in CustomINFOData.__members__:
             info_data[key] = value
 
     for key, value in atoms.arrays.items():
         if use_ase_calc and key in all_properties:
-            raise ValueError(f"key {key} is reserved for ASE calculator results.")
+            raise ValueError(f"Key {key} is reserved for ASE calculator results.")
         if key not in ASE_TO_H5MD:
             particles[key] = value
 

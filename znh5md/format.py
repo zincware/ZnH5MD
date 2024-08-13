@@ -203,9 +203,7 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
         if key not in ASE_TO_H5MD and key not in CustomINFOData.__members__:
             if isinstance(value, str):
                 if len(value) > NUMPY_STRING_DTYPE.itemsize:
-                    raise ValueError(
-                        f"String {key} is too long to be stored."
-                    )
+                    raise ValueError(f"String {key} is too long to be stored.")
                 info_data[key] = np.array(value, dtype=NUMPY_STRING_DTYPE)
             else:
                 info_data[key] = value

@@ -1,3 +1,4 @@
+import ase.io
 import h5py
 import numpy.testing as npt
 import pytest
@@ -48,6 +49,56 @@ def test_datasets(tmp_path, dataset, request):
         assert set(b.info) == set(a.info) | {"h5md_step", "h5md_time"}
         for key in a.info:
             npt.assert_array_equal(a.info[key], b.info[key])
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "s22",
+        "s22_energy",
+        "s22_all_properties",
+        "s22_info_arrays_calc",
+        "s22_mixed_pbc_cell",
+        "water",
+    ],
+)
+def test_datasets_extxyz(tmp_path, dataset, request):
+    images = request.getfixturevalue(dataset)
+    ase.io.write(tmp_path / "test.xyz", images)
+    io = znh5md.IO(tmp_path / "test.h5")
+    io.extend(list(ase.io.iread(tmp_path / "test.xyz")))
+    images2 = io[:]
+
+    assert len(images) == len(images2)
+
+    for a, b in zip(images, images2):
+        npt.assert_array_almost_equal(a.get_positions(), b.get_positions())
+        npt.assert_array_almost_equal(a.get_atomic_numbers(), b.get_atomic_numbers())
+        npt.assert_array_almost_equal(a.get_cell(), b.get_cell())
+        npt.assert_array_almost_equal(a.get_pbc(), b.get_pbc())
+        npt.assert_array_almost_equal(a.get_velocities(), b.get_velocities())
+        if a.calc is not None:
+            assert set(a.calc.results) == set(b.calc.results)
+            for key in a.calc.results:
+                npt.assert_array_almost_equal(a.calc.results[key], b.calc.results[key])
+            if "energy" in a.calc.results:
+                assert b.get_potential_energy() == a.get_potential_energy()
+                assert isinstance(a.get_potential_energy(), float)
+                assert isinstance(b.get_potential_energy(), float)
+
+        assert set(a.arrays) == set(b.arrays)
+        for key in a.arrays:
+            npt.assert_array_almost_equal(a.arrays[key], b.arrays[key])
+
+        # h5md keys are added to info automatically
+        assert set(b.info) == set(a.info) | {"h5md_step", "h5md_time"}
+        for key in a.info:
+            if isinstance(a.info[key], str):
+                assert a.info[key] == b.info[key]
+            elif isinstance(a.info[key], dict):
+                assert a.info[key] == b.info[key]
+            else:
+                npt.assert_array_almost_equal(a.info[key], b.info[key])
 
 
 @pytest.mark.parametrize("store", ["time", "linear"])

@@ -102,6 +102,20 @@ def fill_dataset(dataset, new_data):
     dataset[old_shape[0] :] = padded_new_data
 
 
+def handle_info_special_cases(info_data: dict) -> dict:
+    for key, value in info_data.items():
+        if isinstance(value, bytes):
+            # string types
+            info_data[key] = value.decode("utf-8")
+        elif isinstance(value, dict):
+            # json / dict types
+            info_data[key] = value
+        else:
+            # float / int / bool types
+            info_data[key] = remove_nan_rows(value)
+    return info_data
+
+
 def build_atoms(args) -> ase.Atoms:
     (
         atomic_numbers,
@@ -125,12 +139,7 @@ def build_atoms(args) -> ase.Atoms:
             key: remove_nan_rows(value) for key, value in arrays_data.items()
         }
     if info_data is not None:
-        # We update the info_data in place
-        for key, value in info_data.items():
-            if isinstance(value, bytes):
-                info_data[key] = value.decode("utf-8")
-            else:
-                info_data[key] = remove_nan_rows(value)
+        info_data = handle_info_special_cases(info_data)
 
     atoms = ase.Atoms(
         symbols=atomic_numbers,

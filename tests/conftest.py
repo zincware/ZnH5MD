@@ -83,6 +83,7 @@ def s22_info_arrays_calc() -> list[ase.Atoms]:
                 "mlip_energy": np.random.rand(),
                 "mlip_energy_2": np.random.rand(),
                 "mlip_stress": np.random.rand(6),
+                "collection": "s22"
             }
         )
         atoms.new_array("mlip_forces", np.random.rand(len(atoms), 3))

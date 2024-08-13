@@ -183,7 +183,7 @@ class IO(MutableSequence):
 
                     if (
                         f["observables"][self.particle_group][key]["value"].attrs.get(
-                            "type"
+                            "ZNH5MD_TYPE"
                         )
                         == "json"
                     ):
@@ -287,7 +287,7 @@ class IO(MutableSequence):
                 compression_opts=self.compression_opts,
             )
             if json:
-                ds_value.attrs["type"] = "json"
+                ds_value.attrs["ZNH5MD_TYPE"] = "json"
             if calc is not None:
                 ds_value.attrs["ASE_CALCULATOR_RESULT"] = calc
             if unit and self.save_units:
@@ -363,7 +363,7 @@ class IO(MutableSequence):
                     compression_opts=self.compression_opts,
                 )
                 if metadata.get(key, {}).get("type") == "json":
-                    ds_value.attrs["type"] = "json"
+                    ds_value.attrs["ZNH5MD_TYPE"] = "json"
                 if self.use_ase_calc and metadata.get(key, {}).get("calc") is not None:
                     ds_value.attrs["ASE_CALCULATOR_RESULT"] = metadata[key]["calc"]
                 if metadata.get(key, {}).get("unit") and self.save_units:

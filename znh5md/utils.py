@@ -129,6 +129,8 @@ def build_atoms(args) -> ase.Atoms:
         for key, value in info_data.items():
             if isinstance(value, bytes):
                 info_data[key] = value.decode("utf-8")
+            elif isinstance(value, dict):
+                info_data[key] = value
             else:
                 info_data[key] = remove_nan_rows(value)
 

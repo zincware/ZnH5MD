@@ -36,3 +36,12 @@ def test_int_info_data(tmp_path):
 
     io.append(molecule)
     assert io[0].info["test"] == 123
+
+
+def test_dict_data(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    molecule = ase.build.molecule("H2O")
+    molecule.info["test"] = {"a": 1, "b": 2}
+
+    io.append(molecule)
+    assert io[0].info["test"] == {"a": 1, "b": 2}

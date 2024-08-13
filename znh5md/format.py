@@ -1,6 +1,7 @@
 import dataclasses
 import enum
 from typing import Any, Dict, List, Optional, TypedDict, Union
+import json
 
 import h5py
 import numpy as np
@@ -185,6 +186,7 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
 
     info_data: Dict[str, Any] = {}
     uses_calc: List[str] = []
+    metadata = {}
 
     if use_ase_calc and atoms.calc is not None:
         for key, value in atoms.calc.results.items():
@@ -205,6 +207,9 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
                 if len(value) > NUMPY_STRING_DTYPE.itemsize:
                     raise ValueError(f"String {key} is too long to be stored.")
                 info_data[key] = np.array(value, dtype=NUMPY_STRING_DTYPE)
+            elif isinstance(value, dict):
+                info_data[key] = np.array(json.dumps(value), dtype=NUMPY_STRING_DTYPE)
+                metadata[key] = {"unit": None, "calc": False, "type": "json"}
             else:
                 info_data[key] = value
 
@@ -217,14 +222,16 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
     time: Optional[float] = atoms.info.get(CustomINFOData.h5md_time.name, None)
     step: Optional[int] = atoms.info.get(CustomINFOData.h5md_step.name, None)
 
+    metadata.update(
+        {key: {"unit": UNIT_MAPPING.get(key), "calc": True} for key in uses_calc}
+    )
+
     return ASEData(
         cell=cell,
         pbc=pbc,
         observables=info_data,
         particles=particles,
-        metadata={
-            key: {"unit": UNIT_MAPPING.get(key), "calc": True} for key in uses_calc
-        },
+        metadata=metadata,
         time=time,
         step=step,
     )

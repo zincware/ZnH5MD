@@ -6,6 +6,7 @@ import typing as t
 import warnings
 from collections.abc import MutableSequence
 from typing import List, Optional, Union
+import json
 
 import ase
 import h5py
@@ -175,9 +176,20 @@ class IO(MutableSequence):
                         f["observables"], self.particle_group, key, index
                     )
                 else:
-                    info_data[key] = fmt.get_property(
+                    # check if info[types] == json
+                    data = fmt.get_property(
                         f["observables"], self.particle_group, key, index
                     )
+
+                    if (
+                        f["observables"][self.particle_group][key]["value"].attrs.get(
+                            "type"
+                        )
+                        == "json"
+                    ):
+                        info_data[key] = [json.loads(x) for x in data]
+                    else:
+                        info_data[key] = data
 
     def extend(self, images: List[ase.Atoms]):
         if not isinstance(images, list):
@@ -240,6 +252,7 @@ class IO(MutableSequence):
                 else None,
                 time=data.time,
                 step=data.step,
+                json=data.metadata.get(key, {}).get("type") == "json",
             )
         self._create_observables(
             f,
@@ -258,6 +271,7 @@ class IO(MutableSequence):
         calc: Optional[bool] = None,
         time: np.ndarray | None = None,
         step: np.ndarray | None = None,
+        json: bool = False,
     ):
         if data is not None:
             g_grp = parent_grp.create_group(name)
@@ -272,6 +286,8 @@ class IO(MutableSequence):
                 compression=self.compression,
                 compression_opts=self.compression_opts,
             )
+            if json:
+                ds_value.attrs["type"] = "json"
             if calc is not None:
                 ds_value.attrs["ASE_CALCULATOR_RESULT"] = calc
             if unit and self.save_units:
@@ -346,6 +362,8 @@ class IO(MutableSequence):
                     compression=self.compression,
                     compression_opts=self.compression_opts,
                 )
+                if metadata.get(key, {}).get("type") == "json":
+                    ds_value.attrs["type"] = "json"
                 if self.use_ase_calc and metadata.get(key, {}).get("calc") is not None:
                     ds_value.attrs["ASE_CALCULATOR_RESULT"] = metadata[key]["calc"]
                 if metadata.get(key, {}).get("unit") and self.save_units:

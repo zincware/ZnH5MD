@@ -1,12 +1,12 @@
 import contextlib
 import dataclasses
+import json
 import os
 import pathlib
 import typing as t
 import warnings
 from collections.abc import MutableSequence
 from typing import List, Optional, Union
-import json
 
 import ase
 import h5py

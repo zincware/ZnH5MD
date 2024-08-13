@@ -1,7 +1,7 @@
 import dataclasses
 import enum
-from typing import Any, Dict, List, Optional, TypedDict, Union
 import json
+from typing import Any, Dict, List, Optional, TypedDict, Union
 
 import h5py
 import numpy as np

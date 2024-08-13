@@ -1,7 +1,7 @@
 import ase.build
+import pytest
 
 import znh5md
-import pytest
 
 
 def test_smiles(tmp_path):
@@ -18,6 +18,7 @@ def test_smiles(tmp_path):
     io.append(molecule)
     assert io[0].info["smiles"] == "O"
     assert io[1].info["smiles"] == "OO"
+
 
 def test_very_long_text_data(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")

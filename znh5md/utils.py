@@ -101,6 +101,7 @@ def fill_dataset(dataset, new_data):
     # Append the new data to the dataset
     dataset[old_shape[0] :] = padded_new_data
 
+
 def handle_info_special_cases(info_data: dict) -> dict:
     for key, value in info_data.items():
         if isinstance(value, bytes):

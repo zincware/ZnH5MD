@@ -1,7 +1,7 @@
 import ase
+import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
-import h5py
 
 NUMPY_STRING_DTYPE = np.dtype("S512")
 

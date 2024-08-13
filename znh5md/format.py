@@ -7,7 +7,7 @@ import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import all_properties
 
-from .utils import concatenate_varying_shape_arrays, NUMPY_STRING_DTYPE
+from .utils import NUMPY_STRING_DTYPE, concatenate_varying_shape_arrays
 
 
 class ASEKeyMetaData(TypedDict):

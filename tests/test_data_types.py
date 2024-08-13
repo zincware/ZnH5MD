@@ -1,5 +1,6 @@
-import znh5md
 import ase.build
+
+import znh5md
 
 
 def test_smiles(tmp_path):

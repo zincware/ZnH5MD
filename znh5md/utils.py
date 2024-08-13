@@ -1,6 +1,9 @@
 import ase
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
+import h5py
+
+NUMPY_STRING_DTYPE = np.dtype("S512")
 
 
 def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
@@ -122,7 +125,12 @@ def build_atoms(args) -> ase.Atoms:
             key: remove_nan_rows(value) for key, value in arrays_data.items()
         }
     if info_data is not None:
-        info_data = {key: remove_nan_rows(value) for key, value in info_data.items()}
+        # We update the info_data in place
+        for key, value in info_data.items():
+            if isinstance(value, bytes):
+                info_data[key] = value.decode("utf-8")
+            else:
+                info_data[key] = remove_nan_rows(value)
 
     atoms = ase.Atoms(
         symbols=atomic_numbers,
@@ -170,3 +178,10 @@ def build_structures(
             )
             structures.append(build_atoms(args))
     return structures
+
+
+def get_h5py_dtype(data: np.ndarray):
+    if data.dtype == NUMPY_STRING_DTYPE:
+        return h5py.string_dtype(encoding="utf-8")
+    else:
+        return data.dtype

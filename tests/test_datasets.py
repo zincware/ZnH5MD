@@ -1,7 +1,7 @@
+import ase.io
 import h5py
 import numpy.testing as npt
 import pytest
-import ase.io
 
 import znh5md
 
@@ -99,7 +99,6 @@ def test_datasets_extxyz(tmp_path, dataset, request):
                 assert a.info[key] == b.info[key]
             else:
                 npt.assert_array_almost_equal(a.info[key], b.info[key])
-
 
 
 @pytest.mark.parametrize("store", ["time", "linear"])

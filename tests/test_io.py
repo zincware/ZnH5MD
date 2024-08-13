@@ -67,6 +67,20 @@ def test_extend_empty(tmp_path):
     assert len(io) == 22
 
 
+def test_extend_single(tmp_path):
+    vectors = np.random.rand(3, 3, 2, 3)
+
+    water = ase.build.molecule("H2O")
+    water.info["vectors"] = vectors
+
+    znh5md.write(tmp_path / "test.h5", water)
+
+    io = znh5md.IO(tmp_path / "test.h5")
+    assert len(io) == 1
+    assert np.allclose(io[0].info["vectors"], vectors)
+    assert io[0].info["vectors"].shape == vectors.shape
+
+
 def test_not_use_ase_calc_read(tmp_path, s22_all_properties):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(s22_all_properties)

@@ -180,6 +180,8 @@ class IO(MutableSequence):
                     )
 
     def extend(self, images: List[ase.Atoms]):
+        if not isinstance(images, list):
+            raise ValueError("images must be a list of ASE Atoms objects")
         if len(images) == 0:
             warnings.warn("No data provided")
             return
@@ -430,6 +432,8 @@ class IO(MutableSequence):
                         utils.fill_dataset(g_val["step"], step)
 
     def append(self, atoms: ase.Atoms):
+        if not isinstance(atoms, ase.Atoms):
+            raise ValueError("atoms must be an ASE Atoms object")
         self.extend([atoms])
 
     def __delitem__(self, index):

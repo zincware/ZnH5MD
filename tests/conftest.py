@@ -49,7 +49,7 @@ def s22_all_properties() -> list[ase.Atoms]:
         magmoms = np.random.rand(len(atoms))
 
         dielectric_tensor = np.random.rand(3, 3)
-        born_effective_charges = np.random.rand(len(atoms), 3, 3)
+        born_effective_charges = np.random.rand(len(atoms), 3)
         polarization = np.random.rand(3)
 
         calc = SinglePointCalculator(

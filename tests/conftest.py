@@ -20,6 +20,18 @@ def s22_energy() -> list[ase.Atoms]:
 
 
 @pytest.fixture
+def s22_energy_forces() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        calc = SinglePointCalculator(
+            atoms, energy=np.random.rand(), forces=np.random.rand(len(atoms), 3)
+        )
+        atoms.calc = calc
+        images.append(atoms)
+    return images
+
+
+@pytest.fixture
 def s22_all_properties() -> list[ase.Atoms]:
     images = []
     for atoms in ase.collections.s22:

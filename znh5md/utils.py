@@ -1,6 +1,9 @@
 import ase
+import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
+
+NUMPY_STRING_DTYPE = np.dtype("S512")
 
 
 def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
@@ -22,6 +25,8 @@ def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
            [ 3.,  4.,  5.]])
 
     """
+    if np.shape(arrays[0]) == ():
+        return np.array(arrays).flatten()
     if len(np.shape(arrays[0])) == 0:
         return np.array(arrays)
     max_n_particles = max(x.shape[0] for x in arrays)
@@ -120,7 +125,12 @@ def build_atoms(args) -> ase.Atoms:
             key: remove_nan_rows(value) for key, value in arrays_data.items()
         }
     if info_data is not None:
-        info_data = {key: remove_nan_rows(value) for key, value in info_data.items()}
+        # We update the info_data in place
+        for key, value in info_data.items():
+            if isinstance(value, bytes):
+                info_data[key] = value.decode("utf-8")
+            else:
+                info_data[key] = remove_nan_rows(value)
 
     atoms = ase.Atoms(
         symbols=atomic_numbers,
@@ -133,8 +143,9 @@ def build_atoms(args) -> ase.Atoms:
     atoms.info.update(info_data)
 
     if calc_data is not None:
-        atoms.calc = SinglePointCalculator(atoms=atoms)
-        atoms.calc.results = calc_data
+        if len(calc_data) > 0:
+            atoms.calc = SinglePointCalculator(atoms=atoms)
+            atoms.calc.results = calc_data
 
     return atoms
 
@@ -167,3 +178,10 @@ def build_structures(
             )
             structures.append(build_atoms(args))
     return structures
+
+
+def get_h5py_dtype(data: np.ndarray):
+    if data.dtype == NUMPY_STRING_DTYPE:
+        return h5py.string_dtype(encoding="utf-8")
+    else:
+        return data.dtype

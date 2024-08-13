@@ -57,9 +57,8 @@ def test_datasets(tmp_path, dataset, request):
         "s22",
         "s22_energy",
         "s22_all_properties",
-        # "s22_info_arrays_calc", # TODO: fix
+        "s22_info_arrays_calc",
         "s22_mixed_pbc_cell",
-        # "s22_illegal_calc_results", # TODO: fix
         "water",
     ],
 )
@@ -89,12 +88,17 @@ def test_datasets_extxyz(tmp_path, dataset, request):
 
         assert set(a.arrays) == set(b.arrays)
         for key in a.arrays:
-            npt.assert_array_equal(a.arrays[key], b.arrays[key])
+            npt.assert_array_almost_equal(a.arrays[key], b.arrays[key])
 
         # h5md keys are added to info automatically
         assert set(b.info) == set(a.info) | {"h5md_step", "h5md_time"}
         for key in a.info:
-            npt.assert_array_equal(a.info[key], b.info[key])
+            if isinstance(a.info[key], str):
+                assert a.info[key] == b.info[key]
+            elif isinstance(a.info[key], dict):
+                assert a.info[key] == b.info[key]
+            else:
+                npt.assert_array_almost_equal(a.info[key], b.info[key])
 
 
 

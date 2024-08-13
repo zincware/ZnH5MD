@@ -80,6 +80,7 @@ def test_extend_single(tmp_path):
     assert np.allclose(io[0].info["vectors"], vectors)
     assert io[0].info["vectors"].shape == vectors.shape
 
+
 def test_not_use_ase_calc_read(tmp_path, s22_all_properties):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(s22_all_properties)

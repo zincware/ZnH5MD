@@ -7,7 +7,7 @@ import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import all_properties
 
-from .utils import concatenate_varying_shape_arrays
+from .utils import NUMPY_STRING_DTYPE, concatenate_varying_shape_arrays
 
 
 class ASEKeyMetaData(TypedDict):
@@ -201,7 +201,12 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
         if use_ase_calc and key in all_properties:
             raise ValueError(f"Key {key} is reserved for ASE calculator results.")
         if key not in ASE_TO_H5MD and key not in CustomINFOData.__members__:
-            info_data[key] = value
+            if isinstance(value, str):
+                if len(value) > NUMPY_STRING_DTYPE.itemsize:
+                    raise ValueError(f"String {key} is too long to be stored.")
+                info_data[key] = np.array(value, dtype=NUMPY_STRING_DTYPE)
+            else:
+                info_data[key] = value
 
     for key, value in atoms.arrays.items():
         if use_ase_calc and key in all_properties:

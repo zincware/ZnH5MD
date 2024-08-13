@@ -180,6 +180,8 @@ class IO(MutableSequence):
                     )
 
     def extend(self, images: List[ase.Atoms]):
+        if not isinstance(images, list):
+            raise ValueError("images must be a list of ASE Atoms objects")
         if len(images) == 0:
             warnings.warn("No data provided")
             return
@@ -262,7 +264,7 @@ class IO(MutableSequence):
             ds_value = g_grp.create_dataset(
                 "value",
                 data=data,
-                dtype=np.float64,
+                dtype=utils.get_h5py_dtype(data),
                 chunks=True
                 if self.chunk_size is None
                 else tuple([self.chunk_size] + list(data.shape[1:])),
@@ -336,7 +338,7 @@ class IO(MutableSequence):
                 ds_value = g_observable.create_dataset(
                     "value",
                     data=value,
-                    dtype=np.float64,
+                    dtype=utils.get_h5py_dtype(value),
                     chunks=True
                     if self.chunk_size is None
                     else tuple([self.chunk_size] + list(value.shape[1:])),
@@ -430,6 +432,8 @@ class IO(MutableSequence):
                         utils.fill_dataset(g_val["step"], step)
 
     def append(self, atoms: ase.Atoms):
+        if not isinstance(atoms, ase.Atoms):
+            raise ValueError("atoms must be an ASE Atoms object")
         self.extend([atoms])
 
     def __delitem__(self, index):

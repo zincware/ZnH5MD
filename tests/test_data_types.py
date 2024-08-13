@@ -27,3 +27,12 @@ def test_very_long_text_data(tmp_path):
     molecule.info["test"] = f"{list(range(1_000))}"
     with pytest.raises(ValueError, match="String test is too long to be stored."):
         io.append(molecule)
+
+
+def test_int_info_data(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    molecule = ase.build.molecule("H2O")
+    molecule.info["test"] = 123
+
+    io.append(molecule)
+    assert io[0].info["test"] == 123

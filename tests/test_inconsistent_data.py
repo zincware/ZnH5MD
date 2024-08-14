@@ -15,7 +15,6 @@ def test_keys_missing(tmp_path, s22, s22_energy_forces):
         assert a == b
         if b.calc is not None:
             for key in b.calc.results:
-                try:
-                    npt.assert_array_equal(a.calc.results[key], b.calc.results[key])
-                except AttributeError:
-                    raise AttributeError(b.calc.results[key])
+                npt.assert_array_equal(a.calc.results[key], b.calc.results[key])
+        else:
+            assert a.calc is None

@@ -13,6 +13,9 @@ def test_keys_missing(tmp_path, s22, s22_energy_forces):
 
     for a, b in zip(images, io):
         assert a == b
-        b.get_potential_energy()
-        assert a.get_potential_energy() == b.get_potential_energy()
-        npt.assert_array_equal(a.get_forces(), b.get_forces())
+        if b.calc is not None:
+            for key in b.calc.results:
+                try:
+                    npt.assert_array_equal(a.calc.results[key], b.calc.results[key])
+                except AttributeError:
+                    raise AttributeError(b.calc.results[key])

@@ -58,6 +58,8 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
     1
 
     """
+    if np.isnan(array).all():
+        return None
     if len(np.shape(array)) == 0:
         return array if not np.isnan(array) else None
     return array[~np.isnan(array).all(axis=tuple(range(1, array.ndim)))]
@@ -153,8 +155,9 @@ def build_atoms(args) -> ase.Atoms:
 
     if calc_data is not None:
         if len(calc_data) > 0:
-            atoms.calc = SinglePointCalculator(atoms=atoms)
-            atoms.calc.results = calc_data
+            if not all(val is None for val in calc_data.values()):
+                atoms.calc = SinglePointCalculator(atoms=atoms)
+                atoms.calc.results = calc_data
 
     return atoms
 

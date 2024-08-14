@@ -383,7 +383,9 @@ class IO(MutableSequence):
                 g_observables_grp = f["observables"].create_group(self.particle_group)
             else:
                 g_observables_grp = f["observables"][self.particle_group]
-            self._extend_group(g_observables_grp, key, value, step=data.step, time=data.time)
+            self._extend_group(
+                g_observables_grp, key, value, step=data.step, time=data.time
+            )
 
     def _extend_group(
         self,

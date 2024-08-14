@@ -397,7 +397,19 @@ class IO(MutableSequence):
             self._extend_group(
                 g_particle_grp, key, value, step=data.step, time=data.time
             )
-        self._extend_observables(f, data.observables, step=data.step, time=data.time)
+        for key, value in tqdm(
+            data.observables.items(),
+            ncols=120,
+            desc="Extending observables",
+            disable=_disable_tqdm,
+        ):
+            if "observables" not in f:
+                g_observables_grp = f.create_group("observables")
+            if self.particle_group not in f["observables"]:
+                g_observables_grp = f["observables"].create_group(self.particle_group)
+            else:
+                g_observables_grp = f["observables"][self.particle_group]
+            self._extend_group(g_observables_grp, key, value, step=data.step, time=data.time)
 
     def _extend_group(
         self,
@@ -407,6 +419,8 @@ class IO(MutableSequence):
         step: np.ndarray | None = None,
         time: np.ndarray | None = None,
     ):
+        if name not in parent_grp:
+            raise ValueError(f"Group {name} not found in {parent_grp.name}")
         if data is not None and name in parent_grp:
             g_grp = parent_grp[name]
             utils.fill_dataset(g_grp["value"], data)
@@ -422,32 +436,6 @@ class IO(MutableSequence):
                     time,
                 )
                 utils.fill_dataset(g_grp["step"], step)
-
-    def _extend_observables(
-        self,
-        f,
-        info_data,
-        step: np.ndarray | None = None,
-        time: np.ndarray | None = None,
-    ):
-        if f"observables/{self.particle_group}" in f:
-            g_observables = f[f"observables/{self.particle_group}"]
-            for key, value in info_data.items():
-                if key in g_observables:
-                    g_val = g_observables[key]
-                    utils.fill_dataset(g_val["value"], value)
-                    if self.store == "time":
-                        if time is None:
-                            last_time = g_val["time"][-1]
-                            time = np.arange(len(value)) * self.timestep + last_time
-                        if step is None:
-                            last_step = g_val["step"][-1]
-                            step = np.arange(len(value)) + last_step
-                        utils.fill_dataset(
-                            g_val["time"],
-                            time,
-                        )
-                        utils.fill_dataset(g_val["step"], step)
 
     def append(self, atoms: ase.Atoms):
         if not isinstance(atoms, ase.Atoms):

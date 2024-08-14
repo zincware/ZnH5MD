@@ -288,10 +288,20 @@ def _combine_dicts(dicts: List[Dict[str, np.ndarray]]) -> Dict[str, np.ndarray]:
     """Helper function to combine dictionaries containing numpy arrays."""
     combined = {}
     for key in dicts[0]:
-        combined[key] = concatenate_varying_shape_arrays(
-            [
-                d[key] if isinstance(d[key], np.ndarray) else np.array(d[key])
-                for d in dicts
-            ]
-        )
+        data = []
+        for d in dicts:
+            if key in d:
+                data.append(d[key])
+            else:
+                dims = dicts[0][key].ndim
+                # Create an array with the appropriate number of dimensions.
+                if dims == 0:
+                    # Handle the case where the number of dimensions is 0
+                    data.append(np.NaN)
+                else:
+                    data.append(np.full_like(dicts[0][key], np.NaN))
+        if data:
+            combined[key] = concatenate_varying_shape_arrays(data)
+        else:
+            raise ValueError(f"Key {key} is missing in one of the data objects.")
     return combined

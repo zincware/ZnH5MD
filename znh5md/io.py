@@ -254,13 +254,27 @@ class IO(MutableSequence):
                 step=data.step,
                 json=data.metadata.get(key, {}).get("type") == "json",
             )
-        self._create_observables(
-            f,
-            data.observables,
-            data.metadata,
-            time=data.time,
-            step=data.step,
-        )
+        for key, value in tqdm(
+            data.observables.items(),
+            ncols=120,
+            desc="Creating observables",
+            disable=_disable_tqdm,
+        ):
+            if "observables" not in f:
+                g_observables_grp = f.create_group("observables")
+                g_observables_grp = f["observables"].create_group(self.particle_group)
+            self._create_group(
+                g_observables_grp,
+                key,
+                value,
+                data.metadata.get(key, {}).get("unit"),
+                calc=data.metadata.get(key, {}).get("calc")
+                if self.use_ase_calc
+                else None,
+                time=data.time,
+                step=data.step,
+                json=data.metadata.get(key, {}).get("type") == "json",
+            )
 
     def _create_group(
         self,
@@ -337,46 +351,6 @@ class IO(MutableSequence):
             )
             ds_time[()] = self.timestep
             ds_step[()] = 1
-
-    def _create_observables(
-        self,
-        f,
-        info_data,
-        metadata: dict,
-        time: np.ndarray | None = None,
-        step: np.ndarray | None = None,
-    ):
-        if info_data:
-            g_observables = f.require_group("observables")
-            g_info = g_observables.require_group(self.particle_group)
-            for key, value in info_data.items():
-                g_observable = g_info.create_group(key)
-                ds_value = g_observable.create_dataset(
-                    "value",
-                    data=value,
-                    dtype=utils.get_h5py_dtype(value),
-                    chunks=True
-                    if self.chunk_size is None
-                    else tuple([self.chunk_size] + list(value.shape[1:])),
-                    maxshape=([None] * value.ndim),
-                    compression=self.compression,
-                    compression_opts=self.compression_opts,
-                )
-                if metadata.get(key, {}).get("type") == "json":
-                    ds_value.attrs["ZNH5MD_TYPE"] = "json"
-                if self.use_ase_calc and metadata.get(key, {}).get("calc") is not None:
-                    ds_value.attrs["ASE_CALCULATOR_RESULT"] = metadata[key]["calc"]
-                if metadata.get(key, {}).get("unit") and self.save_units:
-                    ds_value.attrs["unit"] = metadata[key]["unit"]
-                if time is None:
-                    time = np.arange(len(value)) * self.timestep
-                elif self.store == "linear":
-                    warnings.warn("time is ignored in 'linear' storage mode")
-                if step is None:
-                    step = np.arange(len(value))
-                elif self.store == "linear":
-                    warnings.warn("step is ignored in 'linear' storage mode")
-                self._add_time_and_step(g_observable, step, time)
 
     def _extend_existing_data(self, f, data: fmt.ASEData):
         g_particle_grp = f["particles"][self.particle_group]

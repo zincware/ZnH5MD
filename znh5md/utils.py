@@ -1,6 +1,9 @@
 import ase
+import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
+
+NUMPY_STRING_DTYPE = np.dtype("S512")
 
 
 def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
@@ -22,6 +25,8 @@ def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
            [ 3.,  4.,  5.]])
 
     """
+    if np.shape(arrays[0]) == ():
+        return np.array(arrays).flatten()
     if len(np.shape(arrays[0])) == 0:
         return np.array(arrays)
     max_n_particles = max(x.shape[0] for x in arrays)
@@ -53,6 +58,8 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
     1
 
     """
+    if np.isnan(array).all():
+        return None
     if len(np.shape(array)) == 0:
         return array if not np.isnan(array) else None
     return array[~np.isnan(array).all(axis=tuple(range(1, array.ndim)))]
@@ -97,6 +104,20 @@ def fill_dataset(dataset, new_data):
     dataset[old_shape[0] :] = padded_new_data
 
 
+def handle_info_special_cases(info_data: dict) -> dict:
+    for key, value in info_data.items():
+        if isinstance(value, bytes):
+            # string types
+            info_data[key] = value.decode("utf-8")
+        elif isinstance(value, dict):
+            # json / dict types
+            info_data[key] = value
+        else:
+            # float / int / bool types
+            info_data[key] = remove_nan_rows(value)
+    return info_data
+
+
 def build_atoms(args) -> ase.Atoms:
     (
         atomic_numbers,
@@ -120,7 +141,7 @@ def build_atoms(args) -> ase.Atoms:
             key: remove_nan_rows(value) for key, value in arrays_data.items()
         }
     if info_data is not None:
-        info_data = {key: remove_nan_rows(value) for key, value in info_data.items()}
+        info_data = handle_info_special_cases(info_data)
 
     atoms = ase.Atoms(
         symbols=atomic_numbers,
@@ -133,8 +154,10 @@ def build_atoms(args) -> ase.Atoms:
     atoms.info.update(info_data)
 
     if calc_data is not None:
-        atoms.calc = SinglePointCalculator(atoms=atoms)
-        atoms.calc.results = calc_data
+        if len(calc_data) > 0:
+            if not all(val is None for val in calc_data.values()):
+                atoms.calc = SinglePointCalculator(atoms=atoms)
+                atoms.calc.results = calc_data
 
     return atoms
 
@@ -167,3 +190,10 @@ def build_structures(
             )
             structures.append(build_atoms(args))
     return structures
+
+
+def get_h5py_dtype(data: np.ndarray):
+    if data.dtype == NUMPY_STRING_DTYPE:
+        return h5py.string_dtype(encoding="utf-8")
+    else:
+        return data.dtype

@@ -1,5 +1,6 @@
 import contextlib
 import dataclasses
+import json
 import os
 import pathlib
 import typing as t
@@ -48,6 +49,8 @@ class IO(MutableSequence):
     timestep: float = 1.0
     store: t.Literal["time", "linear"] = "linear"
     tqdm_limit: int = 100
+    chunk_size: Optional[int] = None
+    use_ase_calc: bool = True
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
@@ -147,7 +150,7 @@ class IO(MutableSequence):
     def _extract_additional_data(self, f, index, arrays_data, calc_data, info_data):
         for key in f["particles"][self.particle_group].keys():
             if key not in list(fmt.ASE_TO_H5MD.values()):
-                if (
+                if self.use_ase_calc and (
                     f["particles"][self.particle_group][key]["value"].attrs.get(
                         "ASE_CALCULATOR_RESULT"
                     )
@@ -158,12 +161,12 @@ class IO(MutableSequence):
                         f["particles"], self.particle_group, key, index
                     )
                 else:
-                    arrays_data[key] = fmt.get_property(
+                    arrays_data[key if key != "force" else "forces"] = fmt.get_property(
                         f["particles"], self.particle_group, key, index
                     )
         if f"observables/{self.particle_group}" in f:
             for key in f[f"observables/{self.particle_group}"].keys():
-                if (
+                if self.use_ase_calc and (
                     f["observables"][self.particle_group][key]["value"].attrs.get(
                         "ASE_CALCULATOR_RESULT"
                     )
@@ -173,11 +176,24 @@ class IO(MutableSequence):
                         f["observables"], self.particle_group, key, index
                     )
                 else:
-                    info_data[key] = fmt.get_property(
+                    # check if info[types] == json
+                    data = fmt.get_property(
                         f["observables"], self.particle_group, key, index
                     )
 
+                    if (
+                        f["observables"][self.particle_group][key]["value"].attrs.get(
+                            "ZNH5MD_TYPE"
+                        )
+                        == "json"
+                    ):
+                        info_data[key] = [json.loads(x) for x in data]
+                    else:
+                        info_data[key] = data
+
     def extend(self, images: List[ase.Atoms]):
+        if not isinstance(images, list):
+            raise ValueError("images must be a list of ASE Atoms objects")
         if len(images) == 0:
             warnings.warn("No data provided")
             return
@@ -195,7 +211,7 @@ class IO(MutableSequence):
         for atoms in tqdm(
             images, ncols=120, desc="Preparing data", disable=_disable_tqdm
         ):
-            data.append(fmt.extract_atoms_data(atoms))
+            data.append(fmt.extract_atoms_data(atoms, use_ase_calc=self.use_ase_calc))
         combined_data = fmt.combine_asedata(data)
 
         with _open_file(self.filename, self.file_handle, mode="a") as f:
@@ -231,9 +247,12 @@ class IO(MutableSequence):
                 key,
                 value,
                 data.metadata.get(key, {}).get("unit"),
-                calc=data.metadata.get(key, {}).get("calc"),
+                calc=data.metadata.get(key, {}).get("calc")
+                if self.use_ase_calc
+                else None,
                 time=data.time,
                 step=data.step,
+                json=data.metadata.get(key, {}).get("type") == "json",
             )
         self._create_observables(
             f,
@@ -252,18 +271,23 @@ class IO(MutableSequence):
         calc: Optional[bool] = None,
         time: np.ndarray | None = None,
         step: np.ndarray | None = None,
+        json: bool = False,
     ):
         if data is not None:
             g_grp = parent_grp.create_group(name)
             ds_value = g_grp.create_dataset(
                 "value",
                 data=data,
-                dtype=np.float64,
-                chunks=True,
+                dtype=utils.get_h5py_dtype(data),
+                chunks=True
+                if self.chunk_size is None
+                else tuple([self.chunk_size] + list(data.shape[1:])),
                 maxshape=([None] * data.ndim),
                 compression=self.compression,
                 compression_opts=self.compression_opts,
             )
+            if json:
+                ds_value.attrs["ZNH5MD_TYPE"] = "json"
             if calc is not None:
                 ds_value.attrs["ASE_CALCULATOR_RESULT"] = calc
             if unit and self.save_units:
@@ -287,6 +311,7 @@ class IO(MutableSequence):
                 compression=self.compression,
                 compression_opts=self.compression_opts,
                 maxshape=(None,),
+                chunks=True if self.chunk_size is None else (self.chunk_size,),
             )
             ds_time.attrs["unit"] = "fs"
             ds_step = grp.create_dataset(
@@ -296,6 +321,7 @@ class IO(MutableSequence):
                 compression=self.compression,
                 compression_opts=self.compression_opts,
                 maxshape=(None,),
+                chunks=True if self.chunk_size is None else (self.chunk_size,),
             )
         elif self.store == "linear":
             ds_time = grp.create_dataset(
@@ -328,13 +354,17 @@ class IO(MutableSequence):
                 ds_value = g_observable.create_dataset(
                     "value",
                     data=value,
-                    dtype=np.float64,
-                    chunks=True,
+                    dtype=utils.get_h5py_dtype(value),
+                    chunks=True
+                    if self.chunk_size is None
+                    else tuple([self.chunk_size] + list(value.shape[1:])),
                     maxshape=([None] * value.ndim),
                     compression=self.compression,
                     compression_opts=self.compression_opts,
                 )
-                if metadata.get(key, {}).get("calc") is not None:
+                if metadata.get(key, {}).get("type") == "json":
+                    ds_value.attrs["ZNH5MD_TYPE"] = "json"
+                if self.use_ase_calc and metadata.get(key, {}).get("calc") is not None:
                     ds_value.attrs["ASE_CALCULATOR_RESULT"] = metadata[key]["calc"]
                 if metadata.get(key, {}).get("unit") and self.save_units:
                     ds_value.attrs["unit"] = metadata[key]["unit"]
@@ -420,6 +450,8 @@ class IO(MutableSequence):
                         utils.fill_dataset(g_val["step"], step)
 
     def append(self, atoms: ase.Atoms):
+        if not isinstance(atoms, ase.Atoms):
+            raise ValueError("atoms must be an ASE Atoms object")
         self.extend([atoms])
 
     def __delitem__(self, index):

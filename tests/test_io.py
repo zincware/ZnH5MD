@@ -83,7 +83,6 @@ def test_add_new_keys_info(tmp_path):
     # assert io[1].info["key1"] == 1
 
 
-
 def test_add_new_keys_arrays(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     water = ase.build.molecule("H2O")

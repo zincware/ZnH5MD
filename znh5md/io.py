@@ -136,6 +136,7 @@ class IO(MutableSequence):
             arrays_data,
             calc_data,
             info_data,
+            variable_length=self.variable_length,
         )
 
         return structures[0] if single_item else structures

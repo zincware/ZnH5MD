@@ -7,6 +7,7 @@ import typing as t
 import warnings
 from collections.abc import MutableSequence
 from typing import List, Optional, Union
+import importlib.metadata
 
 import ase
 import h5py
@@ -41,8 +42,8 @@ class IO(MutableSequence):
     save_units: bool = True  # Export ASE units into the H5MD file
     author: str = "N/A"
     author_email: str = "N/A"
-    creator: str = "N/A"
-    creator_version: str = "N/A"
+    creator: str = "ZnH5MD"
+    creator_version: str = f"{importlib.metadata.version('znh5md')}"
     particle_group: Optional[str] = None
     compression: Optional[str] = "gzip"
     compression_opts: Optional[int] = None
@@ -51,6 +52,7 @@ class IO(MutableSequence):
     tqdm_limit: int = 100
     chunk_size: Optional[int] = None
     use_ase_calc: bool = True
+    variable_length: bool = True # Support data with different atom counts
 
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:

@@ -40,6 +40,8 @@ def test_datasets(tmp_path, dataset, request):
                 assert b.get_potential_energy() == a.get_potential_energy()
                 assert isinstance(a.get_potential_energy(), float)
                 assert isinstance(b.get_potential_energy(), float)
+        else:
+            assert b.calc is None
 
         assert set(a.arrays) == set(b.arrays)
         for key in a.arrays:
@@ -85,6 +87,8 @@ def test_datasets_extxyz(tmp_path, dataset, request):
                 assert b.get_potential_energy() == a.get_potential_energy()
                 assert isinstance(a.get_potential_energy(), float)
                 assert isinstance(b.get_potential_energy(), float)
+        else:
+            assert b.calc is None
 
         assert set(a.arrays) == set(b.arrays)
         for key in a.arrays:

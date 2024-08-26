@@ -53,7 +53,7 @@ class IO(MutableSequence):
     chunk_size: Optional[int] = None
     use_ase_calc: bool = True
     variable_length: bool = False  # Support data with different atom counts
-    _legacy_pad_nan: bool = False
+    _legacy_pad_nan: bool = True
     # TODO: if variable_length=False, have a legency mode that removes rows with NaN values
 
     def __post_init__(self):

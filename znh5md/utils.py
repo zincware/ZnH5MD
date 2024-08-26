@@ -114,7 +114,7 @@ def handle_info_special_cases(info_data: dict, pad_nan: bool) -> dict:
             info_data[key] = value
         else:
             # float / int / bool types
-            if not pad_nan:
+            if pad_nan:
                 info_data[key] = remove_nan_rows(value)
             else:
                 info_data[key] = value
@@ -142,7 +142,7 @@ def build_atoms(args, pad_nan: bool) -> ase.Atoms:
         arrays_data,
     ) = args
     if (
-        not pad_nan
+        pad_nan
     ):  # remove rows with NaN values in fixed sized arrays for legacy support
         atomic_numbers = remove_nan_rows(atomic_numbers)
         if positions is not None:

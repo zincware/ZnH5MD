@@ -240,7 +240,7 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
 # TODO highlight that an additional dimension is added to ASEData here
 def combine_asedata(data: List[ASEData], variable_length: bool) -> ASEData:
     """Combine multiple ASEData objects into one."""
-    cell = _combine_property([x.cell for x in data])
+    cell = _combine_property([x.cell for x in data], variable_length=variable_length)
     pbc = np.array(
         [x.pbc if x.pbc is not None else [False, False, False] for x in data]
     )
@@ -275,7 +275,7 @@ def combine_asedata(data: List[ASEData], variable_length: bool) -> ASEData:
     )
 
 
-def _combine_property(properties: List[Optional[np.ndarray]]) -> Optional[np.ndarray]:
+def _combine_property(properties: List[Optional[np.ndarray]], variable_length: bool) -> Optional[np.ndarray]:
     """Helper function to combine varying shape arrays."""
     if all(x is None for x in properties):
         return None

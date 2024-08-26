@@ -114,7 +114,7 @@ def handle_info_special_cases(info_data: dict, variable_length: bool) -> dict:
             info_data[key] = value
         else:
             # float / int / bool types
-            if variable_length:
+            if not variable_length:
                 info_data[key] = remove_nan_rows(value)
             else:
                 info_data[key] = value

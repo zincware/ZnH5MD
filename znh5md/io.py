@@ -1,5 +1,6 @@
 import contextlib
 import dataclasses
+import importlib.metadata
 import json
 import os
 import pathlib
@@ -7,7 +8,6 @@ import typing as t
 import warnings
 from collections.abc import MutableSequence
 from typing import List, Optional, Union
-import importlib.metadata
 
 import ase
 import h5py
@@ -52,13 +52,15 @@ class IO(MutableSequence):
     tqdm_limit: int = 100
     chunk_size: Optional[int] = None
     use_ase_calc: bool = True
-    variable_length: bool = False # Support data with different atom counts
+    variable_length: bool = False  # Support data with different atom counts
     _legacy_pad_nan: bool = False
     # TODO: if variable_length=False, have a legency mode that removes rows with NaN values
 
     def __post_init__(self):
         if self._legacy_pad_nan and self.variable_length:
-            raise ValueError(f"Cannot use '{self._legacy_pad_nan =}' with '{self.variable_length =}' modes")
+            raise ValueError(
+                f"Cannot use '{self._legacy_pad_nan =}' with '{self.variable_length =}' modes"
+            )
         if self.filename is None and self.file_handle is None:
             raise ValueError("Either filename or file_handle must be provided")
         if self.filename is not None and self.file_handle is not None:

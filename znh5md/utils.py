@@ -123,7 +123,7 @@ def handle_info_special_cases(info_data: dict, variable_length: bool) -> dict:
 
 def build_atoms(args, variable_length: bool) -> ase.Atoms:
     """Build an ASE Atoms object from the given data.
-    
+
     Parameters
     ----------
         args (tuple):
@@ -141,20 +141,26 @@ def build_atoms(args, variable_length: bool) -> ase.Atoms:
         info_data,
         arrays_data,
     ) = args
-    if not variable_length: # remove rows with NaN values in fixed sized arrays for legacy support
+    if (
+        not variable_length
+    ):  # remove rows with NaN values in fixed sized arrays for legacy support
         atomic_numbers = remove_nan_rows(atomic_numbers)
         if positions is not None:
             positions = remove_nan_rows(positions)
         if velocities is not None:
             velocities = remove_nan_rows(velocities)
         if calc_data is not None:
-            calc_data = {key: remove_nan_rows(value) for key, value in calc_data.items()}
+            calc_data = {
+                key: remove_nan_rows(value) for key, value in calc_data.items()
+            }
         if arrays_data is not None:
             arrays_data = {
                 key: remove_nan_rows(value) for key, value in arrays_data.items()
             }
     if info_data is not None:
-        info_data = handle_info_special_cases(info_data, variable_length=variable_length)
+        info_data = handle_info_special_cases(
+            info_data, variable_length=variable_length
+        )
 
     atoms = ase.Atoms(
         symbols=atomic_numbers,
@@ -214,7 +220,7 @@ def get_h5py_dtype(data: np.ndarray, variable_length: bool) -> np.dtype:
         dtype = h5py.string_dtype(encoding="utf-8")
     else:
         dtype = data.dtype
-    
+
     if variable_length:
         return h5py.vlen_dtype(dtype)
     return dtype

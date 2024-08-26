@@ -245,8 +245,12 @@ def combine_asedata(data: List[ASEData], variable_length: bool) -> ASEData:
         [x.pbc if x.pbc is not None else [False, False, False] for x in data]
     )
 
-    observables = _combine_dicts([x.observables for x in data], variable_length=variable_length)
-    particles = _combine_dicts([x.particles for x in data], variable_length=variable_length)
+    observables = _combine_dicts(
+        [x.observables for x in data], variable_length=variable_length
+    )
+    particles = _combine_dicts(
+        [x.particles for x in data], variable_length=variable_length
+    )
 
     time_occurrences = sum([x.time is not None for x in data])
     step_occurrences = sum([x.step is not None for x in data])
@@ -284,7 +288,9 @@ def _combine_property(properties: List[Optional[np.ndarray]], variable_length: b
     )
 
 
-def _combine_dicts(dicts: List[Dict[str, np.ndarray]], variable_length: bool) -> Dict[str, np.ndarray]:
+def _combine_dicts(
+    dicts: List[Dict[str, np.ndarray]], variable_length: bool
+) -> Dict[str, np.ndarray]:
     """Helper function to combine dictionaries containing numpy arrays."""
     combined = {}
     for key in dicts[0]:
@@ -308,7 +314,7 @@ def _combine_dicts(dicts: List[Dict[str, np.ndarray]], variable_length: bool) ->
                 combined[key] = concatenate_varying_shape_arrays(data)
             else:
                 combined[key] = data
-            
+
         else:
             raise ValueError(f"Key {key} is missing in one of the data objects.")
     return combined

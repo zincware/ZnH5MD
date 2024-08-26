@@ -158,9 +158,7 @@ def build_atoms(args, pad_nan: bool) -> ase.Atoms:
                 key: remove_nan_rows(value) for key, value in arrays_data.items()
             }
     if info_data is not None:
-        info_data = handle_info_special_cases(
-            info_data, pad_nan=pad_nan
-        )
+        info_data = handle_info_special_cases(info_data, pad_nan=pad_nan)
 
     atoms = ase.Atoms(
         symbols=atomic_numbers,

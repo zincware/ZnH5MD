@@ -37,9 +37,7 @@ print(io[5:10])
 
 ZnH5MD circumvents two current limitations of the H5MD standard.
 
-- support `images` with varying particle counts by padding the dataset with
-  `np.nan`. Using varying species counts might break the compatibility with
-  other H5MD tools.
+- support `images` with varying particle counts.
 - support varying `pbc` within a single particle group by introducing
   `particles/<group>/box/pbc/value` in addition to the `particles/<group>/box`
   attributes. By default, this is enabled via `IO(pbc_group=True)`. The

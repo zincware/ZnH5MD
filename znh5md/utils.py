@@ -104,7 +104,7 @@ def fill_dataset(dataset, new_data):
     dataset[old_shape[0] :] = padded_new_data
 
 
-def handle_info_special_cases(info_data: dict) -> dict:
+def handle_info_special_cases(info_data: dict, pad_nan: bool) -> dict:
     for key, value in info_data.items():
         if isinstance(value, bytes):
             # string types
@@ -114,11 +114,23 @@ def handle_info_special_cases(info_data: dict) -> dict:
             info_data[key] = value
         else:
             # float / int / bool types
-            info_data[key] = remove_nan_rows(value)
+            if not pad_nan:
+                info_data[key] = remove_nan_rows(value)
+            else:
+                info_data[key] = value
     return info_data
 
 
-def build_atoms(args) -> ase.Atoms:
+def build_atoms(args, pad_nan: bool) -> ase.Atoms:
+    """Build an ASE Atoms object from the given data.
+
+    Parameters
+    ----------
+        args (tuple):
+            Tuple of data to build the Atoms object.
+        pad_nan (bool):
+            Remove rows with NaN values from the input data.
+    """
     (
         atomic_numbers,
         positions,
@@ -129,19 +141,24 @@ def build_atoms(args) -> ase.Atoms:
         info_data,
         arrays_data,
     ) = args
-    atomic_numbers = remove_nan_rows(atomic_numbers)
-    if positions is not None:
-        positions = remove_nan_rows(positions)
-    if velocities is not None:
-        velocities = remove_nan_rows(velocities)
-    if calc_data is not None:
-        calc_data = {key: remove_nan_rows(value) for key, value in calc_data.items()}
-    if arrays_data is not None:
-        arrays_data = {
-            key: remove_nan_rows(value) for key, value in arrays_data.items()
-        }
+    if (
+        not pad_nan
+    ):  # remove rows with NaN values in fixed sized arrays for legacy support
+        atomic_numbers = remove_nan_rows(atomic_numbers)
+        if positions is not None:
+            positions = remove_nan_rows(positions)
+        if velocities is not None:
+            velocities = remove_nan_rows(velocities)
+        if calc_data is not None:
+            calc_data = {
+                key: remove_nan_rows(value) for key, value in calc_data.items()
+            }
+        if arrays_data is not None:
+            arrays_data = {
+                key: remove_nan_rows(value) for key, value in arrays_data.items()
+            }
     if info_data is not None:
-        info_data = handle_info_special_cases(info_data)
+        info_data = handle_info_special_cases(info_data, pad_nan=pad_nan)
 
     atoms = ase.Atoms(
         symbols=atomic_numbers,
@@ -168,6 +185,7 @@ def build_structures(
     arrays_data,
     calc_data,
     info_data,
+    pad_nan: bool,
 ) -> list[ase.Atoms]:
     structures = []
 
@@ -188,12 +206,19 @@ def build_structures(
                 {key: value[idx] for key, value in info_data.items()},
                 {key: value[idx] for key, value in arrays_data.items()},
             )
-            structures.append(build_atoms(args))
+            structures.append(build_atoms(args, pad_nan=pad_nan))
     return structures
 
 
-def get_h5py_dtype(data: np.ndarray):
+def get_h5py_dtype(data: np.ndarray, variable_length: bool) -> np.dtype:
+    if isinstance(data, list):
+        # we assume all data has the same dtype
+        data = np.array(data[0])
     if data.dtype == NUMPY_STRING_DTYPE:
-        return h5py.string_dtype(encoding="utf-8")
+        dtype = h5py.string_dtype(encoding="utf-8")
     else:
-        return data.dtype
+        dtype = data.dtype
+
+    if variable_length:
+        return h5py.vlen_dtype(dtype)
+    return dtype

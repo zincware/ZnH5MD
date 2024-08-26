@@ -142,7 +142,7 @@ class IO(MutableSequence):
             arrays_data,
             calc_data,
             info_data,
-            variable_length=self.variable_length,
+            pad_nan=self._legacy_pad_nan,
         )
 
         return structures[0] if single_item else structures

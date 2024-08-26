@@ -279,7 +279,9 @@ def combine_asedata(data: List[ASEData], variable_length: bool) -> ASEData:
     )
 
 
-def _combine_property(properties: List[Optional[np.ndarray]], variable_length: bool) -> Optional[np.ndarray]:
+def _combine_property(
+    properties: List[Optional[np.ndarray]], variable_length: bool
+) -> Optional[np.ndarray]:
     """Helper function to combine varying shape arrays."""
     if all(x is None for x in properties):
         return None

@@ -69,11 +69,14 @@ def test_remove_nan_rows():
     assert np.array_equal(remove_nan_rows(c), 5)
     assert remove_nan_rows(np.nan) is None
 
+
 def test_build_atoms():
     pass
 
+
 def test_handle_info_special_cases():
     pass
+
 
 def test_build_structures():
     pass

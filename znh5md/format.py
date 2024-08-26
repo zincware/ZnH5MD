@@ -238,15 +238,15 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
 
 
 # TODO highlight that an additional dimension is added to ASEData here
-def combine_asedata(data: List[ASEData]) -> ASEData:
+def combine_asedata(data: List[ASEData], variable_length: bool) -> ASEData:
     """Combine multiple ASEData objects into one."""
     cell = _combine_property([x.cell for x in data])
     pbc = np.array(
         [x.pbc if x.pbc is not None else [False, False, False] for x in data]
     )
 
-    observables = _combine_dicts([x.observables for x in data])
-    particles = _combine_dicts([x.particles for x in data])
+    observables = _combine_dicts([x.observables for x in data], variable_length=variable_length)
+    particles = _combine_dicts([x.particles for x in data], variable_length=variable_length)
 
     time_occurrences = sum([x.time is not None for x in data])
     step_occurrences = sum([x.step is not None for x in data])
@@ -284,7 +284,7 @@ def _combine_property(properties: List[Optional[np.ndarray]]) -> Optional[np.nda
     )
 
 
-def _combine_dicts(dicts: List[Dict[str, np.ndarray]]) -> Dict[str, np.ndarray]:
+def _combine_dicts(dicts: List[Dict[str, np.ndarray]], variable_length: bool) -> Dict[str, np.ndarray]:
     """Helper function to combine dictionaries containing numpy arrays."""
     combined = {}
     for key in dicts[0]:
@@ -296,12 +296,19 @@ def _combine_dicts(dicts: List[Dict[str, np.ndarray]]) -> Dict[str, np.ndarray]:
                 dims = dicts[0][key].ndim
                 # Create an array with the appropriate number of dimensions.
                 if dims == 0:
+                    # TODO: does None work?
+                    # TODO: write test where some data points don't have a key with dims=0 and dims>0
                     # Handle the case where the number of dimensions is 0
                     data.append(np.NaN)
                 else:
                     data.append(np.full_like(dicts[0][key], np.NaN))
         if data:
-            combined[key] = concatenate_varying_shape_arrays(data)
+            if not variable_length:
+                # TODO: legacy format support with padding with NaNs
+                combined[key] = concatenate_varying_shape_arrays(data)
+            else:
+                combined[key] = data
+            
         else:
             raise ValueError(f"Key {key} is missing in one of the data objects.")
     return combined

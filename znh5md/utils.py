@@ -141,7 +141,7 @@ def build_atoms(args, variable_length: bool) -> ase.Atoms:
         info_data,
         arrays_data,
     ) = args
-    if variable_length:
+    if not variable_length: # remove rows with NaN values in fixed sized arrays for legacy support
         atomic_numbers = remove_nan_rows(atomic_numbers)
         if positions is not None:
             positions = remove_nan_rows(positions)
@@ -206,8 +206,15 @@ def build_structures(
     return structures
 
 
-def get_h5py_dtype(data: np.ndarray):
+def get_h5py_dtype(data: np.ndarray, variable_length: bool) -> np.dtype:
+    if isinstance(data, list):
+        # we assume all data has the same dtype
+        data = np.array(data[0])
     if data.dtype == NUMPY_STRING_DTYPE:
-        return h5py.string_dtype(encoding="utf-8")
+        dtype = h5py.string_dtype(encoding="utf-8")
     else:
-        return data.dtype
+        dtype = data.dtype
+    
+    if variable_length:
+        return h5py.vlen_dtype(dtype)
+    return dtype

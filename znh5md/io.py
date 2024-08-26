@@ -52,9 +52,13 @@ class IO(MutableSequence):
     tqdm_limit: int = 100
     chunk_size: Optional[int] = None
     use_ase_calc: bool = True
-    variable_length: bool = True # Support data with different atom counts
+    variable_length: bool = False # Support data with different atom counts
+    _legacy_pad_nan: bool = False
+    # TODO: if variable_length=False, have a legency mode that removes rows with NaN values
 
     def __post_init__(self):
+        if self._legacy_pad_nan and self.variable_length:
+            raise ValueError(f"Cannot use '{self._legacy_pad_nan =}' with '{self.variable_length =}' modes")
         if self.filename is None and self.file_handle is None:
             raise ValueError("Either filename or file_handle must be provided")
         if self.filename is not None and self.file_handle is not None:
@@ -215,7 +219,7 @@ class IO(MutableSequence):
             images, ncols=120, desc="Preparing data", disable=_disable_tqdm
         ):
             data.append(fmt.extract_atoms_data(atoms, use_ase_calc=self.use_ase_calc))
-        combined_data = fmt.combine_asedata(data)
+        combined_data = fmt.combine_asedata(data, variable_length=self.variable_length)
 
         with _open_file(self.filename, self.file_handle, mode="a") as f:
             if self.particle_group not in f["particles"]:
@@ -295,7 +299,7 @@ class IO(MutableSequence):
             ds_value = g_grp.create_dataset(
                 "value",
                 data=data,
-                dtype=utils.get_h5py_dtype(data),
+                dtype=utils.get_h5py_dtype(data, variable_length=self.variable_length),
                 chunks=True
                 if self.chunk_size is None
                 else tuple([self.chunk_size] + list(data.shape[1:])),

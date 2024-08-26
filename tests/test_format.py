@@ -13,7 +13,7 @@ def test_extract_atoms_data():
     assert isinstance(data, ASEData)
     # TODO assert len(data) == 1 does not work, because wrong dimension
 
-    data = combine_asedata([data, data])
+    data = combine_asedata([data, data], variable_length=False)
     assert isinstance(data, ASEData)
     assert len(data) == 2
 

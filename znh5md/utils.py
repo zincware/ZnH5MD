@@ -3,6 +3,8 @@ import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 
+from znh5md.config import NUMERIC_FILL_VALUE, STRING_FILL_VALUE
+
 NUMPY_STRING_DTYPE = np.dtype("S512")
 
 
@@ -32,9 +34,18 @@ def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
     max_n_particles = max(x.shape[0] for x in arrays)
     dimensions = arrays[0].shape[1:]
 
-    result = np.full((len(arrays), max_n_particles, *dimensions), np.nan)
-    for i, x in enumerate(arrays):
-        result[i, : x.shape[0], ...] = x
+    if arrays[0].dtype == NUMPY_STRING_DTYPE:
+        result = np.full(
+            (len(arrays), max_n_particles), STRING_FILL_VALUE, dtype=NUMPY_STRING_DTYPE
+        )
+        for i, x in enumerate(arrays):
+            result[i, : x.shape[0]] = x
+    else:
+        result = np.full(
+            (len(arrays), max_n_particles, *dimensions), NUMERIC_FILL_VALUE
+        )
+        for i, x in enumerate(arrays):
+            result[i, : x.shape[0], ...] = x
     return result
 
 
@@ -58,6 +69,8 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
     1
 
     """
+    if isinstance(array, np.ndarray) and array.dtype == object:
+        return np.array([x.decode() for x in array if x != STRING_FILL_VALUE])
     if np.isnan(array).all():
         return None
     if len(np.shape(array)) == 0:

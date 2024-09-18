@@ -1,5 +1,6 @@
 import contextlib
 import dataclasses
+import importlib.metadata
 import json
 import os
 import pathlib
@@ -16,6 +17,8 @@ from tqdm import tqdm
 
 import znh5md.format as fmt
 from znh5md import utils
+
+__version__ = importlib.metadata.version("znh5md")
 
 # TODO: use pint to convert the units in the h5md file to ase units
 
@@ -41,8 +44,8 @@ class IO(MutableSequence):
     save_units: bool = True  # Export ASE units into the H5MD file
     author: str = "N/A"
     author_email: str = "N/A"
-    creator: str = "N/A"
-    creator_version: str = "N/A"
+    creator: str = "znh5md"
+    creator_version: str = __version__
     particle_group: Optional[str] = None
     compression: Optional[str] = "gzip"
     compression_opts: Optional[int] = None

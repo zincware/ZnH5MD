@@ -207,7 +207,9 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
                     raise ValueError(f"String {key} is too long to be stored.")
                 info_data[key] = np.array(value.encode(), dtype=NUMPY_STRING_DTYPE)
             elif isinstance(value, dict):
-                info_data[key] = np.array(json.dumps(value).encode(), dtype=NUMPY_STRING_DTYPE)
+                info_data[key] = np.array(
+                    json.dumps(value).encode(), dtype=NUMPY_STRING_DTYPE
+                )
                 metadata[key] = {"unit": None, "calc": False, "type": "json"}
             else:
                 info_data[key] = value

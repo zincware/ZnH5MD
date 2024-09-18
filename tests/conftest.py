@@ -129,6 +129,6 @@ def water() -> list[ase.Atoms]:
 def s22_no_ascii() -> list[ase.Atoms]:
     images = []
     for atoms in ase.collections.s22:
-        atoms.info['config'] = 'βγ'
+        atoms.info["config"] = "βγ"
         images.append(atoms)
     return images

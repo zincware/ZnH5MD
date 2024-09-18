@@ -1,5 +1,5 @@
-import ase.collections
 import ase.build
+import ase.collections
 import numpy as np
 import pytest
 from ase.calculators.singlepoint import SinglePointCalculator
@@ -140,5 +140,5 @@ def water_with_residuenames() -> list[ase.Atoms]:
     water = ase.build.molecule("H2O")
     # typical PDB array data
     water.arrays["residuenames"] = np.array(["H2O"] * len(water))
-    water.arrays['atomtypes'] = np.array(['γO', 'βH', 'βH'])
+    water.arrays["atomtypes"] = np.array(["γO", "βH", "βH"])
     return [water]

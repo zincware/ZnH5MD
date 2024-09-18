@@ -221,7 +221,9 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
             if isinstance(value, np.ndarray):
                 # check if dtype is <U1 or <U2
                 if value.dtype.kind == "U":
-                    value = np.array([x.encode() for x in value.tolist()], dtype=NUMPY_STRING_DTYPE)
+                    value = np.array(
+                        [x.encode() for x in value.tolist()], dtype=NUMPY_STRING_DTYPE
+                    )
             particles[key] = value
 
     time: Optional[float] = atoms.info.get(CustomINFOData.h5md_time.name, None)

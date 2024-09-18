@@ -64,7 +64,7 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
 
     """
     if isinstance(array, np.ndarray) and array.dtype == object:
-        return np.array([x.decode() for x in array if x != ''])
+        return np.array([x.decode() for x in array if x != ""])
     if np.isnan(array).all():
         return None
     if len(np.shape(array)) == 0:

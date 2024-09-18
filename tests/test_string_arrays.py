@@ -1,5 +1,6 @@
-import znh5md
 import numpy.testing as npt
+
+import znh5md
 
 
 def test_info_non_ascii(tmp_path, water_with_residuenames):
@@ -11,5 +12,3 @@ def test_info_non_ascii(tmp_path, water_with_residuenames):
         for key in b.arrays:
             npt.assert_array_equal(a.arrays[key], b.arrays[key])
             # test json per atom?
-            
-        

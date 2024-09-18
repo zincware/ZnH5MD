@@ -1,5 +1,6 @@
 import contextlib
 import dataclasses
+import importlib.metadata
 import json
 import os
 import pathlib
@@ -16,7 +17,6 @@ from tqdm import tqdm
 
 import znh5md.format as fmt
 from znh5md import utils
-import importlib.metadata
 
 __version__ = importlib.metadata.version("znh5md")
 

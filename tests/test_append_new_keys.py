@@ -12,8 +12,6 @@ def test_append_new_calc(tmp_path, s22, s22_energy):
     assert len(s22_energy) == 22
     assert len(io) == 44
 
-    # for a, b in zip(io, s22 + s22_energy):
-    #     assert a.calc == b.calc
 
     for a, b in zip(io[: len(s22)], s22):
         assert a.calc is None

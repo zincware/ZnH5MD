@@ -3,7 +3,7 @@ import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from znh5md.config import NUMERIC_FILL_VALUE, STRING_FILL_VALUE
+from znh5md.config import NUMERIC_FILL_VALUE, STRING_FILL_VALUE, NON_EXISTING_ENTRY
 
 NUMPY_STRING_DTYPE = np.dtype("S512")
 
@@ -49,7 +49,7 @@ def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
     return result
 
 
-def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
+def remove_nan_rows(array: np.ndarray) -> np.ndarray | object:
     """Remove rows with NaN values from a numpy array.
 
     Parameters
@@ -70,6 +70,7 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
 
     """
     if isinstance(array, np.ndarray) and array.dtype == object:
+        # TODO: test if this has been added in a second append!
         return np.array([x.decode() for x in array if x != STRING_FILL_VALUE])
     if np.isnan(array).all():
         return None
@@ -153,8 +154,18 @@ def build_atoms(args) -> ase.Atoms:
         arrays_data = {
             key: remove_nan_rows(value) for key, value in arrays_data.items()
         }
-    if info_data is not None:
+    
+    if info_data is not None: # we don't need this check?
         info_data = handle_info_special_cases(info_data)
+
+    # TODO: remove non-existing values (using sentinels!)
+    # TODO: write check to ensure None will not be removed!
+    for key in list(info_data):
+        if info_data[key] is None:
+            info_data.pop(key)
+    for key in list(arrays_data):
+        if arrays_data[key] is None:
+            arrays_data.pop(key)
 
     atoms = ase.Atoms(
         symbols=atomic_numbers,

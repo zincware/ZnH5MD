@@ -218,13 +218,50 @@ class IO(MutableSequence):
         combined_data = fmt.combine_asedata(data)
 
         with _open_file(self.filename, self.file_handle, mode="a") as f:
-            if self.particle_group not in f["particles"]:
-                self._create_particle_group(f, combined_data)
-            else:
+            try:
                 self._extend_existing_data(f, combined_data)
+            except KeyError:
+                # new file
+                self._create_particle_group(f, combined_data)
+            except ValueError:
+                # new group
+                # we get the length by looking at "species" wich is guarenteed to be created first.
+                full_length = len(f["particles"][self.particle_group]["species"]["value"])
+                for key, value in combined_data.particles.items():
+                    if key not in f["particles"][self.particle_group]:
+                        prev_length = full_length - len(value)
+                        combined_data.particles[key] = np.concatenate(
+                            [
+                                np.full(
+                                    (prev_length, *value.shape[1:]), # subtract value, because species has already been processed
+                                    np.nan,
+                                    dtype=utils.get_h5py_dtype(value),
+                                ),
+                                value,
+                            ]
+                        )
+                for key, value in combined_data.observables.items():
+                    if key not in f["observables"][self.particle_group]:
+                        prev_length = full_length - len(value)
+                        combined_data.observables[key] = np.concatenate(
+                            [
+                                np.full(
+                                    (prev_length, *value.shape[1:]),
+                                    np.nan,
+                                    dtype=utils.get_h5py_dtype(value),
+                                ),
+                                value,
+                            ]
+                        )
+                self._create_particle_group(f, combined_data)
+                
 
     def _create_particle_group(self, f, data: fmt.ASEData):
-        g_particle_grp = f["particles"].create_group(self.particle_group)
+        try:
+            g_particle_grp = f["particles"].create_group(self.particle_group)
+        except ValueError:
+            g_particle_grp = f["particles"][self.particle_group]
+        
         self._create_group(
             g_particle_grp, "box/edges", data.cell, time=data.time, step=data.step
         )
@@ -239,12 +276,21 @@ class IO(MutableSequence):
             )
 
         _disable_tqdm = len(data) < self.tqdm_limit if self.tqdm_limit > 0 else True
-        for key, value in tqdm(
-            data.particles.items(),
+
+        # ensure "species" is in the list and will be created first
+        # this is used as the reference length of the dataset
+        particle_keys = list(data.particles)
+
+        particle_keys = [x for x in particle_keys if x != "species"]
+        particle_keys = ["species"] + particle_keys
+
+        for key in tqdm(
+            particle_keys,
             ncols=120,
             desc="Creating groups",
             disable=_disable_tqdm,
         ):
+            value = data.particles[key]
             self._create_group(
                 g_particle_grp,
                 key,
@@ -266,6 +312,8 @@ class IO(MutableSequence):
             if "observables" not in f:
                 g_observables_grp = f.create_group("observables")
                 g_observables_grp = f["observables"].create_group(self.particle_group)
+            else:
+                g_observables_grp = f["observables"][self.particle_group]
             self._create_group(
                 g_observables_grp,
                 key,
@@ -291,7 +339,10 @@ class IO(MutableSequence):
         json: bool = False,
     ):
         if data is not None:
-            g_grp = parent_grp.create_group(name)
+            try:
+                g_grp = parent_grp.create_group(name)
+            except ValueError:
+                return False
             ds_value = g_grp.create_dataset(
                 "value",
                 data=data,

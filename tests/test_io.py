@@ -72,15 +72,14 @@ def test_add_new_keys_info(tmp_path):
     water = ase.build.molecule("H2O")
 
     io.append(water)
-    water.info["key1"] = 1
-    with pytest.raises(ValueError):
-        io.append(water)
+    water.info["key1"] = np.random.random()
+    io.append(water)
 
-    # assert len(io) == 2
-    # assert "key1" not in io[0].info
-    # assert "key1" in io[1].info
+    assert len(io) == 2
+    assert "key1" not in io[0].info
+    assert "key1" in io[1].info
 
-    # assert io[1].info["key1"] == 1
+    assert io[1].info["key1"] == water.info["key1"]
 
 
 def test_add_new_keys_arrays(tmp_path):
@@ -88,15 +87,14 @@ def test_add_new_keys_arrays(tmp_path):
     water = ase.build.molecule("H2O")
 
     io.append(water)
-    water.arrays["key1"] = np.zeros((len(water), 3))
-    with pytest.raises(ValueError):
-        io.append(water)
+    water.arrays["key1"] = np.random.rand(len(water), 3)
+    io.append(water)
 
-    # assert len(io) == 2
-    # assert "key1" not in io[0].arrays
-    # assert "key1" in io[1].arrays
+    assert len(io) == 2
+    assert "key1" not in io[0].arrays
+    assert "key1" in io[1].arrays
 
-    # assert np.allclose(io[1].arrays["key1"], np.zeros((len(water), 3)))
+    assert np.array_equal(io[1].arrays["key1"], water.arrays["key1"])
 
 
 def test_extend_single(tmp_path):

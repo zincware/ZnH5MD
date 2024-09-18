@@ -32,9 +32,14 @@ def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:
     max_n_particles = max(x.shape[0] for x in arrays)
     dimensions = arrays[0].shape[1:]
 
-    result = np.full((len(arrays), max_n_particles, *dimensions), np.nan)
-    for i, x in enumerate(arrays):
-        result[i, : x.shape[0], ...] = x
+    if arrays[0].dtype == NUMPY_STRING_DTYPE:
+        result = np.full((len(arrays), max_n_particles), "", dtype=NUMPY_STRING_DTYPE)
+        for i, x in enumerate(arrays):
+            result[i, : x.shape[0]] = x
+    else:
+        result = np.full((len(arrays), max_n_particles, *dimensions), np.nan)
+        for i, x in enumerate(arrays):
+            result[i, : x.shape[0], ...] = x
     return result
 
 
@@ -58,6 +63,8 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | None:
     1
 
     """
+    if isinstance(array, np.ndarray) and array.dtype == object:
+        return np.array([x.decode() for x in array if x != ''])
     if np.isnan(array).all():
         return None
     if len(np.shape(array)) == 0:

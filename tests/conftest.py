@@ -123,3 +123,12 @@ def s22_illegal_calc_results() -> list[ase.Atoms]:
 def water() -> list[ase.Atoms]:
     """Get a dataset without positions."""
     return [ase.Atoms("H2O")]
+
+
+@pytest.fixture
+def s22_no_ascii() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        atoms.info['config'] = 'βγ'
+        images.append(atoms)
+    return images

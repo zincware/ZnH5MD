@@ -193,7 +193,6 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
             key = "force" if key == "forces" else key
             uses_calc.append(key)
             value = np.array(value) if isinstance(value, (int, float, list)) else value
-
             if value.ndim > 1 and value.shape[0] == len(atomic_numbers):
                 particles[key] = value
             else:
@@ -206,9 +205,11 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
             if isinstance(value, str):
                 if len(value) > NUMPY_STRING_DTYPE.itemsize:
                     raise ValueError(f"String {key} is too long to be stored.")
-                info_data[key] = np.array(value, dtype=NUMPY_STRING_DTYPE)
+                info_data[key] = np.array(value.encode(), dtype=NUMPY_STRING_DTYPE)
             elif isinstance(value, dict):
-                info_data[key] = np.array(json.dumps(value), dtype=NUMPY_STRING_DTYPE)
+                info_data[key] = np.array(
+                    json.dumps(value).encode(), dtype=NUMPY_STRING_DTYPE
+                )
                 metadata[key] = {"unit": None, "calc": False, "type": "json"}
             else:
                 info_data[key] = value

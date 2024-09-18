@@ -136,9 +136,13 @@ def s22_no_ascii() -> list[ase.Atoms]:
 
 
 @pytest.fixture
-def water_with_residuenames() -> list[ase.Atoms]:
+def frames_with_residuenames() -> list[ase.Atoms]:
     water = ase.build.molecule("H2O")
     # typical PDB array data
     water.arrays["residuenames"] = np.array(["H2O"] * len(water))
     water.arrays["atomtypes"] = np.array(["γO", "βH", "βH"])
-    return [water]
+
+    ethane = ase.build.molecule("C2H6")
+    ethane.arrays["residuenames"] = np.array(["C2H6"] * len(ethane))
+    ethane.arrays["atomtypes"] = np.array(["γC", "βH", "βH", "βH", "βH", "βH"])
+    return [water, ethane]

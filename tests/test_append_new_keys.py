@@ -3,7 +3,7 @@ import numpy as np
 import ase.build
 
 
-def test_append_data_with_new_info(tmp_path, s22, s22_energy):
+def test_append_new_calc(tmp_path, s22, s22_energy):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(s22)
     io.extend(s22_energy)
@@ -24,7 +24,7 @@ def test_append_data_with_new_info(tmp_path, s22, s22_energy):
         assert a.calc.results == b.calc.results
 
 
-def test_add_new_keys_info(tmp_path):
+def test_append_new_keys_info(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     water = ase.build.molecule("H2O")
 
@@ -39,7 +39,7 @@ def test_add_new_keys_info(tmp_path):
     assert io[1].info["key1"] == water.info["key1"]
 
 
-def test_add_new_keys_arrays(tmp_path):
+def test_append_new_keys_arrays(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     water = ase.build.molecule("H2O")
 

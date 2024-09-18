@@ -1,6 +1,7 @@
-import znh5md
-import numpy as np
 import ase.build
+import numpy as np
+
+import znh5md
 
 
 def test_append_data_with_new_info(tmp_path, s22, s22_energy):
@@ -52,4 +53,3 @@ def test_add_new_keys_arrays(tmp_path):
     assert "key1" in io[1].arrays
 
     assert np.array_equal(io[1].arrays["key1"], water.arrays["key1"])
-

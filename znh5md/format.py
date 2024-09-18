@@ -11,8 +11,6 @@ from ase.calculators.calculator import all_properties
 from .utils import NUMPY_STRING_DTYPE, concatenate_varying_shape_arrays
 
 
-
-
 class ASEKeyMetaData(TypedDict):
     unit: Optional[str]
     calc: Optional[bool]

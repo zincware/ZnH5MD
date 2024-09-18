@@ -3,7 +3,7 @@ import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from znh5md.config import NUMERIC_FILL_VALUE, STRING_FILL_VALUE, NON_EXISTING_ENTRY
+from znh5md.config import NUMERIC_FILL_VALUE, STRING_FILL_VALUE
 
 NUMPY_STRING_DTYPE = np.dtype("S512")
 
@@ -154,8 +154,8 @@ def build_atoms(args) -> ase.Atoms:
         arrays_data = {
             key: remove_nan_rows(value) for key, value in arrays_data.items()
         }
-    
-    if info_data is not None: # we don't need this check?
+
+    if info_data is not None:  # we don't need this check?
         info_data = handle_info_special_cases(info_data)
 
     # TODO: remove non-existing values (using sentinels!)

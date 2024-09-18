@@ -226,14 +226,19 @@ class IO(MutableSequence):
             except ValueError:
                 # new group
                 # we get the length by looking at "species" wich is guarenteed to be created first.
-                full_length = len(f["particles"][self.particle_group]["species"]["value"])
+                full_length = len(
+                    f["particles"][self.particle_group]["species"]["value"]
+                )
                 for key, value in combined_data.particles.items():
                     if key not in f["particles"][self.particle_group]:
                         prev_length = full_length - len(value)
                         combined_data.particles[key] = np.concatenate(
                             [
                                 np.full(
-                                    (prev_length, *value.shape[1:]), # subtract value, because species has already been processed
+                                    (
+                                        prev_length,
+                                        *value.shape[1:],
+                                    ),  # subtract value, because species has already been processed
                                     np.nan,
                                     dtype=utils.get_h5py_dtype(value),
                                 ),
@@ -254,14 +259,13 @@ class IO(MutableSequence):
                             ]
                         )
                 self._create_particle_group(f, combined_data)
-                
 
     def _create_particle_group(self, f, data: fmt.ASEData):
         try:
             g_particle_grp = f["particles"].create_group(self.particle_group)
         except ValueError:
             g_particle_grp = f["particles"][self.particle_group]
-        
+
         self._create_group(
             g_particle_grp, "box/edges", data.cell, time=data.time, step=data.step
         )

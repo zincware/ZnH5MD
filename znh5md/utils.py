@@ -104,11 +104,10 @@ def fill_dataset(dataset, new_data, shift=0):
 
     # Determine the new shape of the dataset
     max_shape = (
-        old_shape[0] + new_shape[0],
+        old_shape[0] + new_shape[0] + shift,
         max(old_shape[1], new_shape[1]),
         *old_shape[2:],
     )
-    # raise ValueError(f"{old_shape=}, {new_shape=}, {max_shape=}")
 
     # Resize the dataset to the new shape
     dataset.resize(max_shape)
@@ -125,7 +124,9 @@ def fill_dataset(dataset, new_data, shift=0):
         padded_new_data = new_data
 
     # Append the new data to the dataset
-    dataset[old_shape[0] :] = padded_new_data
+    if shift > 0:
+        dataset[old_shape[0]  :] = fill_value
+    dataset[old_shape[0] + shift :] = padded_new_data
 
 
 def handle_info_special_cases(info_data: dict) -> dict:

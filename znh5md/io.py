@@ -520,8 +520,9 @@ class IO(MutableSequence):
                 utils.fill_dataset(
                     g_grp["time"],
                     time,
+                    shift=shift,
                 )
-                utils.fill_dataset(g_grp["step"], step)
+                utils.fill_dataset(g_grp["step"], step, shift=shift)
 
     def append(self, atoms: ase.Atoms):
         if not isinstance(atoms, ase.Atoms):

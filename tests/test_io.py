@@ -238,3 +238,20 @@ def test_use_ase_calc_write_info_arrays(tmp_path, key, expect_float):
     else:
         assert np.allclose(val, calc.results[key])
         assert isinstance(calc.results[key], np.ndarray)
+
+
+def test_index_error(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    with pytest.raises(FileNotFoundError):
+        # file does not exist yet
+        io[0]
+    
+    io.append(ase.build.molecule("H2O"))
+    assert io[0] is not None
+    assert io[-1] is not None
+    assert io[0:1] is not None
+    assert io[0:2] is not None
+    with pytest.raises(IndexError):
+        io[1]
+    with pytest.raises(IndexError):
+        io[-2]

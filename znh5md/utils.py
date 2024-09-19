@@ -70,7 +70,6 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | object:
 
     """
     if isinstance(array, np.ndarray) and array.dtype == object:
-        # TODO: test if this has been added in a second append!
         data = np.array([x.decode() for x in array if x != STRING_FILL_VALUE])
         if len(data) == 0:
             return None
@@ -177,8 +176,6 @@ def build_atoms(args) -> ase.Atoms:
     if info_data is not None:  # we don't need this check?
         info_data = handle_info_special_cases(info_data)
 
-    # TODO: remove non-existing values (using sentinels!)
-    # TODO: write check to ensure None will not be removed!
     for key in list(info_data):
         if info_data[key] is None:
             info_data.pop(key)

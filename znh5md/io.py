@@ -14,7 +14,6 @@ import h5py
 import numpy as np
 from ase.calculators.calculator import all_properties
 from tqdm import tqdm
-from znh5md.config import STRING_FILL_VALUE, NUMERIC_FILL_VALUE
 
 import znh5md.format as fmt
 from znh5md import utils
@@ -262,7 +261,8 @@ class IO(MutableSequence):
                                     dtype=dtype,
                                 ),
                                 value,
-                            ], dtype=dtype
+                            ],
+                            dtype=dtype,
                         )
                 for key, value in combined_data.observables.items():
                     if key not in f["observables"][self.particle_group]:
@@ -277,7 +277,8 @@ class IO(MutableSequence):
                                     dtype=dtype,
                                 ),
                                 value,
-                            ], dtype=dtype
+                            ],
+                            dtype=dtype,
                         )
                 self._create_particle_group(f, combined_data)
 

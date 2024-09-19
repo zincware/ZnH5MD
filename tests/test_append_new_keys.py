@@ -50,9 +50,9 @@ def test_append_new_calc(tmp_path, s22, s22_energy):
 def test_append_new_keys_info(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     water = ase.build.molecule("H2O")
-
-    io.append(water)
     water.info["key1"] = np.random.random()
+
+    io.append(ase.build.molecule("H2O"))
     io.append(water)
     io.append(ase.build.molecule("H2O"))
     io.append(water)
@@ -71,9 +71,9 @@ def test_append_new_keys_info(tmp_path):
 def test_append_new_keys_info_non_ascii(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     water = ase.build.molecule("H2O")
-
-    io.append(water)
     water.info["key1"] = "γC"
+
+    io.append(ase.build.molecule("H2O"))
     io.append(water)
     io.append(ase.build.molecule("H2O"))
     io.append(water)
@@ -92,9 +92,9 @@ def test_append_new_keys_info_non_ascii(tmp_path):
 def test_append_new_keys_arrays(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     water = ase.build.molecule("H2O")
-
-    io.append(water)
     water.arrays["key1"] = np.random.rand(len(water), 3)
+
+    io.append(ase.build.molecule("H2O"))
     io.append(water)
     io.append(ase.build.molecule("H2O"))
     io.append(water)

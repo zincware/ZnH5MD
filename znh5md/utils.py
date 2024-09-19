@@ -68,10 +68,13 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | object:
     >>> remove_nan_rows(np.array(1))
     1
 
-    """
+    """        
     if isinstance(array, np.ndarray) and array.dtype == object:
         # TODO: test if this has been added in a second append!
-        return np.array([x.decode() for x in array if x != STRING_FILL_VALUE])
+        data = np.array([x.decode() for x in array if x != STRING_FILL_VALUE])
+        if len(data) == 0:
+            return None
+        return data
     if np.isnan(array).all():
         return None
     if len(np.shape(array)) == 0:
@@ -90,10 +93,12 @@ def fill_dataset(dataset, new_data, shift=0):
     old_shape = dataset.shape
     new_shape = new_data.shape
 
+    fill_value = get_h5py_fill_value(new_data)
+
     if len(old_shape) == 1 and len(new_shape) == 1:
         dataset.resize((old_shape[0] + new_shape[0] + shift,))
         if shift > 0:
-            dataset[old_shape[0] :] = np.nan
+            dataset[old_shape[0] :] = fill_value
         dataset[old_shape[0] + shift :] = new_data
         return
 
@@ -110,11 +115,11 @@ def fill_dataset(dataset, new_data, shift=0):
 
     # Fill the new columns of the existing data with np.nan
     if old_shape[1] < max_shape[1]:
-        dataset[:, old_shape[1] :] = np.nan
+        dataset[:, old_shape[1] :] = fill_value
 
     # Fill the new data rows with np.nan if necessary
     if new_shape[1] < max_shape[1]:
-        padded_new_data = np.full((new_shape[0], max_shape[1], *old_shape[2:]), np.nan)
+        padded_new_data = np.full((new_shape[0], max_shape[1], *old_shape[2:]), fill_value)
         padded_new_data[:, : new_shape[1]] = new_data
     else:
         padded_new_data = new_data
@@ -124,16 +129,22 @@ def fill_dataset(dataset, new_data, shift=0):
 
 
 def handle_info_special_cases(info_data: dict) -> dict:
+    keys_to_remove = []
     for key, value in info_data.items():
         if isinstance(value, bytes):
             # string types
-            info_data[key] = value.decode("utf-8")
+            if value == STRING_FILL_VALUE:
+                keys_to_remove.append(key)
+            else:
+                info_data[key] = value.decode("utf-8")
         elif isinstance(value, dict):
             # json / dict types
             info_data[key] = value
         else:
             # float / int / bool types
             info_data[key] = remove_nan_rows(value)
+    for key in keys_to_remove:
+        info_data.pop(key)
     return info_data
 
 

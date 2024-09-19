@@ -213,7 +213,11 @@ def build_structures(
                 velocities[idx] if velocities is not None else None,
                 cell[idx] if cell is not None else None,
                 pbc[idx] if isinstance(pbc[0], np.ndarray) else pbc,
-                {key: value[idx] for key, value in calc_data.items() if len(value) > idx},
+                {
+                    key: value[idx]
+                    for key, value in calc_data.items()
+                    if len(value) > idx
+                },
                 {key: value[idx] for key, value in info_data.items()},
                 {key: value[idx] for key, value in arrays_data.items()},
             )

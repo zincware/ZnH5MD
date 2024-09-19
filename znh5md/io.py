@@ -14,6 +14,7 @@ import h5py
 import numpy as np
 from ase.calculators.calculator import all_properties
 from tqdm import tqdm
+from znh5md.config import STRING_FILL_VALUE, NUMERIC_FILL_VALUE
 
 import znh5md.format as fmt
 from znh5md import utils
@@ -248,6 +249,8 @@ class IO(MutableSequence):
                 for key, value in combined_data.particles.items():
                     if key not in f["particles"][self.particle_group]:
                         prev_length = full_length - len(value)
+                        dtype = utils.get_h5py_dtype(value)
+                        fill_value = utils.get_h5py_fill_value(value)
                         combined_data.particles[key] = np.concatenate(
                             [
                                 np.full(
@@ -255,24 +258,26 @@ class IO(MutableSequence):
                                         prev_length,
                                         *value.shape[1:],
                                     ),  # subtract value, because species has already been processed
-                                    np.nan,
-                                    dtype=utils.get_h5py_dtype(value),
+                                    fill_value,
+                                    dtype=dtype,
                                 ),
                                 value,
-                            ]
+                            ], dtype=dtype
                         )
                 for key, value in combined_data.observables.items():
                     if key not in f["observables"][self.particle_group]:
                         prev_length = full_length - len(value)
+                        dtype = utils.get_h5py_dtype(value)
+                        fill_value = utils.get_h5py_fill_value(value)
                         combined_data.observables[key] = np.concatenate(
                             [
                                 np.full(
                                     (prev_length, *value.shape[1:]),
-                                    np.nan,
-                                    dtype=utils.get_h5py_dtype(value),
+                                    fill_value,
+                                    dtype=dtype,
                                 ),
                                 value,
-                            ]
+                            ], dtype=dtype
                         )
                 self._create_particle_group(f, combined_data)
 

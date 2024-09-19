@@ -226,3 +226,10 @@ def get_h5py_dtype(data: np.ndarray):
         return h5py.string_dtype(encoding="utf-8")
     else:
         return data.dtype
+    
+def get_h5py_fill_value(data: np.ndarray):
+    if data.dtype == NUMPY_STRING_DTYPE:
+        return STRING_FILL_VALUE
+    else:
+        return NUMERIC_FILL_VALUE
+

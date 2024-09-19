@@ -55,15 +55,38 @@ def test_append_new_keys_info(tmp_path):
     water.info["key1"] = np.random.random()
     io.append(water)
     io.append(ase.build.molecule("H2O"))
+    io.append(water)
 
-    assert len(list(io)) == 3
+    assert len(list(io)) == 4
 
-    assert len(io) == 3
+    assert len(io) == 4
     assert "key1" not in io[0].info
     assert "key1" in io[1].info
     assert "key1" not in io[2].info
+    assert "key1" in io[3].info
 
     assert io[1].info["key1"] == water.info["key1"]
+
+
+def test_append_new_keys_info_non_ascii(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    water = ase.build.molecule("H2O")
+
+    io.append(water)
+    water.info["key1"] = "γC"
+    io.append(water)
+    io.append(ase.build.molecule("H2O"))
+    io.append(water)
+
+    assert len(list(io)) == 4
+
+    assert len(io) == 4
+    assert "key1" not in io[0].info
+    assert "key1" in io[1].info
+    assert "key1" not in io[2].info
+    assert "key1" in io[3].info
+
+    assert io[1].info["key1"] == "γC" == io[3].info["key1"]
 
 
 def test_append_new_keys_arrays(tmp_path):
@@ -74,12 +97,14 @@ def test_append_new_keys_arrays(tmp_path):
     water.arrays["key1"] = np.random.rand(len(water), 3)
     io.append(water)
     io.append(ase.build.molecule("H2O"))
+    io.append(water)
 
-    assert len(list(io)) == 3
+    assert len(list(io)) == 4
 
-    assert len(io) == 3
+    assert len(io) == 4
     assert "key1" not in io[0].arrays
     assert "key1" in io[1].arrays
     assert "key1" not in io[2].arrays
+    assert "key1" in io[3].arrays
 
     assert np.array_equal(io[1].arrays["key1"], water.arrays["key1"])

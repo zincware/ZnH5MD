@@ -161,15 +161,19 @@ class IO(MutableSequence):
                     or key == "force"
                 ):
                     try:
-                        calc_data[key if key != "force" else "forces"] = fmt.get_property(
-                            f["particles"], self.particle_group, key, index
+                        calc_data[key if key != "force" else "forces"] = (
+                            fmt.get_property(
+                                f["particles"], self.particle_group, key, index
+                            )
                         )
                     except IndexError:
-                        pass    
+                        pass
                 else:
                     try:
-                        arrays_data[key if key != "force" else "forces"] = fmt.get_property(
-                            f["particles"], self.particle_group, key, index
+                        arrays_data[key if key != "force" else "forces"] = (
+                            fmt.get_property(
+                                f["particles"], self.particle_group, key, index
+                            )
                         )
                     except IndexError:
                         pass
@@ -195,9 +199,9 @@ class IO(MutableSequence):
                         )
 
                         if (
-                            f["observables"][self.particle_group][key]["value"].attrs.get(
-                                "ZNH5MD_TYPE"
-                            )
+                            f["observables"][self.particle_group][key][
+                                "value"
+                            ].attrs.get("ZNH5MD_TYPE")
                             == "json"
                         ):
                             info_data[key] = [json.loads(x) for x in data]

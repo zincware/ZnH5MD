@@ -436,14 +436,25 @@ class IO(MutableSequence):
                 g_particle_grp, "box/pbc", data.pbc, step=data.step, time=data.time
             )
         _disable_tqdm = len(data) < self.tqdm_limit if self.tqdm_limit > 0 else True
-        for key, value in tqdm(
-            data.particles.items(),
+
+        particle_keys = list(data.particles)
+
+        particle_keys = [x for x in particle_keys if x != "species"]
+        particle_keys = ["species"] + particle_keys
+
+        for key in tqdm(
+            particle_keys,
             ncols=120,
             desc="Extending groups",
             disable=_disable_tqdm,
         ):
+            value = data.particles[key]
+            if key != "species":
+                len_species = len(f["particles"][self.particle_group]["species"]["value"])
+            else:
+                len_species = None
             self._extend_group(
-                g_particle_grp, key, value, step=data.step, time=data.time
+                g_particle_grp, key, value, step=data.step, time=data.time, len_species=len_species
             )
         for key, value in tqdm(
             data.observables.items(),
@@ -458,7 +469,7 @@ class IO(MutableSequence):
             else:
                 g_observables_grp = f["observables"][self.particle_group]
             self._extend_group(
-                g_observables_grp, key, value, step=data.step, time=data.time
+                g_observables_grp, key, value, step=data.step, time=data.time, len_species=len_species
             )
 
     def _extend_group(
@@ -468,12 +479,19 @@ class IO(MutableSequence):
         data,
         step: np.ndarray | None = None,
         time: np.ndarray | None = None,
+        len_species: int | None = None,
     ):
         if name not in parent_grp:
             raise ValueError(f"Group {name} not found in {parent_grp.name}")
         if data is not None and name in parent_grp:
             g_grp = parent_grp[name]
-            utils.fill_dataset(g_grp["value"], data)
+            # shift is the length of the particles group species/value minus the length of the current group minus lenght of data
+            if len_species is None:
+                shift = 0
+            else:
+                shift = len_species - len(g_grp["value"]) - len(data)
+            warnings.warn(f"{shift=}")
+            utils.fill_dataset(g_grp["value"], data, shift=shift)
             if self.store == "time":
                 if time is None:
                     last_time = g_grp["time"][-1]

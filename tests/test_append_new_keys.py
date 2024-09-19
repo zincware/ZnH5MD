@@ -9,11 +9,15 @@ def test_append_new_calc(tmp_path, s22, s22_energy):
     io.extend(s22)
     io.extend(s22_energy)
     io.extend(s22)
+    io.extend(s22_energy)
+    io.extend(s22)
+    io.extend(s22_energy)
+
     assert len(s22) == 22
     assert len(s22_energy) == 22
-    assert len(io) == 66
+    assert len(io) == len(s22) * 3 + len(s22_energy) * 3
 
-    assert len(list(io)) == 66
+    assert len(list(io)) == len(s22) * 3 + len(s22_energy) * 3
 
     for a, b in zip(io[:22], s22):
         assert a.calc is None
@@ -27,6 +31,20 @@ def test_append_new_calc(tmp_path, s22, s22_energy):
     for a, b in zip(io[44:], s22):
         assert a.calc is None
         assert b.calc is None
+    
+    for a, b in zip(io[66:], s22_energy):
+        assert a.calc is not None
+        assert b.calc is not None
+        assert a.calc.results == b.calc.results
+    
+    for a, b in zip(io[88:], s22):
+        assert a.calc is None
+        assert b.calc is None
+    
+    for a, b in zip(io[110:], s22_energy):
+        assert a.calc is not None
+        assert b.calc is not None
+        assert a.calc.results == b.calc.results
 
 
 def test_append_new_keys_info(tmp_path):

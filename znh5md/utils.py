@@ -79,7 +79,10 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | object:
     return array[~np.isnan(array).all(axis=tuple(range(1, array.ndim)))]
 
 
-def fill_dataset(dataset, new_data):
+def fill_dataset(dataset, new_data, shift=0):
+    # shift is applied along axis 0:
+    #  a dataset might not have been extenden in the last step because no data was added.
+    #  with the shfit we ensure that the missing data along axis 0 is filled with np.nan
     # Axis 0 is the configuration axis
     # Axis 1 is the number of particles axis
     # all following axis are optional, e.g 2 can be (x, y, z) or 1 can already be energy
@@ -88,8 +91,10 @@ def fill_dataset(dataset, new_data):
     new_shape = new_data.shape
 
     if len(old_shape) == 1 and len(new_shape) == 1:
-        dataset.resize((old_shape[0] + new_shape[0],))
-        dataset[old_shape[0] :] = new_data
+        dataset.resize((old_shape[0] + new_shape[0] + shift,))
+        if shift > 0:
+            dataset[old_shape[0] :] = np.nan
+        dataset[old_shape[0] + shift :] = new_data
         return
 
     # Determine the new shape of the dataset
@@ -208,7 +213,7 @@ def build_structures(
                 velocities[idx] if velocities is not None else None,
                 cell[idx] if cell is not None else None,
                 pbc[idx] if isinstance(pbc[0], np.ndarray) else pbc,
-                {key: value[idx] for key, value in calc_data.items() if len(value) > 0},
+                {key: value[idx] for key, value in calc_data.items() if len(value) > idx},
                 {key: value[idx] for key, value in info_data.items()},
                 {key: value[idx] for key, value in arrays_data.items()},
             )

@@ -15,7 +15,6 @@ def test_append_new_calc(tmp_path, s22, s22_energy):
 
     assert len(list(io)) == 66
 
-
     for a, b in zip(io[: 22], s22):
         assert a.calc is None
         assert b.calc is None

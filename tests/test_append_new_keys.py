@@ -38,7 +38,7 @@ def test_append_new_keys_info(tmp_path):
     io.append(water)
     io.append(ase.build.molecule("H2O"))
 
-    # assert len(list(io)) == 3
+    assert len(list(io)) == 3
 
     assert len(io) == 3
     assert "key1" not in io[0].info

@@ -160,13 +160,19 @@ class IO(MutableSequence):
                     or key in all_properties
                     or key == "force"
                 ):
-                    calc_data[key if key != "force" else "forces"] = fmt.get_property(
-                        f["particles"], self.particle_group, key, index
-                    )
+                    try:
+                        calc_data[key if key != "force" else "forces"] = fmt.get_property(
+                            f["particles"], self.particle_group, key, index
+                        )
+                    except IndexError:
+                        pass    
                 else:
-                    arrays_data[key if key != "force" else "forces"] = fmt.get_property(
-                        f["particles"], self.particle_group, key, index
-                    )
+                    try:
+                        arrays_data[key if key != "force" else "forces"] = fmt.get_property(
+                            f["particles"], self.particle_group, key, index
+                        )
+                    except IndexError:
+                        pass
         if f"observables/{self.particle_group}" in f:
             for key in f[f"observables/{self.particle_group}"].keys():
                 if self.use_ase_calc and (
@@ -175,24 +181,30 @@ class IO(MutableSequence):
                     )
                     or key in all_properties
                 ):
-                    calc_data[key] = fmt.get_property(
-                        f["observables"], self.particle_group, key, index
-                    )
+                    try:
+                        calc_data[key] = fmt.get_property(
+                            f["observables"], self.particle_group, key, index
+                        )
+                    except IndexError:
+                        pass
                 else:
                     # check if info[types] == json
-                    data = fmt.get_property(
-                        f["observables"], self.particle_group, key, index
-                    )
-
-                    if (
-                        f["observables"][self.particle_group][key]["value"].attrs.get(
-                            "ZNH5MD_TYPE"
+                    try:
+                        data = fmt.get_property(
+                            f["observables"], self.particle_group, key, index
                         )
-                        == "json"
-                    ):
-                        info_data[key] = [json.loads(x) for x in data]
-                    else:
-                        info_data[key] = data
+
+                        if (
+                            f["observables"][self.particle_group][key]["value"].attrs.get(
+                                "ZNH5MD_TYPE"
+                            )
+                            == "json"
+                        ):
+                            info_data[key] = [json.loads(x) for x in data]
+                        else:
+                            info_data[key] = data
+                    except IndexError:
+                        pass
 
     def extend(self, images: List[ase.Atoms]):
         if not isinstance(images, list):

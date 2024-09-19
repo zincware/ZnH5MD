@@ -245,7 +245,7 @@ def test_index_error(tmp_path):
     with pytest.raises(FileNotFoundError):
         # file does not exist yet
         io[0]
-    
+
     io.append(ase.build.molecule("H2O"))
     assert io[0] is not None
     assert io[-1] is not None

@@ -15,16 +15,16 @@ def test_append_new_calc(tmp_path, s22, s22_energy):
 
     assert len(list(io)) == 66
 
-    for a, b in zip(io[: 22], s22):
+    for a, b in zip(io[:22], s22):
         assert a.calc is None
         assert b.calc is None
 
-    for a, b in zip(io[22 : 44], s22_energy):
+    for a, b in zip(io[22:44], s22_energy):
         assert a.calc is not None
         assert b.calc is not None
         assert a.calc.results == b.calc.results
-    
-    for a, b in zip(io[44 :], s22):
+
+    for a, b in zip(io[44:], s22):
         assert a.calc is None
         assert b.calc is None
 

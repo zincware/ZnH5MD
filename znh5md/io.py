@@ -455,11 +455,18 @@ class IO(MutableSequence):
         ):
             value = data.particles[key]
             if key != "species":
-                len_species = len(f["particles"][self.particle_group]["species"]["value"])
+                len_species = len(
+                    f["particles"][self.particle_group]["species"]["value"]
+                )
             else:
                 len_species = None
             self._extend_group(
-                g_particle_grp, key, value, step=data.step, time=data.time, len_species=len_species
+                g_particle_grp,
+                key,
+                value,
+                step=data.step,
+                time=data.time,
+                len_species=len_species,
             )
         for key, value in tqdm(
             data.observables.items(),
@@ -474,7 +481,12 @@ class IO(MutableSequence):
             else:
                 g_observables_grp = f["observables"][self.particle_group]
             self._extend_group(
-                g_observables_grp, key, value, step=data.step, time=data.time, len_species=len_species
+                g_observables_grp,
+                key,
+                value,
+                step=data.step,
+                time=data.time,
+                len_species=len_species,
             )
 
     def _extend_group(

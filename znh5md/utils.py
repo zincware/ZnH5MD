@@ -68,7 +68,7 @@ def remove_nan_rows(array: np.ndarray) -> np.ndarray | object:
     >>> remove_nan_rows(np.array(1))
     1
 
-    """        
+    """
     if isinstance(array, np.ndarray) and array.dtype == object:
         # TODO: test if this has been added in a second append!
         data = np.array([x.decode() for x in array if x != STRING_FILL_VALUE])
@@ -118,14 +118,16 @@ def fill_dataset(dataset, new_data, shift=0):
 
     # Fill the new data rows with np.nan if necessary
     if new_shape[1] < max_shape[1]:
-        padded_new_data = np.full((new_shape[0], max_shape[1], *old_shape[2:]), fill_value)
+        padded_new_data = np.full(
+            (new_shape[0], max_shape[1], *old_shape[2:]), fill_value
+        )
         padded_new_data[:, : new_shape[1]] = new_data
     else:
         padded_new_data = new_data
 
     # Append the new data to the dataset
     if shift > 0:
-        dataset[old_shape[0]  :] = fill_value
+        dataset[old_shape[0] :] = fill_value
     dataset[old_shape[0] + shift :] = padded_new_data
 
 

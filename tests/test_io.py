@@ -67,38 +67,6 @@ def test_extend_empty(tmp_path):
     assert len(io) == 22
 
 
-def test_add_new_keys_info(tmp_path):
-    io = znh5md.IO(tmp_path / "test.h5")
-    water = ase.build.molecule("H2O")
-
-    io.append(water)
-    water.info["key1"] = 1
-    with pytest.raises(ValueError):
-        io.append(water)
-
-    # assert len(io) == 2
-    # assert "key1" not in io[0].info
-    # assert "key1" in io[1].info
-
-    # assert io[1].info["key1"] == 1
-
-
-def test_add_new_keys_arrays(tmp_path):
-    io = znh5md.IO(tmp_path / "test.h5")
-    water = ase.build.molecule("H2O")
-
-    io.append(water)
-    water.arrays["key1"] = np.zeros((len(water), 3))
-    with pytest.raises(ValueError):
-        io.append(water)
-
-    # assert len(io) == 2
-    # assert "key1" not in io[0].arrays
-    # assert "key1" in io[1].arrays
-
-    # assert np.allclose(io[1].arrays["key1"], np.zeros((len(water), 3)))
-
-
 def test_extend_single(tmp_path):
     vectors = np.random.rand(3, 3, 2, 3)
 
@@ -270,3 +238,20 @@ def test_use_ase_calc_write_info_arrays(tmp_path, key, expect_float):
     else:
         assert np.allclose(val, calc.results[key])
         assert isinstance(calc.results[key], np.ndarray)
+
+
+def test_index_error(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    with pytest.raises(FileNotFoundError):
+        # file does not exist yet
+        io[0]
+
+    io.append(ase.build.molecule("H2O"))
+    assert io[0] is not None
+    assert io[-1] is not None
+    assert io[0:1] is not None
+    assert io[0:2] is not None
+    with pytest.raises(IndexError):
+        io[1]
+    with pytest.raises(IndexError):
+        io[-2]

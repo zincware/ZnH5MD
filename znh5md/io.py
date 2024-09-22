@@ -160,13 +160,23 @@ class IO(MutableSequence):
                     or key in all_properties
                     or key == "force"
                 ):
-                    calc_data[key if key != "force" else "forces"] = fmt.get_property(
-                        f["particles"], self.particle_group, key, index
-                    )
+                    try:
+                        calc_data[key if key != "force" else "forces"] = (
+                            fmt.get_property(
+                                f["particles"], self.particle_group, key, index
+                            )
+                        )
+                    except IndexError:
+                        pass
                 else:
-                    arrays_data[key if key != "force" else "forces"] = fmt.get_property(
-                        f["particles"], self.particle_group, key, index
-                    )
+                    try:
+                        arrays_data[key if key != "force" else "forces"] = (
+                            fmt.get_property(
+                                f["particles"], self.particle_group, key, index
+                            )
+                        )
+                    except IndexError:
+                        pass
         if f"observables/{self.particle_group}" in f:
             for key in f[f"observables/{self.particle_group}"].keys():
                 if self.use_ase_calc and (
@@ -175,24 +185,30 @@ class IO(MutableSequence):
                     )
                     or key in all_properties
                 ):
-                    calc_data[key] = fmt.get_property(
-                        f["observables"], self.particle_group, key, index
-                    )
+                    try:
+                        calc_data[key] = fmt.get_property(
+                            f["observables"], self.particle_group, key, index
+                        )
+                    except IndexError:
+                        pass
                 else:
                     # check if info[types] == json
-                    data = fmt.get_property(
-                        f["observables"], self.particle_group, key, index
-                    )
-
-                    if (
-                        f["observables"][self.particle_group][key]["value"].attrs.get(
-                            "ZNH5MD_TYPE"
+                    try:
+                        data = fmt.get_property(
+                            f["observables"], self.particle_group, key, index
                         )
-                        == "json"
-                    ):
-                        info_data[key] = [json.loads(x) for x in data]
-                    else:
-                        info_data[key] = data
+
+                        if (
+                            f["observables"][self.particle_group][key][
+                                "value"
+                            ].attrs.get("ZNH5MD_TYPE")
+                            == "json"
+                        ):
+                            info_data[key] = [json.loads(x) for x in data]
+                        else:
+                            info_data[key] = data
+                    except IndexError:
+                        pass
 
     def extend(self, images: List[ase.Atoms]):
         if not isinstance(images, list):
@@ -218,13 +234,60 @@ class IO(MutableSequence):
         combined_data = fmt.combine_asedata(data)
 
         with _open_file(self.filename, self.file_handle, mode="a") as f:
-            if self.particle_group not in f["particles"]:
-                self._create_particle_group(f, combined_data)
-            else:
+            try:
                 self._extend_existing_data(f, combined_data)
+            except KeyError:
+                # new file
+                self._create_particle_group(f, combined_data)
+            except ValueError:
+                # new group
+                # we get the length by looking at "species" wich is guarenteed to be created first.
+                full_length = len(
+                    f["particles"][self.particle_group]["species"]["value"]
+                )
+                for key, value in combined_data.particles.items():
+                    if key not in f["particles"][self.particle_group]:
+                        prev_length = full_length - len(value)
+                        dtype = utils.get_h5py_dtype(value)
+                        fill_value = utils.get_h5py_fill_value(value)
+                        combined_data.particles[key] = np.concatenate(
+                            [
+                                np.full(
+                                    (
+                                        prev_length,
+                                        *value.shape[1:],
+                                    ),  # subtract value, because species has already been processed
+                                    fill_value,
+                                    dtype=dtype,
+                                ),
+                                value,
+                            ],
+                            dtype=dtype,
+                        )
+                for key, value in combined_data.observables.items():
+                    if key not in f["observables"][self.particle_group]:
+                        prev_length = full_length - len(value)
+                        dtype = utils.get_h5py_dtype(value)
+                        fill_value = utils.get_h5py_fill_value(value)
+                        combined_data.observables[key] = np.concatenate(
+                            [
+                                np.full(
+                                    (prev_length, *value.shape[1:]),
+                                    fill_value,
+                                    dtype=dtype,
+                                ),
+                                value,
+                            ],
+                            dtype=dtype,
+                        )
+                self._create_particle_group(f, combined_data)
 
     def _create_particle_group(self, f, data: fmt.ASEData):
-        g_particle_grp = f["particles"].create_group(self.particle_group)
+        try:
+            g_particle_grp = f["particles"].create_group(self.particle_group)
+        except ValueError:
+            g_particle_grp = f["particles"][self.particle_group]
+
         self._create_group(
             g_particle_grp, "box/edges", data.cell, time=data.time, step=data.step
         )
@@ -239,12 +302,21 @@ class IO(MutableSequence):
             )
 
         _disable_tqdm = len(data) < self.tqdm_limit if self.tqdm_limit > 0 else True
-        for key, value in tqdm(
-            data.particles.items(),
+
+        # ensure "species" is in the list and will be created first
+        # this is used as the reference length of the dataset
+        particle_keys = list(data.particles)
+
+        particle_keys = [x for x in particle_keys if x != "species"]
+        particle_keys = ["species"] + particle_keys
+
+        for key in tqdm(
+            particle_keys,
             ncols=120,
             desc="Creating groups",
             disable=_disable_tqdm,
         ):
+            value = data.particles[key]
             self._create_group(
                 g_particle_grp,
                 key,
@@ -266,6 +338,8 @@ class IO(MutableSequence):
             if "observables" not in f:
                 g_observables_grp = f.create_group("observables")
                 g_observables_grp = f["observables"].create_group(self.particle_group)
+            else:
+                g_observables_grp = f["observables"][self.particle_group]
             self._create_group(
                 g_observables_grp,
                 key,
@@ -291,7 +365,10 @@ class IO(MutableSequence):
         json: bool = False,
     ):
         if data is not None:
-            g_grp = parent_grp.create_group(name)
+            try:
+                g_grp = parent_grp.create_group(name)
+            except ValueError:
+                return False
             ds_value = g_grp.create_dataset(
                 "value",
                 data=data,
@@ -365,14 +442,32 @@ class IO(MutableSequence):
                 g_particle_grp, "box/pbc", data.pbc, step=data.step, time=data.time
             )
         _disable_tqdm = len(data) < self.tqdm_limit if self.tqdm_limit > 0 else True
-        for key, value in tqdm(
-            data.particles.items(),
+
+        particle_keys = list(data.particles)
+
+        particle_keys = [x for x in particle_keys if x != "species"]
+        particle_keys = ["species"] + particle_keys
+
+        for key in tqdm(
+            particle_keys,
             ncols=120,
             desc="Extending groups",
             disable=_disable_tqdm,
         ):
+            value = data.particles[key]
+            if key != "species":
+                len_species = len(
+                    f["particles"][self.particle_group]["species"]["value"]
+                )
+            else:
+                len_species = None
             self._extend_group(
-                g_particle_grp, key, value, step=data.step, time=data.time
+                g_particle_grp,
+                key,
+                value,
+                step=data.step,
+                time=data.time,
+                len_species=len_species,
             )
         for key, value in tqdm(
             data.observables.items(),
@@ -387,7 +482,12 @@ class IO(MutableSequence):
             else:
                 g_observables_grp = f["observables"][self.particle_group]
             self._extend_group(
-                g_observables_grp, key, value, step=data.step, time=data.time
+                g_observables_grp,
+                key,
+                value,
+                step=data.step,
+                time=data.time,
+                len_species=len_species,
             )
 
     def _extend_group(
@@ -397,12 +497,19 @@ class IO(MutableSequence):
         data,
         step: np.ndarray | None = None,
         time: np.ndarray | None = None,
+        len_species: int | None = None,
     ):
         if name not in parent_grp:
             raise ValueError(f"Group {name} not found in {parent_grp.name}")
         if data is not None and name in parent_grp:
             g_grp = parent_grp[name]
-            utils.fill_dataset(g_grp["value"], data)
+            # shift is the length of the particles group species/value minus the length of the current group minus lenght of data
+            if len_species is None:
+                shift = 0
+            else:
+                shift = len_species - len(g_grp["value"]) - len(data)
+            warnings.warn(f"{shift=}")
+            utils.fill_dataset(g_grp["value"], data, shift=shift)
             if self.store == "time":
                 if time is None:
                     last_time = g_grp["time"][-1]
@@ -413,8 +520,9 @@ class IO(MutableSequence):
                 utils.fill_dataset(
                     g_grp["time"],
                     time,
+                    shift=shift,
                 )
-                utils.fill_dataset(g_grp["step"], step)
+                utils.fill_dataset(g_grp["step"], step, shift=shift)
 
     def append(self, atoms: ase.Atoms):
         if not isinstance(atoms, ase.Atoms):

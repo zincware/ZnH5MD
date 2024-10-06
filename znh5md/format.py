@@ -298,7 +298,7 @@ def _combine_dicts(dicts: List[Dict[str, np.ndarray]]) -> Dict[str, np.ndarray]:
         data = []
         for d in dicts:
             if key in d:
-                data.append(d[key])
+                data.append(np.array(d[key]))
             else:
                 dims = dicts[0][key].ndim
                 # Create an array with the appropriate number of dimensions.

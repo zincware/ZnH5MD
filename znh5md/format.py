@@ -203,6 +203,7 @@ def extract_atoms_data(atoms: Atoms, use_ase_calc: bool = True) -> ASEData:  # n
             raise ValueError(f"Key {key} is reserved for ASE calculator results.")
         if key not in ASE_TO_H5MD and key not in CustomINFOData.__members__:
             if isinstance(value, str):
+                # TODO: needs to be tested!
                 if len(value) > NUMPY_STRING_DTYPE.itemsize:
                     raise ValueError(f"String {key} is too long to be stored.")
                 info_data[key] = np.array(value.encode(), dtype=NUMPY_STRING_DTYPE)
@@ -298,7 +299,15 @@ def _combine_dicts(dicts: List[Dict[str, np.ndarray]]) -> Dict[str, np.ndarray]:
         data = []
         for d in dicts:
             if key in d:
-                data.append(np.array(d[key]))
+                # import warnings
+                # warnings.warn(f"Key {key}:{type(d[key])}")
+                if isinstance(d[key], list):
+                    if any(isinstance(x, str) for x in d[key]):
+                        data.append(np.array(d[key], dtype=NUMPY_STRING_DTYPE))
+                    else:
+                        data.append(np.array(d[key]))
+                else:
+                    data.append(np.array(d[key]))
             else:
                 dims = dicts[0][key].ndim
                 # Create an array with the appropriate number of dimensions.

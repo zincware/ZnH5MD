@@ -57,10 +57,17 @@ def test_dict_data(tmp_path):
     io.append(molecule)
     molecule.info["b"] = {"a": 1, "b": 2, "c": 3, "d": 4}
     io.append(molecule)
+    # molecule.info["elements"] = {"H": "H", 2: "O"}
+    # NOTE! Mixed types in dict keys are currently not supported
+    # TODO json dump / load?
+    molecule.info["elements"] = {"H": "H", "O": "O"}
+    io.append(molecule)
 
     assert io[0].info["test"] == {"a": 1, "b": 2}
     assert io[1].info["test"] == {"a": 1, "b": 2, "c": 3}
     assert io[2].info["b"] == {"a": 1, "b": 2, "c": 3, "d": 4}
+    # assert io[3].info["elements"] == {"H": "H", 2: "O"}
+    assert io[3].info["elements"] == {"H": "H", "O": "O"}
 
 
 def test_list_data(tmp_path):
@@ -81,10 +88,13 @@ def test_list_data(tmp_path):
     io.append(molecule)
     molecule.info["b"] = [1, 2, 3, 4]
     io.append(molecule)
+    molecule.info["elements"] = ["H", "O"]
+    io.append(molecule)
 
     npt.assert_array_equal(io[0].info["test"], [1, 2])
     npt.assert_array_equal(io[1].info["test"], [1, 2, 3])
     npt.assert_array_equal(io[2].info["b"], [1, 2, 3, 4])
+    npt.assert_array_equal(io[3].info["elements"], ["H", "O"])
 
 
 def test_multiple_molecules_with_diff_length_dicts(tmp_path):

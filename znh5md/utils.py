@@ -5,7 +5,7 @@ from ase.calculators.singlepoint import SinglePointCalculator
 
 from znh5md.config import NUMERIC_FILL_VALUE, STRING_FILL_VALUE
 
-NUMPY_STRING_DTYPE = np.dtype("S512")
+NUMPY_STRING_DTYPE = np.dtype("S4096")  # TODO this has to be tested!
 
 
 def concatenate_varying_shape_arrays(arrays: list[np.ndarray]) -> np.ndarray:

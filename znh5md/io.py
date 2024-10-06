@@ -17,6 +17,7 @@ from tqdm import tqdm
 
 import znh5md.format as fmt
 from znh5md import utils
+from znh5md.config import STRING_FILL_VALUE
 
 __version__ = importlib.metadata.version("znh5md")
 
@@ -204,7 +205,12 @@ class IO(MutableSequence):
                             ].attrs.get("ZNH5MD_TYPE")
                             == "json"
                         ):
-                            info_data[key] = [json.loads(x) for x in data]
+                            info_data[key] = [
+                                json.loads(x)
+                                if x != STRING_FILL_VALUE
+                                else STRING_FILL_VALUE
+                                for x in data
+                            ]
                         else:
                             info_data[key] = data
                     except IndexError:

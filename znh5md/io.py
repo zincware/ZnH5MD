@@ -205,7 +205,12 @@ class IO(MutableSequence):
                             ].attrs.get("ZNH5MD_TYPE")
                             == "json"
                         ):
-                            info_data[key] = [json.loads(x) if x != STRING_FILL_VALUE else STRING_FILL_VALUE for x in data]
+                            info_data[key] = [
+                                json.loads(x)
+                                if x != STRING_FILL_VALUE
+                                else STRING_FILL_VALUE
+                                for x in data
+                            ]
                         else:
                             info_data[key] = data
                     except IndexError:

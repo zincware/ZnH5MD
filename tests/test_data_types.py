@@ -43,11 +43,11 @@ def test_int_info_data(tmp_path):
 def test_dict_data(tmp_path):
     molecule = ase.build.molecule("H2O")
     molecule.info["test"] = {"a": 1, "b": 2}
-    
+
     # Write to extxyz format
     extxyz_path = tmp_path / "molecule.extxyz"
     ase.io.write(extxyz_path, molecule, format="extxyz")
-    
+
     # Read from extxyz format
     molecule = ase.io.read(extxyz_path, format="extxyz")
 
@@ -57,19 +57,20 @@ def test_dict_data(tmp_path):
     io.append(molecule)
     molecule.info["b"] = {"a": 1, "b": 2, "c": 3, "d": 4}
     io.append(molecule)
-    
+
     assert io[0].info["test"] == {"a": 1, "b": 2}
     assert io[1].info["test"] == {"a": 1, "b": 2, "c": 3}
     assert io[2].info["b"] == {"a": 1, "b": 2, "c": 3, "d": 4}
 
+
 def test_list_data(tmp_path):
     molecule = ase.build.molecule("H2O")
     molecule.info["test"] = [1, 2]
-    
+
     # Write to extxyz format
     extxyz_path = tmp_path / "molecule.extxyz"
     ase.io.write(extxyz_path, molecule, format="extxyz")
-    
+
     # Read from extxyz format
     molecule = ase.io.read(extxyz_path, format="extxyz")
     npt.assert_array_equal(molecule.info["test"], [1, 2])
@@ -84,6 +85,7 @@ def test_list_data(tmp_path):
     npt.assert_array_equal(io[0].info["test"], [1, 2])
     npt.assert_array_equal(io[1].info["test"], [1, 2, 3])
     npt.assert_array_equal(io[2].info["b"], [1, 2, 3, 4])
+
 
 def test_multiple_molecules_with_diff_length_dicts(tmp_path):
     molecules = [

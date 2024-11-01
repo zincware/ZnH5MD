@@ -110,8 +110,9 @@ class IO(MutableSequence):
             return len(f["particles"][self.particle_group]["species"]["value"])
 
     def __getitem__(
-        self, index: Union[int, slice]
+        self, index: Union[int, np.int_, slice]
     ) -> Union[ase.Atoms, List[ase.Atoms]]:
+        index = int(index) if isinstance(index, np.int_) else index
         single_item = isinstance(index, int)
         index = [index] if single_item else index
 

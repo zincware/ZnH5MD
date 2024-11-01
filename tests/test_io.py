@@ -255,3 +255,14 @@ def test_index_error(tmp_path):
         io[1]
     with pytest.raises(IndexError):
         io[-2]
+
+
+def test_np_int_getitem(tmp_path):
+    io = znh5md.IO(tmp_path / "test.h5")
+    io.append(ase.build.molecule("H2O"))
+    assert io[np.int64(0)] is not None
+    assert io[np.int64(-1)] is not None
+    with pytest.raises(IndexError):
+        io[np.int64(1)]
+    with pytest.raises(IndexError):
+        io[np.int64(-2)]

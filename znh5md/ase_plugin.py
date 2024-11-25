@@ -7,10 +7,10 @@ from ase.utils.plugins import ExternalIOFormat
 from znh5md.io import IO
 
 znh5md_format = ExternalIOFormat(
-    desc='ZnH5MD h5 file',
-    code='+S',  # multiple atoms objects, accepts a file name string
-    module='znh5md.ase_plugin',
-    ext='h5'
+    desc="ZnH5MD h5 file",
+    code="+S",  # multiple atoms objects, accepts a file name string
+    module="znh5md.ase_plugin",
+    ext="h5",
 )
 
 

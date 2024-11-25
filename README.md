@@ -3,6 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/znh5md.svg)](https://badge.fury.io/py/znh5md)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/zincware/ZnH5MD/HEAD)
 [![H5MD](https://img.shields.io/badge/format-H5MD-darkmagenta)](https://www.nongnu.org/h5md/)
+[![Discord](https://img.shields.io/discord/1034511611802689557)](https://discord.gg/7ncfwhsnm4)
 
 # ZnH5MD - ASE Interface for the H5MD format.
 

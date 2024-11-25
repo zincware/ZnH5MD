@@ -47,3 +47,6 @@ skip = "poetry.lock,*.ipynb"
 
 [tool.pytest.ini_options]
 addopts = "-m 'not benchmark'"
+
+[tool.poetry.plugins."ase.ioformats"]
+znh5md = "znh5md.ase_plugin:znh5md_format"

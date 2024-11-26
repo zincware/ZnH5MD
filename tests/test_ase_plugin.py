@@ -66,7 +66,7 @@ def test_read_multiple(tmp_path):
     images = list(s22)
     io.extend(images)
 
-    images_read = read(path, index=':')
+    images_read = read(path, index=":")
     assert isinstance(images_read, list)
     for image, image_read in zip(images, images_read):
         assert image == image_read

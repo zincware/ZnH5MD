@@ -1,18 +1,21 @@
-from znh5md import serialization as zns
 import numpy as np
 import numpy.testing as npt
 import pytest
+
+from znh5md import serialization as zns
+
 
 def test_serialisation_s22(s22):
     frames = zns.encode(s22)
 
     assert len(frames.positions) == 22
     assert len(frames.numbers) == 22
-    assert len(frames.pbc)== 22
+    assert len(frames.pbc) == 22
     assert len(frames.cell) == 22
     assert len(frames.arrays) == 0
     assert len(frames.info) == 0
     assert len(frames.calc) == 0
+
 
 @pytest.mark.parametrize(
     "dataset_name",
@@ -27,7 +30,7 @@ def test_serialisation_s22(s22):
         "s22_no_ascii",
         "frames_with_residuenames",
     ],
-) 
+)
 @pytest.mark.parametrize("append", [True, False])
 def test_frames_iter(dataset_name, append, request):
     dataset = request.getfixturevalue(dataset_name)
@@ -67,7 +70,7 @@ def test_frames_iter(dataset_name, append, request):
         "frames_with_residuenames",
         "s22_info_arrays_calc_missing_inbetween",
     ],
-)    
+)
 def test_frames_getitem(dataset_name, request):
     dataset = request.getfixturevalue(dataset_name)
     frames = zns.encode(dataset)
@@ -97,6 +100,7 @@ def test_len(s22):
 
     assert len(list(frames)) == 22
 
+
 def test_serialisation_s22_energy(s22_energy):
     frames = zns.encode(s22_energy)
 
@@ -117,4 +121,3 @@ def test_serialisation_s22_energy_forces(s22_energy_forces):
     assert all(isinstance(x, float) for x in frames.calc["energy"])
     assert len(frames.calc["forces"]) == 22
     assert all(isinstance(x, np.ndarray) for x in frames.calc["forces"])
-

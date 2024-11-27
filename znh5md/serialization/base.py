@@ -7,6 +7,7 @@ from ase.calculators.singlepoint import SinglePointCalculator
 
 CONTENT_TYPE = dict[str, np.ndarray | dict | float | int | str | bool]
 
+
 def process_category(
     target: dict[str, list], content: CONTENT_TYPE, index: int
 ) -> None:
@@ -38,7 +39,9 @@ def process_category(
         # Backfill missing entries with MISSING for the unseen key
         target[key].append(MISSING)
 
+
 # TODO: provide a reference for each, for the later padding to write to h5
+
 
 @dataclasses.dataclass(repr=False)
 class Frames:
@@ -48,15 +51,9 @@ class Frames:
     numbers: list = dataclasses.field(default_factory=list)
     pbc: list = dataclasses.field(default_factory=list)
     cell: list = dataclasses.field(default_factory=list)
-    arrays: dict[str, list] = dataclasses.field(
-        default_factory=dict
-    )
-    info: dict[str, list] = dataclasses.field(
-        default_factory=dict
-    )
-    calc: dict[str, list] = dataclasses.field(
-        default_factory=dict
-    )
+    arrays: dict[str, list] = dataclasses.field(default_factory=dict)
+    info: dict[str, list] = dataclasses.field(default_factory=dict)
+    calc: dict[str, list] = dataclasses.field(default_factory=dict)
 
     @classmethod
     def from_ase(cls, frames: t.Iterable[ase.Atoms]) -> "Frames":

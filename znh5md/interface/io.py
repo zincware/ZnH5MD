@@ -1,13 +1,15 @@
-import dataclasses
-import os
-from collections.abc import MutableSequence
-import typing as t
-import h5py
-import importlib.metadata
 import contextlib
+import dataclasses
+import importlib.metadata
+import os
 import pathlib
-import numpy as np
+import typing as t
+from collections.abc import MutableSequence
+
 import ase
+import h5py
+import numpy as np
+
 from znh5md.interface.read import getitem
 from znh5md.interface.write import extend
 
@@ -24,25 +26,26 @@ def _open_file(
         with h5py.File(filename, **kwargs) as f:
             yield f
 
+
 @dataclasses.dataclass
 class IO(MutableSequence):
     """A class for handling H5MD files for ASE Atoms objects."""
 
-    filename: str | os.PathLike |None = None
-    file_handle: h5py.File|None = None
+    filename: str | os.PathLike | None = None
+    file_handle: h5py.File | None = None
     pbc_group: bool = True  # Specify PBC per step (Not H5MD conform)
     save_units: bool = True  # Export ASE units into the H5MD file
     author: str = "N/A"
     author_email: str = "N/A"
     creator: str = "znh5md"
     creator_version: str = __version__
-    particles_group: str|None = None
-    compression: str|None = "gzip"
-    compression_opts: int|None = None
+    particles_group: str | None = None
+    compression: str | None = "gzip"
+    compression_opts: int | None = None
     timestep: float = 1.0
     store: t.Literal["time", "linear"] = "linear"
     tqdm_limit: int = 100
-    chunk_size: int|None = None
+    chunk_size: int | None = None
     use_ase_calc: bool = True
 
     def __post_init__(self):
@@ -68,7 +71,7 @@ class IO(MutableSequence):
             with _open_file(self.filename, self.file_handle, mode="r") as f:
                 self.particles_group = next(iter(f["particles"].keys()))
         else:
-            self.particles_group = "atoms" # Default group name
+            self.particles_group = "atoms"  # Default group name
 
     def _read_author_creator(self):
         with contextlib.suppress(FileNotFoundError, KeyError):
@@ -97,10 +100,10 @@ class IO(MutableSequence):
     def __len__(self) -> int:
         with _open_file(self.filename, self.file_handle, mode="r") as f:
             return len(f["particles"][self.particles_group]["species"]["value"])
-        
+
     def __getitem__(
-        self, index: int | np.int_| slice | np.ndarray
-    ) -> ase.Atoms| list[ase.Atoms]:
+        self, index: int | np.int_ | slice | np.ndarray
+    ) -> ase.Atoms | list[ase.Atoms]:
         return getitem(self, index)
 
     def extend(self, frames: list[ase.Atoms]) -> None:

@@ -1,9 +1,8 @@
-from enum import Enum
 import typing as t
+from enum import Enum
 
 if t.TYPE_CHECKING:
     from znh5md.serialization import Frames
-
 
 
 class H5MDPath(str, Enum):
@@ -25,6 +24,10 @@ class H5MDPath(str, Enum):
     internal_energy = "/observables/{}/internal_energy"
     enthalpy = "/observables/{}/enthalpy"
 
+    # cell
+    box_edges = "/particles/{}/box/edges"
+    box_pbc = "/particles/{}/box/pbc"
+
 
 class H5MDToASEMapping(str, Enum):
     position = "positions"
@@ -32,8 +35,8 @@ class H5MDToASEMapping(str, Enum):
     mass = "masses"
     charge = "charges"
     potential_energy = "energy"
-
-
+    box_edges = "cell"
+    box_pbc = "pbc"
 
 
 def get_h5md_path(name: str, particles_group: str, frames: "Frames") -> str:
@@ -51,10 +54,12 @@ def get_h5md_path(name: str, particles_group: str, frames: "Frames") -> str:
         elif name in frames.calc.keys():
             in_particles = False
             try:
-                in_particles =  frames.calc[name][0].shape[0] == frames.positions[0].shape[0]
+                in_particles = (
+                    frames.calc[name][0].shape[0] == frames.positions[0].shape[0]
+                )
                 # it could be a coincidence that the shape of the property is the same as the shape of the positions
                 # e.g for 3, or 6 particles!
-            except (AttributeError, IndexError): 
+            except (AttributeError, IndexError):
                 # e.g. object has no attribute 'shape'
                 # or tuple index out of range
                 pass

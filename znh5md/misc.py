@@ -1,9 +1,11 @@
 import numpy as np
 
 
-def concatenate_varying_shape_arrays(values: list, fillvalue: str | int | float | bool) -> np.ndarray:
+def concatenate_varying_shape_arrays(
+    values: list, fillvalue: str | int | float | bool
+) -> np.ndarray:
     """
-    Concatenates arrays of varying shapes into a single array, 
+    Concatenates arrays of varying shapes into a single array,
     padding smaller arrays with a specified fillvalue.
 
     Args:
@@ -37,7 +39,9 @@ def concatenate_varying_shape_arrays(values: list, fillvalue: str | int | float 
     return dataset
 
 
-def decompose_varying_shape_arrays(dataset: np.ndarray, fillvalue: str | int | float | bool | np.ndarray) -> list:
+def decompose_varying_shape_arrays(
+    dataset: np.ndarray, fillvalue: str | int | float | bool | np.ndarray
+) -> list:
     """
     Decomposes a concatenated array with padding into a list of original arrays.
 
@@ -61,7 +65,9 @@ def decompose_varying_shape_arrays(dataset: np.ndarray, fillvalue: str | int | f
         for axis in range(value.ndim):
             # Sum along all dimensions except the current one
             axis_sum = mask.any(axis=tuple(i for i in range(value.ndim) if i != axis))
-            end = len(axis_sum) - np.argmax(axis_sum[::-1])  # Last non-fillvalue index + 1
+            end = len(axis_sum) - np.argmax(
+                axis_sum[::-1]
+            )  # Last non-fillvalue index + 1
             slices.append(slice(0, end))
 
         # Use slices to extract the non-fillvalue portion of the array

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def concatenate_varying_shape_arrays(values: list, fillvalue: str | int | float | bool) -> np.ndarray:
     """
     Concatenates arrays of varying shapes into a single array, 
@@ -52,18 +53,16 @@ def decompose_varying_shape_arrays(dataset: np.ndarray, fillvalue: str | int | f
 
     for value in dataset:
         slices = []
+        # Collapse all other dimensions to find non-fillvalue regions along the current axis
+        if is_nan:
+            mask = ~np.isnan(value)
+        else:
+            mask = value != fillvalue
         for axis in range(value.ndim):
-            # Collapse all other dimensions to find non-fillvalue regions along the current axis
-            if is_nan:
-                mask = ~np.isnan(value)
-            else:
-                mask = value != fillvalue
-
             # Sum along all dimensions except the current one
             axis_sum = mask.any(axis=tuple(i for i in range(value.ndim) if i != axis))
-            start = np.argmax(axis_sum)  # First non-fillvalue index
             end = len(axis_sum) - np.argmax(axis_sum[::-1])  # Last non-fillvalue index + 1
-            slices.append(slice(start, end))
+            slices.append(slice(0, end))
 
         # Use slices to extract the non-fillvalue portion of the array
         decomposed.append(value[tuple(slices)])

@@ -49,8 +49,6 @@ def test_concatenate_varying_shape_arrays_concept(inp, shape):
 @pytest.mark.parametrize("fillvalue", [np.nan, 0.0])
 def test_decompose_varying_shape_arrays(inp, fillvalue):
     concatenated = concatenate_varying_shape_arrays(inp, fillvalue=fillvalue)
-    print(inp)
-    print(concatenated)
     result = decompose_varying_shape_arrays(concatenated, fillvalue=fillvalue)
     assert len(result) == len(inp)
     for i, array in enumerate(result):

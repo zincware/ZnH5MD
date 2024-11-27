@@ -95,6 +95,8 @@ def test_len(s22):
 
     assert len(frames) == 22
 
+    assert len(list(frames)) == 22
+
 def test_serialisation_s22_energy(s22_energy):
     frames = zns.encode(s22_energy)
 

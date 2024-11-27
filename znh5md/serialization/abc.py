@@ -77,6 +77,13 @@ class Frames:
         default_factory=dict
     )  # (N, ...) can either be object or if consistent shape the respective dtype
 
+    @classmethod
+    def from_ase(cls, frames: t.Iterable[ase.Atoms]) -> "Frames":
+        """Create a Frames object from a sequence of ASE Atoms objects."""
+        obj = cls()
+        obj.extend(frames)
+        return obj
+
     def __iter__(self) -> t.Iterator[ase.Atoms]:
         """Iterate over the frames."""
         if self.positions is None:

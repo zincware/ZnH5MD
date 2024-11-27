@@ -82,8 +82,11 @@ class Frames:
         if self.positions is None:
             return iter([])
         for idx in range(len(self.positions)):
-            yield self[idx]
-
+            try:
+                yield self[idx]
+            except IndexError:
+                return
+            
     def __len__(self) -> int:
         """Return the number of frames."""
         if self.positions is None:
@@ -155,6 +158,8 @@ class Frames:
             # Process calc
             if atoms.calc is not None:
                 process_category(self.calc, atoms.calc.results, idx)
+            elif len(self.calc) != 0:
+                process_category(self.calc, {}, idx)
 
 class _MISSING:
     """Sentinel value for missing entries."""

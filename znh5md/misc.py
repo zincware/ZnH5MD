@@ -42,17 +42,30 @@ def decompose_varying_shape_arrays(dataset: np.ndarray, fillvalue: str | int | f
 
     Args:
         dataset (np.ndarray): The concatenated array with padding.
-        fillvalue (str | int | float | bool): Value used to fill missing entries in the original concatenation.
+        fillvalue (str | int | float | bool | np.ndarray): Value used to fill missing entries in the original concatenation.
 
     Returns:
         list: List of numpy arrays with the padding removed.
     """
     decomposed = []
+    is_nan = np.isnan(fillvalue) if isinstance(fillvalue, float) else None
 
     for value in dataset:
-        if np.isnan(fillvalue):
-            decomposed.append(value[~np.isnan(value)])
-        else:
-            decomposed.append(value[value != fillvalue])
+        slices = []
+        for axis in range(value.ndim):
+            # Collapse all other dimensions to find non-fillvalue regions along the current axis
+            if is_nan:
+                mask = ~np.isnan(value)
+            else:
+                mask = value != fillvalue
+
+            # Sum along all dimensions except the current one
+            axis_sum = mask.any(axis=tuple(i for i in range(value.ndim) if i != axis))
+            start = np.argmax(axis_sum)  # First non-fillvalue index
+            end = len(axis_sum) - np.argmax(axis_sum[::-1])  # Last non-fillvalue index + 1
+            slices.append(slice(start, end))
+
+        # Use slices to extract the non-fillvalue portion of the array
+        decomposed.append(value[tuple(slices)])
 
     return decomposed

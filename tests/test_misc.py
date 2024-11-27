@@ -40,11 +40,11 @@ def test_concatenate_varying_shape_arrays_concept(inp, shape):
 
 @pytest.mark.parametrize("inp", [
     [np.random.rand(3), np.random.rand(2)],
-    # [np.random.rand(10, 3), np.random.rand(20, 3)],
-    # [np.random.rand(10, 10, 3), np.random.rand(20, 10, 3)],
-    # [np.random.rand(10, 10, 3), np.random.rand(10, 20, 3)],
-    # [np.random.rand(20, 10, 3), np.random.rand(10, 20, 3)],
-    # [np.random.rand(20, 10, 3), np.random.rand(10, 20, 3), np.random.rand(10, 20, 4)],
+    [np.random.rand(10, 3), np.random.rand(20, 3)],
+    [np.random.rand(10, 10, 3), np.random.rand(20, 10, 3)],
+    [np.random.rand(10, 10, 3), np.random.rand(10, 20, 3)],
+    [np.random.rand(20, 10, 3), np.random.rand(10, 20, 3)],
+    [np.random.rand(20, 10, 3), np.random.rand(10, 20, 3), np.random.rand(10, 20, 4)],
 ])
 @pytest.mark.parametrize("fillvalue", [np.nan, 0.0])
 def test_decompose_varying_shape_arrays(inp, fillvalue):

@@ -117,3 +117,6 @@ def test_serialisation_s22_energy_forces(s22_energy_forces):
     assert all(isinstance(x, float) for x in frames.calc["energy"])
     assert frames.calc["forces"].shape == (22,)
     assert all(isinstance(x, np.ndarray) for x in frames.calc["forces"])
+
+    assert frames.cell.dtype == np.float_
+    assert frames.pbc.dtype == np.bool_

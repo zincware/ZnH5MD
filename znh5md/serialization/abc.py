@@ -1,23 +1,21 @@
 import dataclasses
+import typing as t
+
+import ase
 import numpy as np
 import numpy.typing as nptype
-import ase
 from ase.calculators.singlepoint import SinglePointCalculator
-import typing as t
 
 CONTENT_TYPE = dict[str, np.ndarray | dict | float | int | str | bool]
 
-def concatenate(a: np.ndarray, b: np.ndarray | dict | float | int | str | bool) -> np.ndarray:
-    # edge case for float
-    if isinstance(b, (float, int)):
-        return np.array(list(a) + [b])
 
-
+def concatenate(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     if len(a.shape) != 1 or len(b.shape) != 1:
         return np.array(list(a) + list(b), dtype=object)
     else:
-        return np.concatenate([a, b], axis=0, dtype=object)
-    
+        return np.concatenate([a, b], axis=0)
+
+
 # TODO TEST
 # print(concatenate(np.random.rand(1, 100, 3), np.random.rand(1, 100, 3)).shape)
 # print(concatenate(np.random.rand(1, 100, 3), np.random.rand(1, 90, 3)).shape)
@@ -30,15 +28,21 @@ def concatenate(a: np.ndarray, b: np.ndarray | dict | float | int | str | bool) 
 # concatenate(a, np.random.rand(1, 80, 3)).shape
 
 
-def process_category(target: dict[str, nptype.NDArray[np.object_]], content: CONTENT_TYPE, index: int) -> None:
+def process_category(
+    target: dict[str, nptype.NDArray[np.object_]], content: CONTENT_TYPE, index: int
+) -> None:
     """
     Process a category (arrays, info, calc) for a single atoms object, ensuring
     that keys are added and missing values are backfilled.
 
-    Parameters:
-        target (dict): The main dictionary storing data for the category.
-        content (dict): The data from the current atoms object (arrays, info, or calc).
-        index (int): The index of the current atoms object in the trajectory used for backfilling.
+    Parameters
+    ----------
+    target : dict
+        The target dictionary to update.
+    content : dict
+        The content to add to the target dictionary.
+    index : int
+        The index of the current frame.
     """
     seen = set(content.keys())
     unseen = set(target.keys()) - seen
@@ -48,7 +52,7 @@ def process_category(target: dict[str, nptype.NDArray[np.object_]], content: CON
             # Backfill existing entries with MISSING for the new key
             if index > 0:
                 target[key] = np.array([MISSING] * index + [content[key]], dtype=object)
-            else:    
+            else:
                 target[key] = np.array([content[key]])
         else:
             # Add the new data to the existing key
@@ -93,7 +97,7 @@ class Frames:
                 yield self[idx]
             except IndexError:
                 return
-            
+
     def __len__(self) -> int:
         """Return the number of frames."""
         if self.positions is None:
@@ -132,8 +136,8 @@ class Frames:
         """Extend the frames with a sequence of frames."""
         positions = np.array([atoms.positions for atoms in frames], dtype=object)
         numbers = np.array([atoms.numbers for atoms in frames], dtype=object)
-        pbc = np.array([atoms.pbc for atoms in frames], dtype=object)
-        cell = np.array([atoms.cell.array for atoms in frames], dtype=object)
+        pbc = np.array([atoms.pbc for atoms in frames])
+        cell = np.array([atoms.cell.array for atoms in frames])
 
         if self.positions is None:
             # Initialize arrays
@@ -167,6 +171,7 @@ class Frames:
                 process_category(self.calc, atoms.calc.results, idx)
             elif len(self.calc) != 0:
                 process_category(self.calc, {}, idx)
+
 
 class _MISSING:
     """Sentinel value for missing entries."""

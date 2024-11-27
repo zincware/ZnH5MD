@@ -62,8 +62,10 @@ def process_category(
         # Backfill missing entries with MISSING for the unseen key
         target[key] = concatenate(target[key], np.array([MISSING], dtype=object))
 
+# TODO: no need/use for np.arrays of dtype object - use lists
+# TODO: provide a reference for each, for the later padding to write to h5
 
-@dataclasses.dataclass
+@dataclasses.dataclass(repr=False)
 class Frames:
     """Dataclass for Atoms object serialization."""
 

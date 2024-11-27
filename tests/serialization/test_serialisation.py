@@ -6,10 +6,10 @@ import pytest
 def test_serialisation_s22(s22):
     frames = zns.encode(s22)
 
-    assert frames.positions.shape == (22,)
-    assert frames.numbers.shape == (22,)
-    assert frames.pbc.shape == (22, 3)
-    assert frames.cell.shape == (22, 3, 3)
+    assert len(frames.positions) == 22
+    assert len(frames.numbers) == 22
+    assert len(frames.pbc)== 22
+    assert len(frames.cell) == 22
     assert len(frames.arrays) == 0
     assert len(frames.info) == 0
     assert len(frames.calc) == 0
@@ -103,7 +103,7 @@ def test_serialisation_s22_energy(s22_energy):
     assert len(frames.arrays) == 0
     assert len(frames.info) == 0
     assert len(frames.calc) == 1
-    assert frames.calc["energy"].shape == (22,)
+    assert len(frames.calc["energy"]) == 22
     assert all(isinstance(x, float) for x in frames.calc["energy"])
 
 
@@ -113,10 +113,8 @@ def test_serialisation_s22_energy_forces(s22_energy_forces):
     assert len(frames.arrays) == 0
     assert len(frames.info) == 0
     assert len(frames.calc) == 2
-    assert frames.calc["energy"].shape == (22,)
+    assert len(frames.calc["energy"]) == 22
     assert all(isinstance(x, float) for x in frames.calc["energy"])
-    assert frames.calc["forces"].shape == (22,)
+    assert len(frames.calc["forces"]) == 22
     assert all(isinstance(x, np.ndarray) for x in frames.calc["forces"])
 
-    assert frames.cell.dtype == np.float_
-    assert frames.pbc.dtype == np.bool_

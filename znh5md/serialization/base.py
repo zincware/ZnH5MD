@@ -3,33 +3,12 @@ import typing as t
 
 import ase
 import numpy as np
-import numpy.typing as nptype
 from ase.calculators.singlepoint import SinglePointCalculator
 
 CONTENT_TYPE = dict[str, np.ndarray | dict | float | int | str | bool]
 
-
-def concatenate(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    if len(a.shape) != 1 or len(b.shape) != 1:
-        return np.array(list(a) + list(b), dtype=object)
-    else:
-        return np.concatenate([a, b], axis=0)
-
-
-# TODO TEST
-# print(concatenate(np.random.rand(1, 100, 3), np.random.rand(1, 100, 3)).shape)
-# print(concatenate(np.random.rand(1, 100, 3), np.random.rand(1, 90, 3)).shape)
-# print(concatenate(np.random.rand(1, 100, 3), np.random.rand(2, 90, 3)).shape)
-# print(concatenate(np.random.rand(2, 100, 3), np.random.rand(1, 100, 3)).shape)
-# print(concatenate(np.random.rand(2, 100, 3), np.random.rand(1, 90, 3)).shape)
-# print(concatenate(np.random.rand(2, 100, 3), np.random.rand(2, 90, 3)).shape)
-
-# a  = concatenate(np.random.rand(1, 100, 3), np.random.rand(1, 100, 3))
-# concatenate(a, np.random.rand(1, 80, 3)).shape
-
-
 def process_category(
-    target: dict[str, nptype.NDArray[np.object_]], content: CONTENT_TYPE, index: int
+    target: dict[str, list], content: CONTENT_TYPE, index: int
 ) -> None:
     """
     Process a category (arrays, info, calc) for a single atoms object, ensuring
@@ -50,38 +29,34 @@ def process_category(
     for key in content:
         if key not in target:
             # Backfill existing entries with MISSING for the new key
-            if index > 0:
-                target[key] = np.array([MISSING] * index + [content[key]], dtype=object)
-            else:
-                target[key] = np.array([content[key]])
+            target[key] = [MISSING] * index + [content[key]]
         else:
             # Add the new data to the existing key
-            target[key] = concatenate(target[key], np.array([content[key]]))
+            target[key].append(content[key])
 
     for key in unseen:
         # Backfill missing entries with MISSING for the unseen key
-        target[key] = concatenate(target[key], np.array([MISSING], dtype=object))
+        target[key].append(MISSING)
 
-# TODO: no need/use for np.arrays of dtype object - use lists
 # TODO: provide a reference for each, for the later padding to write to h5
 
 @dataclasses.dataclass(repr=False)
 class Frames:
     """Dataclass for Atoms object serialization."""
 
-    positions: nptype.NDArray[np.object_] | None = None  # (N, )
-    numbers: nptype.NDArray[np.object_] | None = None  # (N, )
-    pbc: nptype.NDArray[np.bool_] | None = None  # (N, 3)
-    cell: nptype.NDArray[np.float_] | None = None  # (N, 3, 3)
-    arrays: dict[str, nptype.NDArray[np.object_]] = dataclasses.field(
+    positions: list = dataclasses.field(default_factory=list)
+    numbers: list = dataclasses.field(default_factory=list)
+    pbc: list = dataclasses.field(default_factory=list)
+    cell: list = dataclasses.field(default_factory=list)
+    arrays: dict[str, list] = dataclasses.field(
         default_factory=dict
-    )  # (N, m, ...) where m is the number of atoms in the frame
-    info: dict[str, np.ndarray] = dataclasses.field(
+    )
+    info: dict[str, list] = dataclasses.field(
         default_factory=dict
-    )  # (N, ...) can either be object or if consistent shape the respective dtype
-    calc: dict[str, np.ndarray] = dataclasses.field(
+    )
+    calc: dict[str, list] = dataclasses.field(
         default_factory=dict
-    )  # (N, ...) can either be object or if consistent shape the respective dtype
+    )
 
     @classmethod
     def from_ase(cls, frames: t.Iterable[ase.Atoms]) -> "Frames":
@@ -108,8 +83,6 @@ class Frames:
 
     def __getitem__(self, idx: int) -> ase.Atoms:
         """Return a single frame."""
-        if self.positions is None:
-            raise IndexError("No frames in Frames object.")
         atoms = ase.Atoms(
             numbers=self.numbers[idx],
             positions=self.positions[idx],
@@ -136,25 +109,13 @@ class Frames:
 
     def extend(self, frames: t.Iterable[ase.Atoms]) -> None:
         """Extend the frames with a sequence of frames."""
-        positions = np.array([atoms.positions for atoms in frames], dtype=object)
-        numbers = np.array([atoms.numbers for atoms in frames], dtype=object)
-        pbc = np.array([atoms.pbc for atoms in frames])
-        cell = np.array([atoms.cell.array for atoms in frames])
 
-        if self.positions is None:
-            # Initialize arrays
-            self.positions = positions
-            self.numbers = numbers
-            self.pbc = pbc
-            self.cell = cell
-            start_idx = 0
-        else:
-            # Concatenate existing data with new data
-            start_idx = len(self.positions)
-            self.positions = concatenate(self.positions, positions)
-            self.numbers = concatenate(self.numbers, numbers)
-            self.pbc = np.concatenate([self.pbc, pbc])
-            self.cell = np.concatenate([self.cell, cell])
+        start_idx = len(self.positions)
+
+        self.positions.extend([atoms.positions for atoms in frames])
+        self.numbers.extend([atoms.numbers for atoms in frames])
+        self.pbc.extend([atoms.pbc for atoms in frames])
+        self.cell.extend([atoms.cell.array for atoms in frames])
 
         for idx, atoms in enumerate(frames, start=start_idx):
             # Process arrays

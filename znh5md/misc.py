@@ -1,24 +1,58 @@
 import numpy as np
 
-def concatenate_varying_shape_arrays(values: list, fillvalue: str|int|float|bool) -> np.ndarray:
+def concatenate_varying_shape_arrays(values: list, fillvalue: str | int | float | bool) -> np.ndarray:
+    """
+    Concatenates arrays of varying shapes into a single array, 
+    padding smaller arrays with a specified fillvalue.
+
+    Args:
+        values (list): List of numpy arrays with varying shapes.
+        fillvalue (str | int | float | bool): Value used to fill missing entries.
+            The fillvalue also determines the dtype of the output array.
+
+    Returns:
+        np.ndarray: A new array containing the input arrays, padded to match the maximum shape.
+    """
+    # Determine the dtype from the fillvalue
     dtype = np.array(fillvalue).dtype
-    dimensions = list(values[0].shape)
+
+    # Determine the maximum shape along all dimensions
+    maxshape = list(values[0].shape)
     for value in values[1:]:
-        for idx, (a, b) in enumerate(zip(dimensions, value.shape)):
-            if b > a:
-                dimensions[idx] = b
-    
-    dataset = np.full((len(values), *dimensions), fillvalue, dtype=dtype)
-    print(dataset.shape)
+        maxshape = [max(a, b) for a, b in zip(maxshape, value.shape)]
+
+    # Add the batch dimension
+    maxshape = (len(values), *maxshape)
+
+    # Create an array filled with the fillvalue
+    dataset = np.full(maxshape, fillvalue, dtype=dtype)
+
+    # Insert each value into the dataset
     for i, value in enumerate(values):
-        if len(value.shape) == 1:
-            dataset[i, :value.shape[0]] = value
-        elif len(value.shape) == 2:
-            dataset[i, :value.shape[0], :value.shape[1]] = value
-        elif len(value.shape) == 3:
-            dataset[i, :value.shape[0], :value.shape[1], :value.shape[2]] = value
-        elif len(value.shape) == 4:
-            dataset[i, :value.shape[0], :value.shape[1], :value.shape[2], :value.shape[3]] = value
-        else:
-            raise ValueError(f"Unsupported shape: {value.shape}")
+        # Create slices for each dimension of the current value
+        slices = tuple(slice(0, dim) for dim in value.shape)
+        dataset[(i,) + slices] = value
+
     return dataset
+
+
+def decompose_varying_shape_arrays(dataset: np.ndarray, fillvalue: str | int | float | bool | np.ndarray) -> list:
+    """
+    Decomposes a concatenated array with padding into a list of original arrays.
+
+    Args:
+        dataset (np.ndarray): The concatenated array with padding.
+        fillvalue (str | int | float | bool): Value used to fill missing entries in the original concatenation.
+
+    Returns:
+        list: List of numpy arrays with the padding removed.
+    """
+    decomposed = []
+
+    for value in dataset:
+        if np.isnan(fillvalue):
+            decomposed.append(value[~np.isnan(value)])
+        else:
+            decomposed.append(value[value != fillvalue])
+
+    return decomposed

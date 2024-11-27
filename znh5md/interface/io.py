@@ -4,6 +4,7 @@ import importlib.metadata
 import os
 import pathlib
 import typing as t
+import warnings
 from collections.abc import MutableSequence
 
 import ase
@@ -12,19 +13,9 @@ import numpy as np
 
 from znh5md.interface.read import getitem
 from znh5md.interface.write import extend
+from znh5md.misc import open_file
 
 __version__ = importlib.metadata.version("znh5md")
-
-
-@contextlib.contextmanager
-def _open_file(
-    filename: str | os.PathLike | None, file_handle: h5py.File | None, **kwargs
-) -> t.Generator[h5py.File, None, None]:
-    if file_handle is not None:
-        yield file_handle
-    else:
-        with h5py.File(filename, **kwargs) as f:
-            yield f
 
 
 @dataclasses.dataclass
@@ -43,7 +34,7 @@ class IO(MutableSequence):
     compression: str | None = "gzip"
     compression_opts: int | None = None
     timestep: float = 1.0
-    store: t.Literal["time", "linear"] = "linear"
+    store: t.Literal["time", "linear", "fixed"] = "linear"
     tqdm_limit: int = 100
     chunk_size: int | None = None
     use_ase_calc: bool = True
@@ -62,13 +53,13 @@ class IO(MutableSequence):
         if self.particles_group is not None:
             pass
         elif self.filename is not None and self.filename.exists():
-            with _open_file(self.filename, self.file_handle, mode="r") as f:
+            with open_file(self.filename, self.file_handle, mode="r") as f:
                 self.particles_group = next(iter(f["particles"].keys()))
         elif (
             self.file_handle is not None
             and pathlib.Path(self.file_handle.filename).exists()
         ):
-            with _open_file(self.filename, self.file_handle, mode="r") as f:
+            with open_file(self.filename, self.file_handle, mode="r") as f:
                 self.particles_group = next(iter(f["particles"].keys()))
         else:
             self.particles_group = "atoms"  # Default group name
@@ -79,14 +70,14 @@ class IO(MutableSequence):
             # KeyError if the file has not yet been initialized as H5MD
             #   or the keys are not provided, which is officially
             #   not allowed in H5MD.
-            with _open_file(self.filename, self.file_handle, mode="r") as f:
+            with open_file(self.filename, self.file_handle, mode="r") as f:
                 self.author = f["h5md"]["author"].attrs["name"]
                 self.author_email = f["h5md"]["author"].attrs["email"]
                 self.creator = f["h5md"]["creator"].attrs["name"]
                 self.creator_version = f["h5md"]["creator"].attrs["version"]
 
     def create_file(self):
-        with _open_file(self.filename, self.file_handle, mode="w") as f:
+        with open_file(self.filename, self.file_handle, mode="w") as f:
             g_h5md = f.create_group("h5md")
             g_h5md.attrs["version"] = np.array([1, 1])
             g_author = g_h5md.create_group("author")
@@ -98,7 +89,7 @@ class IO(MutableSequence):
             f.create_group("particles")
 
     def __len__(self) -> int:
-        with _open_file(self.filename, self.file_handle, mode="r") as f:
+        with open_file(self.filename, self.file_handle, mode="r") as f:
             return len(f["particles"][self.particles_group]["species"]["value"])
 
     def __getitem__(
@@ -107,6 +98,20 @@ class IO(MutableSequence):
         return getitem(self, index)
 
     def extend(self, frames: list[ase.Atoms]) -> None:
+        if not isinstance(frames, list):
+            raise ValueError("images must be a list of ASE Atoms objects")
+        if len(frames) == 0:
+            warnings.warn("No data provided")
+            return
+        if self.filename is not None and not self.filename.exists():
+            self.create_file()
+        if self.file_handle is not None:
+            needs_creation = False
+            with open_file(self.filename, self.file_handle, mode="r") as f:
+                needs_creation = "h5md" not in f
+            if needs_creation:
+                self.create_file()
+
         extend(self, frames)
 
     def append(self, atoms: ase.Atoms):

@@ -1,3 +1,8 @@
+import contextlib
+import os
+import typing as t
+
+import h5py
 import numpy as np
 
 
@@ -74,3 +79,14 @@ def decompose_varying_shape_arrays(
         decomposed.append(value[tuple(slices)])
 
     return decomposed
+
+
+@contextlib.contextmanager
+def open_file(
+    filename: str | os.PathLike | None, file_handle: h5py.File | None, **kwargs
+) -> t.Generator[h5py.File, None, None]:
+    if file_handle is not None:
+        yield file_handle
+    else:
+        with h5py.File(filename, **kwargs) as f:
+            yield f

@@ -37,6 +37,7 @@ class H5MDToASEMapping(str, Enum):
     potential_energy = "energy"
     box_edges = "cell"
     box_pbc = "pbc"
+    species = "numbers"
 
 
 def get_h5md_path(name: str, particles_group: str, frames: "Frames") -> str:
@@ -68,3 +69,5 @@ def get_h5md_path(name: str, particles_group: str, frames: "Frames") -> str:
                 return "/particles/{}/{}".format(particles_group, name)
             else:
                 return "/observables/{}/{}".format(particles_group, name)
+        else:
+            raise ValueError(f"Unable to determine path for '{name}'")

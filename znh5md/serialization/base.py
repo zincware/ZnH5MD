@@ -1,9 +1,12 @@
 import dataclasses
+import json
 import typing as t
 
 import ase
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
+
+from znh5md.misc import decompose_varying_shape_arrays
 
 CONTENT_TYPE = dict[str, np.ndarray | dict | float | int | str | bool]
 
@@ -61,6 +64,64 @@ class Frames:
         obj = cls()
         obj.extend(frames)
         return obj
+
+    def keys(self) -> t.Iterator[str]:
+        """Iterate over the keys."""
+        yield "positions"
+        yield "numbers"
+        yield "pbc"
+        yield "cell"
+        for key in self.arrays:
+            yield key
+        for key in self.info:
+            yield key
+        for key in self.calc:
+            yield key
+
+    # TODO: rename to something that says set via arrays
+    # TODO: move somewhere else?
+    def set(self, name: str, value: np.ndarray) -> None:
+        if name in ["positions", "numbers", "pbc", "cell"]:
+            setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
+        else:
+            # TODO: sort into arrays, info, calc
+            # TODO: insert MISSING
+            # TODO: decompose to correct shape
+            if len(value.shape) == 1:
+                data = value.tolist()
+                if isinstance(data[0], bytes):
+                    data = [json.loads(v) for v in data]
+                    if isinstance(data[0], list) and len(data[0]) == len(
+                        self.numbers[0]
+                    ):
+                        self.arrays[name] = data
+                    else:
+                        self.info[name] = data
+                else:
+                    self.arrays[name] = data
+            else:
+                value = decompose_varying_shape_arrays(value, np.nan)
+                if len(value[0]) == len(self.numbers[0]):
+                    self.arrays[name] = value
+                else:
+                    self.info[name] = value
+
+    def items(self) -> t.Iterator[t.Tuple[str, t.Any]]:
+        """Iterate over the items."""
+        yield "positions", self.positions
+        yield "numbers", self.numbers
+        yield "pbc", self.pbc
+        yield "cell", self.cell
+        for key in self.arrays:
+            yield key, self.arrays[key]
+        for key in self.info:
+            yield key, self.info[key]
+        for key in self.calc:
+            yield key, self.calc[key]
+
+    def check(self) -> None:
+        if len(list(self.keys())) != len(set(self.keys())):
+            raise ValueError("Duplicate keys found in Frames object")
 
     def __iter__(self) -> t.Iterator[ase.Atoms]:
         """Iterate over the frames."""

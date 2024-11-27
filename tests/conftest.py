@@ -146,3 +146,22 @@ def frames_with_residuenames() -> list[ase.Atoms]:
     ethane.arrays["residuenames"] = np.array(["C2H6"] * len(ethane))
     ethane.arrays["atomtypes"] = np.array(["γC", "βH", "βH", "βH", "βH", "βH"])
     return [water, ethane]
+
+
+@pytest.fixture
+def s22_info_arrays_calc_missing_inbetween() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        atoms: ase.Atoms
+        if np.random.random() > 0.5:
+            atoms.info.update({"mlip_energy": np.random.rand()})
+        if np.random.random() > 0.5:
+            atoms.new_array("mlip_forces", np.random.rand(len(atoms), 3))
+        if np.random.random() > 0.5:
+            atoms.calc = SinglePointCalculator(atoms)
+            if np.random.random() > 0.5:
+                atoms.calc.results["energy"] = np.random.rand()
+            if np.random.random() > 0.5:
+                atoms.calc.results["forces"] = np.random.rand(len(atoms), 3)
+        images.append(atoms)
+    return images

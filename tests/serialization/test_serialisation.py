@@ -27,10 +27,16 @@ def test_serialisation_s22(s22):
         "s22_no_ascii",
         "frames_with_residuenames",
     ],
-)    
-def test_frames_iter(dataset_name, request):
+) 
+@pytest.mark.parametrize("append", [True, False])
+def test_frames_iter(dataset_name, append, request):
     dataset = request.getfixturevalue(dataset_name)
-    frames = zns.encode(dataset)
+    frames = zns.Frames()
+    if append:
+        for frame in dataset:
+            frames.append(frame)
+    else:
+        frames.extend(dataset)
 
     for a, b in zip(frames, dataset):
         npt.assert_array_equal(a.positions, b.positions)
@@ -59,6 +65,7 @@ def test_frames_iter(dataset_name, request):
         "s22_illegal_calc_results",
         "s22_no_ascii",
         "frames_with_residuenames",
+        "s22_info_arrays_calc_missing_inbetween",
     ],
 )    
 def test_frames_getitem(dataset_name, request):

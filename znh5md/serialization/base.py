@@ -1,5 +1,4 @@
 import dataclasses
-import json
 import typing as t
 
 import ase
@@ -12,16 +11,18 @@ ALLOWED_TYPES = np.ndarray | dict | float | int | str | bool | list
 CONTENT_TYPE = dict[str, ALLOWED_TYPES]
 ORIGIN_TYPE = t.Literal["calc", "info", "arrays", "atoms"]
 
+
 @dataclasses.dataclass
 class Entry:
     value: list[ALLOWED_TYPES] = dataclasses.field(repr=False)
     origin: ORIGIN_TYPE
     name: str
-    unit: str|None = None
+    unit: str | None = None
 
     def __post_init__(self):
         if self.unit is None:
             self.unit = get_unit(self.name)
+
 
 def process_category(
     target: dict[str, list], content: CONTENT_TYPE, index: int

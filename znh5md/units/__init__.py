@@ -10,7 +10,8 @@ class H5MDUnits(str, Enum):
     time = "fs"
     cell = "Angstrom"
 
-def get_unit(key: str) -> str|None:
+
+def get_unit(key: str) -> str | None:
     try:
         return H5MDUnits[key].value
     except KeyError:

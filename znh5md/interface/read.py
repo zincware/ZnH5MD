@@ -1,12 +1,12 @@
+import json
 import typing as t
 
 import ase
 import numpy as np
 
-from znh5md.misc import open_file, decompose_varying_shape_arrays
-import json
-from znh5md.path import H5MDToASEMapping, AttributePath
-from znh5md.serialization import Frames, ORIGIN_TYPE
+from znh5md.misc import decompose_varying_shape_arrays, open_file
+from znh5md.path import AttributePath, H5MDToASEMapping
+from znh5md.serialization import ORIGIN_TYPE, Frames
 
 if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
@@ -18,8 +18,6 @@ def update_frames(self, name: str, value: np.ndarray, origin: ORIGIN_TYPE) -> No
     else:
         # TODO: insert MISSING
         # TODO: allow writing calc results to arrays
-
-
 
         if origin is not None:
             if len(value.shape) == 1:
@@ -69,7 +67,7 @@ def getitem(
     if isinstance(index, int):
         is_single_item = True
         index = [index]
-    
+
     with open_file(self.filename, self.file_handle, mode="r") as f:
         particles = f[f"/particles/{self.particles_group}"]
         # first do species then the rest so we know the length of the arrays
@@ -88,8 +86,11 @@ def getitem(
             else:
                 try:
                     try:
-                        update_frames(frames, 
-                            H5MDToASEMapping[grp_name].value, grp["value"][index], origin
+                        update_frames(
+                            frames,
+                            H5MDToASEMapping[grp_name].value,
+                            grp["value"][index],
+                            origin,
                         )
                     except KeyError:
                         update_frames(frames, grp_name, grp["value"][index], origin)
@@ -105,7 +106,12 @@ def getitem(
                 origin = grp.attrs.get(AttributePath.origin.value, None)
                 try:
                     try:
-                        update_frames(frames, H5MDToASEMapping[grp_name].value, grp["value"][index], origin)
+                        update_frames(
+                            frames,
+                            H5MDToASEMapping[grp_name].value,
+                            grp["value"][index],
+                            origin,
+                        )
                     except KeyError:
                         update_frames(frames, grp_name, grp["value"][index], origin)
                 except KeyError:

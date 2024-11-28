@@ -1,7 +1,7 @@
-import pytest
-from znh5md.interface import IO
 import numpy.testing as npt
+import pytest
 
+from znh5md.interface import IO
 
 
 @pytest.mark.parametrize(
@@ -28,7 +28,7 @@ def test_frames_iter(dataset_name, append, request, tmp_path):
             io.append(frame)
     else:
         io.extend(dataset)
-    
+
     assert len(io) == len(dataset)
     for a, b in zip(io, dataset):
         assert a == b
@@ -39,4 +39,3 @@ def test_frames_iter(dataset_name, append, request, tmp_path):
         if b.calc is not None or a.calc is not None:
             for key in set(a.calc.results.keys()) | set(b.calc.results.keys()):
                 npt.assert_array_equal(a.calc.results[key], b.calc.results[key])
-        

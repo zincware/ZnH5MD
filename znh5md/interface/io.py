@@ -95,7 +95,10 @@ class IO(MutableSequence):
     def __getitem__(
         self, index: int | np.int_ | slice | np.ndarray
     ) -> ase.Atoms | list[ase.Atoms]:
-        return getitem(self, index)
+        try:
+            return getitem(self, index)
+        except OSError:
+            raise IndexError("Index out of range")
 
     def extend(self, frames: list[ase.Atoms]) -> None:
         if not isinstance(frames, list):

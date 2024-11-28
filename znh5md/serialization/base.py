@@ -78,34 +78,6 @@ class Frames:
         for key in self.calc:
             yield key
 
-    # TODO: rename to something that says set via arrays
-    # TODO: move somewhere else?
-    def set(self, name: str, value: np.ndarray) -> None:
-        if name in ["positions", "numbers", "pbc", "cell"]:
-            setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
-        else:
-            # TODO: sort into arrays, info, calc
-            # TODO: insert MISSING
-            # TODO: decompose to correct shape
-            if len(value.shape) == 1:
-                data = value.tolist()
-                if isinstance(data[0], bytes):
-                    data = [json.loads(v) for v in data]
-                    if isinstance(data[0], list) and len(data[0]) == len(
-                        self.numbers[0]
-                    ):
-                        self.arrays[name] = data
-                    else:
-                        self.info[name] = data
-                else:
-                    self.arrays[name] = data
-            else:
-                value = decompose_varying_shape_arrays(value, np.nan)
-                if len(value[0]) == len(self.numbers[0]):
-                    self.arrays[name] = value
-                else:
-                    self.info[name] = value
-
     def items(self) -> t.Iterator[t.Tuple[str, t.Any]]:
         """Iterate over the items."""
         yield "positions", self.positions

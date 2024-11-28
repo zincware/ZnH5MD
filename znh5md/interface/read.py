@@ -3,7 +3,8 @@ import typing as t
 import ase
 import numpy as np
 
-from znh5md.misc import open_file
+from znh5md.misc import open_file, decompose_varying_shape_arrays
+import json
 from znh5md.path import H5MDToASEMapping
 from znh5md.serialization import Frames
 
@@ -11,49 +12,82 @@ if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
 
+def update_frames(self, name: str, value: np.ndarray) -> None:
+    if name in ["positions", "numbers", "pbc", "cell"]:
+        setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
+    else:
+        # TODO: sort into calc
+        # TODO: insert MISSING
+        if len(value.shape) == 1:
+            data = value.tolist()
+            if isinstance(data[0], bytes):
+                data = [json.loads(v) for v in data]
+                if isinstance(data[0], list) and len(data[0]) == len(
+                    self.numbers[0]
+                ):
+                    self.arrays[name] = data
+                else:
+                    self.info[name] = data
+            else:
+                self.arrays[name] = data
+        else:
+            value = decompose_varying_shape_arrays(value, np.nan)
+            if len(value[0]) == len(self.numbers[0]):
+                self.arrays[name] = value
+            else:
+                self.info[name] = value
+
+
 def getitem(
-    self: "IO", index: int | np.int_ | slice | np.ndarray
+    self: "IO", index: int | np.int_ | slice | np.ndarray | list[int]
 ) -> ase.Atoms | list[ase.Atoms]:
     frames = Frames()
+    is_single_item = False
+    if isinstance(index, int):
+        is_single_item = True
+        index = [index]
 
     with open_file(self.filename, self.file_handle, mode="r") as f:
         particles = f[f"/particles/{self.particles_group}"]
         # first do species then the rest so we know the length of the arrays
         #  for sorting into arrays, info, calc
         grp = particles["species/value"]
-        frames.set(H5MDToASEMapping.species.value, grp[index])
+        update_frames(frames, H5MDToASEMapping.species.value, grp[index])
 
         for grp_name in particles:
             if grp_name == "species":
                 continue
             grp = particles[grp_name]  # Access the subgroup or dataset
             if grp_name == "box":
-                frames.set("cell", grp["edges/value"][index])
-                frames.set("pbc", grp["pbc/value"][index])
+                update_frames(frames, "cell", grp["edges/value"][index])
+                update_frames(frames, "pbc", grp["pbc/value"][index])
             else:
                 try:
                     try:
-                        frames.set(
+                        update_frames(frames, 
                             H5MDToASEMapping[grp_name].value, grp["value"][index]
                         )
                     except KeyError:
-                        frames.set(grp_name, grp["value"][index])
+                        update_frames(frames, grp_name, grp["value"][index])
                 except KeyError:
                     raise KeyError(
                         f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."
                     )
 
-        observables = f[f"/observables/{self.particles_group}"]
+        try:
+            observables = f[f"/observables/{self.particles_group}"]
+        except KeyError:
+            raise KeyError("No observables found in the file.")
         for grp_name in observables:
             grp = observables[grp_name]
             try:
                 try:
-                    frames.set(H5MDToASEMapping[grp_name].value, grp["value"][index])
+                    update_frames(frames, H5MDToASEMapping[grp_name].value, grp["value"][index])
                 except KeyError:
-                    frames.set(grp_name, grp["value"][index])
+                    update_frames(frames, grp_name, grp["value"][index])
             except KeyError:
                 raise KeyError(
                     f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."
                 )
 
-    return frames
+    return list(frames) if not is_single_item else frames[0]

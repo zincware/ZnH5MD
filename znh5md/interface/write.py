@@ -32,23 +32,22 @@ def process_calc_info_arrays(data: list) -> t.Tuple[t.Union[np.ndarray, list], t
         raise ValueError(f"Unknown data type: {type(data[0])}")
 
 
-def create_group(self: "IO", path, data) -> None:
-    with open_file(self.filename, self.file_handle, mode="a") as f:
-        if path in f:
-            raise ValueError(f"Group {path} already exists")
-        grp = f.create_group(path)
-        data, dtype = process_calc_info_arrays(data)
-        # TODO: dtype?
-        if dtype == h5py.string_dtype():
-            ds = grp.create_dataset("value", data=data, maxshape=(None,))
-        else:
-            ds = grp.create_dataset(
-                "value", data=data, maxshape=(None, *data.shape[1:])
-            )
+def create_group(f, path, data) -> None:
+    if path in f:
+        raise ValueError(f"Group {path} already exists")
+    grp = f.create_group(path)
+    data, dtype = process_calc_info_arrays(data)
+    # TODO: dtype?
+    if dtype == h5py.string_dtype():
+        ds = grp.create_dataset("value", data=data, maxshape=(None,))
+    else:
+        ds = grp.create_dataset(
+            "value", data=data, maxshape=(None, *data.shape[1:])
+        )
 
 
 def extend_group(self: "IO", path, data) -> None:
-    pass
+    raise NotImplementedError("extend existing groups not implemented yet")
 
 
 def extend(self: "IO", data: list[ase.Atoms]) -> None:
@@ -57,7 +56,10 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
 
     frames = Frames.from_ase(data)
     frames.check()
-
-    for key, value in frames.items():
-        path = get_h5md_path(key, self.particles_group, frames)
-        create_group(self, path, value)
+    with open_file(self.filename, self.file_handle, mode="a") as f:
+        for key, value in frames.items():
+            path = get_h5md_path(key, self.particles_group, frames)
+            if path in f:
+                extend_group(self, path, value)
+            else:
+                create_group(f, path, value)

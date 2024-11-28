@@ -58,6 +58,8 @@ class Entry:
                 return np.float64
         elif isinstance(self.ref, str):
             return h5py.string_dtype()
+        elif isinstance(self.ref, dict):
+            return h5py.string_dtype()
         else:
             return np.float64
 
@@ -70,20 +72,26 @@ class Entry:
 
     def dump(self) -> t.Tuple[np.ndarray | list, t.Any]:
         data = self.value
+
         if self.dtype == h5py.string_dtype():
-            return [
-                json.dumps(v) if v is not MISSING else "" for v in data
-            ], h5py.string_dtype()
+            # Handle string data
+            serialized_data = [
+                json.dumps(v.tolist() if isinstance(v, np.ndarray) else v) if v is not MISSING else ""
+                for v in data
+            ]
+            return serialized_data, h5py.string_dtype()
         else:
-            data = [
+            # Handle non-string data
+            processed_data = [
                 np.array(v, dtype=self.dtype)
                 if v is not MISSING
                 else np.full_like(self.ref, self.fillvalue, dtype=self.dtype)
                 for v in data
             ]
-            return concatenate_varying_shape_arrays(
-                data, self.fillvalue, dtype=np.float64
-            ), np.float64
+            return (
+                concatenate_varying_shape_arrays(processed_data, self.fillvalue, dtype=np.float64),
+                np.float64,
+            )
 
 
 def process_category(

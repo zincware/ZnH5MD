@@ -100,3 +100,87 @@ def test_entry_array_str_missing():
     assert isinstance(val, list)
     assert val == [json.dumps("a"), "", json.dumps("c")]
     assert dtype == h5py.string_dtype()
+
+def test_entry_list_dict():
+    e = Entry(value=[{"a": 1}, {"b": 2}], origin=None, name="test")
+    assert e.ref == {"a": 1}
+    assert e.fillvalue == ""
+
+    val, dtype = e.dump()
+    assert isinstance(val, list)
+    assert val == [json.dumps(x) for x in [{"a": 1}, {"b": 2}]]
+    assert dtype == h5py.string_dtype()
+
+def test_entry_array_dict():
+    e = Entry(value=np.array([{"a": 1}, {"b": 2}]), origin=None, name="test")
+    assert e.ref == {"a": 1}
+    assert e.fillvalue == ""
+
+    val, dtype = e.dump()
+    assert isinstance(val, list)
+    assert val == [json.dumps(x) for x in [{"a": 1}, {"b": 2}]]
+    assert dtype == h5py.string_dtype()
+
+
+def test_entry_list_dict_missing():
+    e = Entry(value=[{"a": 1}, MISSING, {"b": 2}], origin=None, name="test")
+    assert e.ref == {"a": 1}
+    assert e.fillvalue == ""
+
+    val, dtype = e.dump()
+    assert isinstance(val, list)
+    assert val == [json.dumps({"a": 1}), "", json.dumps({"b": 2})]
+    assert dtype == h5py.string_dtype()
+
+def test_entry_array_dict_missing():
+    e = Entry(value=np.array([MISSING, {"a": 1}, {"b": 2}]), origin=None, name="test")
+    assert e.ref == {"a": 1}
+    assert e.fillvalue == ""
+
+    val, dtype = e.dump()
+    assert isinstance(val, list)
+    assert val == ["", json.dumps({"a": 1}), json.dumps({"b": 2})]
+    assert dtype == h5py.string_dtype()
+
+
+def test_entry_list_array_int():
+    e = Entry(value=[np.array([1, 2]), np.array([3, 4])], origin=None, name="test")
+    npt.assert_array_equal(e.ref, np.array([1, 2]))
+    assert np.isnan(e.fillvalue)
+
+    val, dtype = e.dump()
+    assert isinstance(val, np.ndarray)
+    npt.assert_array_equal(val, [[1, 2], [3, 4]])
+    assert dtype == np.float64
+
+
+def test_entry_list_array_int_missing():
+    e = Entry(value=[np.array([1, 2]), MISSING, np.array([3, 4])], origin=None, name="test")
+    npt.assert_array_equal(e.ref, np.array([1, 2]))
+    assert np.isnan(e.fillvalue)
+
+    val, dtype = e.dump()
+    assert isinstance(val, np.ndarray)
+    npt.assert_array_equal(val, [[1, 2], [np.nan, np.nan], [3, 4]])
+    assert dtype == np.float64
+
+
+def test_entry_list_array_str():
+    e = Entry(value=[np.array(["a", "b"]), np.array(["c", "d"])], origin=None, name="test")
+    npt.assert_array_equal(e.ref, np.array(["a", "b"]))
+    assert e.fillvalue == ""
+
+    val, dtype = e.dump()
+    assert isinstance(val, list)
+    assert val == [json.dumps(["a", "b"]), json.dumps(["c", "d"])]
+    assert dtype == h5py.string_dtype()
+
+def test_entry_list_array_str_missing():
+    e = Entry(value=[np.array(["a", "b"]), MISSING, np.array(["c", "d"])], origin=None, name="test")
+    npt.assert_array_equal(e.ref, np.array(["a", "b"]))
+    assert e.fillvalue == ""
+
+    val, dtype = e.dump()
+    assert isinstance(val, list)
+    assert val == [json.dumps(["a", "b"]), "", json.dumps(["c", "d"])]
+    assert dtype == h5py.string_dtype()

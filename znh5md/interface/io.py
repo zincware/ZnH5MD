@@ -39,6 +39,8 @@ class IO(MutableSequence):
     chunk_size: int | None = None
     use_ase_calc: bool = True
 
+    _store_ase_origin: bool = True # for testing purposes only
+
     def __post_init__(self):
         if self.filename is None and self.file_handle is None:
             raise ValueError("Either filename or file_handle must be provided")

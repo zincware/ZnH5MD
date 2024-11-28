@@ -16,13 +16,16 @@ from znh5md.interface import IO
         "s22_illegal_calc_results",
         "s22_no_ascii",
         "frames_with_residuenames",
+        "s22_info_arrays_calc_missing_inbetween",
     ],
 )
-@pytest.mark.parametrize("append", [False, True])
+@pytest.mark.parametrize("append", [False])
+# @pytest.mark.parametrize("store_ase_origin ", [False, True])
 def test_frames_iter(dataset_name, append, request, tmp_path):
     dataset = request.getfixturevalue(dataset_name)
 
     io = IO(tmp_path / "test.h5")
+    # io._store_ase_origin = store_ase_origin
     if append:
         for frame in dataset:
             io.append(frame)

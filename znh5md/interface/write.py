@@ -41,7 +41,8 @@ def create_group(f, path, entry: Entry) -> None:
         grp.create_dataset("value", data=data, maxshape=(None,))
     else:
         grp.create_dataset("value", data=data, maxshape=(None, *data.shape[1:]))
-    grp.attrs.create(AttributePath.origin.value, entry.origin)
+    if entry.origin is not None:
+        grp.attrs.create(AttributePath.origin.value, entry.origin)
     if entry.unit is not None:
         grp.attrs.create(AttributePath.unit.value, entry.unit)
 
@@ -64,4 +65,6 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
             if path in f:
                 extend_group(self, path, entry)
             else:
+                if not self._store_ase_origin:
+                    entry.origin = None
                 create_group(f, path, entry)

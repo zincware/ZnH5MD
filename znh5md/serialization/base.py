@@ -15,7 +15,7 @@ ORIGIN_TYPE = t.Literal["calc", "info", "arrays", "atoms"]
 @dataclasses.dataclass
 class Entry:
     value: list[ALLOWED_TYPES] = dataclasses.field(repr=False)
-    origin: ORIGIN_TYPE
+    origin: ORIGIN_TYPE | None
     name: str
     unit: str | None = None
 

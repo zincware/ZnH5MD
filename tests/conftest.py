@@ -158,10 +158,15 @@ def s22_info_arrays_calc_missing_inbetween() -> list[ase.Atoms]:
         if np.random.random() > 0.5:
             atoms.new_array("mlip_forces", np.random.rand(len(atoms), 3))
         if np.random.random() > 0.5:
-            atoms.calc = SinglePointCalculator(atoms)
+            calc = SinglePointCalculator(atoms)
+            set_calc = False
             if np.random.random() > 0.5:
-                atoms.calc.results["energy"] = np.random.rand()
+                calc.results["energy"] = np.random.rand()
+                set_calc = True
             if np.random.random() > 0.5:
-                atoms.calc.results["forces"] = np.random.rand(len(atoms), 3)
+                calc.results["forces"] = np.random.rand(len(atoms), 3)
+                set_calc = True
+            if set_calc:
+                atoms.calc = calc
         images.append(atoms)
     return images

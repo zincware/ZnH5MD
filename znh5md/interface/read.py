@@ -16,25 +16,13 @@ def update_frames(self, name: str, value: np.ndarray, origin: ORIGIN_TYPE) -> No
     if name in ["positions", "numbers", "pbc", "cell"]:
         setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
     else:
-        # TODO: insert MISSING
-        # TODO: allow writing calc results to arrays
-
         if origin is not None:
-            if len(value.shape) == 1:
-                data = value.tolist()
-                if isinstance(data[0], bytes):
-                    for i, v in enumerate(data):
-                        if v == b"":
-                            data[i] = MISSING
-                        else:
-                            data[i] = json.loads(v)
+            if value.dtype.kind in ["O", "S", "U"]:
+                data = [json.loads(v) if v != b"" else MISSING for v in value]
             else:
                 data = decompose_varying_shape_arrays(value, np.nan)
-            for i, v in enumerate(data):
-                if (isinstance(v, float) and v == float("nan")) or (
-                    isinstance(v, np.generic) and np.isnan(v).all()
-                ):
-                    data[i] = MISSING
+                data = [x if not np.all(np.isnan(x)) else MISSING for x in data]
+
             if origin == "calc":
                 self.calc[name] = data
             elif origin == "info":

@@ -80,7 +80,9 @@ class Entry:
             if self.dtype == h5py.string_dtype():
                 # Handle string data
                 serialized_data = [
-                    json.dumps(v.tolist() if isinstance(v, np.ndarray) else v) if v is not MISSING else ""
+                    json.dumps(v.tolist() if isinstance(v, np.ndarray) else v)
+                    if v is not MISSING
+                    else ""
                     for v in data
                 ]
                 return serialized_data, h5py.string_dtype()
@@ -93,7 +95,9 @@ class Entry:
                     for v in data
                 ]
                 return (
-                    concatenate_varying_shape_arrays(processed_data, self.fillvalue, dtype=np.float64),
+                    concatenate_varying_shape_arrays(
+                        processed_data, self.fillvalue, dtype=np.float64
+                    ),
                     np.float64,
                 )
         except:

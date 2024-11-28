@@ -73,7 +73,7 @@ def test_frames_iter(dataset_name, append, request):
 )
 def test_frames_getitem(dataset_name, request):
     dataset = request.getfixturevalue(dataset_name)
-    frames = zns.encode(dataset)
+    frames = zns.Frames.from_ase(dataset)
 
     for idx, frame in enumerate(dataset):
         a = frames[idx]
@@ -94,7 +94,7 @@ def test_frames_getitem(dataset_name, request):
 
 
 def test_len(s22):
-    frames = zns.encode(s22)
+    frames = zns.Frames.from_ase(s22)
 
     assert len(frames) == 22
 
@@ -102,7 +102,7 @@ def test_len(s22):
 
 
 def test_serialisation_s22_energy(s22_energy):
-    frames = zns.encode(s22_energy)
+    frames = zns.Frames.from_ase(s22_energy)
 
     assert len(frames.arrays) == 0
     assert len(frames.info) == 0
@@ -112,7 +112,7 @@ def test_serialisation_s22_energy(s22_energy):
 
 
 def test_serialisation_s22_energy_forces(s22_energy_forces):
-    frames = zns.encode(s22_energy_forces)
+    frames = zns.Frames.from_ase(s22_energy_forces)
 
     assert len(frames.arrays) == 0
     assert len(frames.info) == 0

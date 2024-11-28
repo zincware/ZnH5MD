@@ -4,6 +4,7 @@ import typing as t
 import ase
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
+import h5py
 
 from znh5md.units import get_unit
 
@@ -22,6 +23,29 @@ class Entry:
     def __post_init__(self):
         if self.unit is None:
             self.unit = get_unit(self.name)
+
+    @property
+    def dtype(self) -> t.Any:
+        if isinstance(self.value[0], np.ndarray):
+            return self.value[0].dtype
+        elif isinstance(self.value[0], (int, float)):
+            return np.float64
+        elif isinstance(self.value[0], str):
+            return h5py.string_dtype()
+        elif isinstance(self.value[0], bool):
+            # when using bool, there is no possible fill value, only True or False
+            return np.bool_
+        else:
+            raise ValueError(f"Unknown data type: {type(self.value[0])}")
+        
+    @property
+    def fillvalue(self) -> t.Any:
+        if self.dtype == h5py.string_dtype():
+            return ""
+        elif self.dtype.kind in ["O", "S", "U"]:
+            return np.nan
+        else:
+            return np.nan
 
 
 def process_category(

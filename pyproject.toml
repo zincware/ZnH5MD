@@ -29,6 +29,10 @@ pandas = "^2.2.2"
 chemfiles = "^0.10.4"
 mdtraj = "^1.10.0"
 
+
+[tool.poetry.group.tests.dependencies]
+rdkit2ase = "^0.1.4"
+
 [tool.poetry.scripts]
 znh5md = 'znh5md.cli:app'
 

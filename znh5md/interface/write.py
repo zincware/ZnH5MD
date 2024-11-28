@@ -7,27 +7,37 @@ import numpy as np
 
 from znh5md.misc import concatenate_varying_shape_arrays, open_file
 from znh5md.path import AttributePath, get_h5md_path
-from znh5md.serialization import Entry, Frames
+from znh5md.serialization import Entry, Frames, MISSING
 
 if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
 
 def process_calc_info_arrays(data: list) -> t.Tuple[t.Union[np.ndarray, list], t.Any]:
-    if isinstance(data[0], np.ndarray):
-        try:
+    # TODO: handle MISSING
+    ref = None
+    for v in data:
+        if v is not MISSING:
+            ref = v
+            break
+    else:
+        raise ValueError("All values are MISSING")
+
+    if isinstance(ref, np.ndarray):
+        if ref.dtype.kind in ["O", "S", "U"]:
+            return [json.dumps(v.tolist()) if v is not MISSING else "" for v in data], h5py.string_dtype()
+        else:
+            data = [np.array(v) if v is not MISSING else np.full_like(ref, np.nan) for v in data]
             return concatenate_varying_shape_arrays(data, np.nan), np.float64
-        except ValueError:  # could be an unsupported format
-            return [json.dumps(v.tolist()) for v in data], h5py.string_dtype()
-    elif isinstance(data[0], str):
-        return [json.dumps(v) for v in data], h5py.string_dtype()
-    elif isinstance(data[0], (int, float)):
-        data_ = np.array(data)
+    elif isinstance(ref, str):
+        return [json.dumps(v) if v is not MISSING else "" for v in data], h5py.string_dtype()
+    elif isinstance(ref, (int, float)):
+        data_ = np.array([v if v is not MISSING else np.nan for v in data])
         return data_, data_.dtype
-    elif isinstance(data[0], dict):
-        return [json.dumps(v) for v in data], h5py.string_dtype()
-    elif isinstance(data[0], list):
-        return [json.dumps(v) for v in data], h5py.string_dtype()
+    elif isinstance(ref, dict):
+        return [json.dumps(v) if v is not MISSING else "" for v in data], h5py.string_dtype()
+    elif isinstance(ref, list):
+        return [json.dumps(v) if v is not MISSING else "" for v in data], h5py.string_dtype()
     else:
         raise ValueError(f"Unknown data type: {type(data[0])}")
 

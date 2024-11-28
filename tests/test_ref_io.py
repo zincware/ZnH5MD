@@ -1,6 +1,8 @@
 import numpy.testing as npt
 import pytest
-
+import rdkit2ase
+import h5py
+import numpy as np
 from znh5md.interface import IO
 
 
@@ -42,3 +44,20 @@ def test_frames_iter(dataset_name, append, request, tmp_path):
         if b.calc is not None or a.calc is not None:
             for key in set(a.calc.results.keys()) | set(b.calc.results.keys()):
                 npt.assert_array_equal(a.calc.results[key], b.calc.results[key])
+
+
+def test_arrays_list_array(tmp_path):
+
+    atoms = rdkit2ase.smiles2atoms("Cl")
+    atoms.arrays["lst"] = list(atoms.symbols)
+    atoms.arrays["arr"] = np.array(atoms.symbols)
+
+    io = IO(tmp_path / "test.h5")
+    io.extend([atoms, rdkit2ase.smiles2atoms("C")])
+
+    with h5py.File(io.filename, "r") as f:
+        assert np.array_equal(f["particles/atoms/lst/value"][0], b'["Cl", "H"]')
+        assert np.array_equal(f["particles/atoms/lst/value"][1], b'')
+        # now for arr
+        assert np.array_equal(f["particles/atoms/arr/value"][0], b'["Cl", "H"]')
+        assert np.array_equal(f["particles/atoms/arr/value"][1], b'')

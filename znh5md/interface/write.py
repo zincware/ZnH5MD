@@ -1,52 +1,51 @@
-import json
 import typing as t
 
 import ase
 import h5py
 import numpy as np
 
-from znh5md.misc import concatenate_varying_shape_arrays, open_file
+from znh5md.misc import open_file
 from znh5md.path import AttributePath, get_h5md_path
-from znh5md.serialization import Entry, Frames, MISSING
+from znh5md.serialization import MISSING, Entry, Frames
 
 if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
 
-def process_calc_info_arrays(data: list) -> t.Tuple[t.Union[np.ndarray, list], t.Any]:
+def process_calc_info_arrays(entry: Entry) -> t.Tuple[t.Union[np.ndarray, list], t.Any]:
     # TODO: handle MISSING
     ref = None
-    for v in data:
+    for v in entry.value:
         if v is not MISSING:
             ref = v
             break
     else:
         raise ValueError("All values are MISSING")
 
-    if isinstance(ref, np.ndarray):
-        if ref.dtype.kind in ["O", "S", "U"]:
-            return [json.dumps(v.tolist()) if v is not MISSING else "" for v in data], h5py.string_dtype()
-        else:
-            data = [np.array(v) if v is not MISSING else np.full_like(ref, np.nan) for v in data]
-            return concatenate_varying_shape_arrays(data, np.nan), np.float64
-    elif isinstance(ref, str):
-        return [json.dumps(v) if v is not MISSING else "" for v in data], h5py.string_dtype()
-    elif isinstance(ref, (int, float)):
-        data_ = np.array([v if v is not MISSING else np.nan for v in data])
-        return data_, data_.dtype
-    elif isinstance(ref, dict):
-        return [json.dumps(v) if v is not MISSING else "" for v in data], h5py.string_dtype()
-    elif isinstance(ref, list):
-        return [json.dumps(v) if v is not MISSING else "" for v in data], h5py.string_dtype()
-    else:
-        raise ValueError(f"Unknown data type: {type(data[0])}")
+    # if isinstance(ref, np.ndarray):
+    #     if ref.dtype.kind in ["O", "S", "U"]:
+    #         return [json.dumps(v.tolist()) if v is not MISSING else "" for v in data], h5py.string_dtype()
+    #     else:
+    #         data = [np.array(v) if v is not MISSING else np.full_like(ref, np.nan) for v in data]
+    #         return concatenate_varying_shape_arrays(data, np.nan), np.float64
+    # elif isinstance(ref, str):
+    #     return [json.dumps(v) if v is not MISSING else "" for v in data], h5py.string_dtype()
+    # elif isinstance(ref, (int, float)):
+    #     data_ = np.array([v if v is not MISSING else np.nan for v in data])
+    #     return data_, data_.dtype
+    # elif isinstance(ref, dict):
+    #     return [json.dumps(v) if v is not MISSING else "" for v in data], h5py.string_dtype()
+    # elif isinstance(ref, list):
+    #     return [json.dumps(v) if v is not MISSING else "" for v in data], h5py.string_dtype()
+    # else:
+    #     raise ValueError(f"Unknown data type: {type(data[0])}")
 
 
 def create_group(f, path, entry: Entry) -> None:
     if path in f:
         raise ValueError(f"Group {path} already exists")
     grp = f.create_group(path)
-    data, dtype = process_calc_info_arrays(entry.value)
+    data, dtype = entry.dump()
     if dtype == h5py.string_dtype():
         grp.create_dataset("value", data=data, maxshape=(None,))
     else:

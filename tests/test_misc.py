@@ -36,7 +36,9 @@ from znh5md.misc import concatenate_varying_shape_arrays, decompose_varying_shap
     ],
 )
 def test_concatenate_varying_shape_arrays(inp, expected, fillvalue):
-    result = concatenate_varying_shape_arrays(inp, fillvalue=fillvalue)
+    result = concatenate_varying_shape_arrays(
+        inp, fillvalue=fillvalue, dtype=np.float64
+    )
     npt.assert_array_equal(result, expected)
 
 
@@ -59,7 +61,7 @@ def test_concatenate_varying_shape_arrays(inp, expected, fillvalue):
     ],
 )
 def test_concatenate_varying_shape_arrays_concept(inp, shape):
-    result = concatenate_varying_shape_arrays(inp, fillvalue=np.nan)
+    result = concatenate_varying_shape_arrays(inp, fillvalue=np.nan, dtype=np.float64)
     assert result.shape == shape
 
 
@@ -80,7 +82,9 @@ def test_concatenate_varying_shape_arrays_concept(inp, shape):
 )
 @pytest.mark.parametrize("fillvalue", [np.nan, 0.0])
 def test_decompose_varying_shape_arrays(inp, fillvalue):
-    concatenated = concatenate_varying_shape_arrays(inp, fillvalue=fillvalue)
+    concatenated = concatenate_varying_shape_arrays(
+        inp, fillvalue=fillvalue, dtype=np.float64
+    )
     result = decompose_varying_shape_arrays(concatenated, fillvalue=fillvalue)
     assert len(result) == len(inp)
     for i, array in enumerate(result):

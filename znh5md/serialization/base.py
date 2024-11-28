@@ -1,21 +1,38 @@
 import dataclasses
+import functools
+import json
 import typing as t
 
 import ase
+import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
-import h5py
 
+from znh5md.misc import concatenate_varying_shape_arrays
 from znh5md.units import get_unit
 
-ALLOWED_TYPES = np.ndarray | dict | float | int | str | bool | list
+
+class _MISSING:
+    """Sentinel value for missing entries."""
+
+    pass
+
+
+MISSING = _MISSING()
+
+# Define allowed types
+ALLOWED_TYPES = t.Union[np.ndarray, dict, float, int, str, bool, list, _MISSING]
+
+# Define content type
 CONTENT_TYPE = dict[str, ALLOWED_TYPES]
+
+# Define origin type
 ORIGIN_TYPE = t.Literal["calc", "info", "arrays", "atoms"]
 
 
 @dataclasses.dataclass
 class Entry:
-    value: list[ALLOWED_TYPES] = dataclasses.field(repr=False)
+    value: list[ALLOWED_TYPES] | np.ndarray = dataclasses.field(repr=False)
     origin: ORIGIN_TYPE | None
     name: str
     unit: str | None = None
@@ -24,28 +41,49 @@ class Entry:
         if self.unit is None:
             self.unit = get_unit(self.name)
 
-    @property
-    def dtype(self) -> t.Any:
-        if isinstance(self.value[0], np.ndarray):
-            return self.value[0].dtype
-        elif isinstance(self.value[0], (int, float)):
-            return np.float64
-        elif isinstance(self.value[0], str):
-            return h5py.string_dtype()
-        elif isinstance(self.value[0], bool):
-            # when using bool, there is no possible fill value, only True or False
-            return np.bool_
+    @functools.cached_property
+    def ref(self) -> t.Any:
+        for v in self.value:
+            if v is not MISSING:
+                return v
         else:
-            raise ValueError(f"Unknown data type: {type(self.value[0])}")
-        
+            raise ValueError("All values are MISSING")
+
+    @functools.cached_property
+    def dtype(self) -> t.Any:
+        if isinstance(self.ref, np.ndarray):
+            if self.ref.dtype.kind in ["O", "S", "U"]:
+                return h5py.string_dtype()
+            else:
+                return np.float64
+        elif isinstance(self.ref, str):
+            return h5py.string_dtype()
+        else:
+            return np.float64
+
     @property
     def fillvalue(self) -> t.Any:
         if self.dtype == h5py.string_dtype():
             return ""
-        elif self.dtype.kind in ["O", "S", "U"]:
-            return np.nan
         else:
             return np.nan
+
+    def dump(self) -> t.Tuple[np.ndarray | list, t.Any]:
+        data = self.value
+        if self.dtype == h5py.string_dtype():
+            return [
+                json.dumps(v) if v is not MISSING else "" for v in data
+            ], h5py.string_dtype()
+        else:
+            data = [
+                np.array(v, dtype=self.dtype)
+                if v is not MISSING
+                else np.full_like(self.ref, self.fillvalue, dtype=self.dtype)
+                for v in data
+            ]
+            return concatenate_varying_shape_arrays(
+                data, self.fillvalue, dtype=np.float64
+            ), np.float64
 
 
 def process_category(
@@ -201,12 +239,3 @@ class Frames:
                 process_category(self.calc, atoms.calc.results, idx)
             elif len(self.calc) != 0:
                 process_category(self.calc, {}, idx)
-
-
-class _MISSING:
-    """Sentinel value for missing entries."""
-
-    pass
-
-
-MISSING = _MISSING()

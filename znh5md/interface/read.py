@@ -6,7 +6,7 @@ import numpy as np
 
 from znh5md.misc import decompose_varying_shape_arrays, open_file
 from znh5md.path import AttributePath, H5MDToASEMapping
-from znh5md.serialization import ORIGIN_TYPE, Frames, MISSING
+from znh5md.serialization import MISSING, ORIGIN_TYPE, Frames
 
 if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
@@ -31,7 +31,9 @@ def update_frames(self, name: str, value: np.ndarray, origin: ORIGIN_TYPE) -> No
             else:
                 data = decompose_varying_shape_arrays(value, np.nan)
             for i, v in enumerate(data):
-                if( isinstance(v, float) and v == float("nan")) or (isinstance(v, np.generic) and np.isnan(v).all()):
+                if (isinstance(v, float) and v == float("nan")) or (
+                    isinstance(v, np.generic) and np.isnan(v).all()
+                ):
                     data[i] = MISSING
             if origin == "calc":
                 self.calc[name] = data

@@ -7,7 +7,7 @@ import numpy as np
 
 
 def concatenate_varying_shape_arrays(
-    values: list, fillvalue: str | int | float | bool
+    values: list, fillvalue: str | int | float | bool, dtype
 ) -> np.ndarray:
     """
     Concatenates arrays of varying shapes into a single array,
@@ -21,8 +21,6 @@ def concatenate_varying_shape_arrays(
     Returns:
         np.ndarray: A new array containing the input arrays, padded to match the maximum shape.
     """
-    # Determine the dtype from the fillvalue
-    dtype = np.array(fillvalue).dtype
 
     # Determine the maximum shape along all dimensions
     maxshape = list(values[0].shape)

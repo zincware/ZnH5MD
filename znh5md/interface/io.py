@@ -34,7 +34,7 @@ class IO(MutableSequence):
     compression: str | None = "gzip"
     compression_opts: int | None = None
     timestep: float = 1.0
-    store: t.Literal["time", "linear", "fixed"] = "linear"
+    store: t.Literal["time", "linear"] = "linear"
     tqdm_limit: int = 100
     chunk_size: int | None = None
     use_ase_calc: bool = True

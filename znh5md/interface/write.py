@@ -2,6 +2,7 @@ import typing as t
 
 import ase
 import h5py
+
 from znh5md.misc import open_file
 from znh5md.path import AttributePath, get_h5md_path
 from znh5md.serialization import Entry, Frames
@@ -23,7 +24,7 @@ def create_group(f, path, entry: Entry) -> None:
         grp.attrs.create(AttributePath.origin.value, entry.origin)
     if entry.unit is not None:
         grp.attrs.create(AttributePath.unit.value, entry.unit)
-    
+
     # We use linear time and step for now
     # because most of the time we don't have an step / offset ...
     step_ds = grp.create_dataset("step", data=1)

@@ -184,3 +184,13 @@ def test_entry_list_array_str_missing():
     assert isinstance(val, list)
     assert val == [json.dumps(["a", "b"]), "", json.dumps(["c", "d"])]
     assert dtype == h5py.string_dtype()
+
+
+def test_list_list_str_missing():
+    e = Entry(value=[['Cl', 'H'], ["O", "O"], MISSING], origin=None, name="test")
+    npt.assert_array_equal(e.ref, np.array(['Cl', 'H']))
+    assert e.fillvalue == ""
+
+    val, dtype = e.dump()
+    assert isinstance(val, list)
+    assert val == [json.dumps(['Cl', 'H']), json.dumps(["O", "O"]), ""]

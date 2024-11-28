@@ -36,8 +36,7 @@ def test_frames_iter(dataset_name, append, request, tmp_path):
             npt.assert_array_equal(a.arrays[key], b.arrays[key])
         for key in set(a.info.keys()) | set(b.info.keys()):
             npt.assert_array_equal(a.info[key], b.info[key])
-        assert a.arrays == b.arrays
         if b.calc is not None or a.calc is not None:
-            for key in set(a.calc.keys()) | set(b.calc.keys()):
-                npt.assert_array_equal(a.calc[key], b.calc[key])
+            for key in set(a.calc.results.keys()) | set(b.calc.results.keys()):
+                npt.assert_array_equal(a.calc.results[key], b.calc.results[key])
         

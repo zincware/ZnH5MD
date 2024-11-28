@@ -5,37 +5,60 @@ import numpy as np
 
 from znh5md.misc import open_file, decompose_varying_shape_arrays
 import json
-from znh5md.path import H5MDToASEMapping
-from znh5md.serialization import Frames
+from znh5md.path import H5MDToASEMapping, AttributePath
+from znh5md.serialization import Frames, ORIGIN_TYPE
 
 if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
 
-def update_frames(self, name: str, value: np.ndarray) -> None:
+def update_frames(self, name: str, value: np.ndarray, origin: ORIGIN_TYPE) -> None:
     if name in ["positions", "numbers", "pbc", "cell"]:
         setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
     else:
-        # TODO: sort into calc
         # TODO: insert MISSING
-        if len(value.shape) == 1:
-            data = value.tolist()
-            if isinstance(data[0], bytes):
-                data = [json.loads(v) for v in data]
-                if isinstance(data[0], list) and len(data[0]) == len(
-                    self.numbers[0]
-                ):
-                    self.arrays[name] = data
-                else:
-                    self.info[name] = data
+        # TODO: allow writing calc results to arrays
+
+
+
+        if origin is not None:
+            if len(value.shape) == 1:
+                data = value.tolist()
+                if isinstance(data[0], bytes):
+                    data = [json.loads(v) for v in data]
             else:
+                data = decompose_varying_shape_arrays(value, np.nan)
+            if origin == "calc":
+                self.calc[name] = data
+            elif origin == "info":
+                self.info[name] = data
+            elif origin == "arrays":
                 self.arrays[name] = data
-        else:
-            value = decompose_varying_shape_arrays(value, np.nan)
-            if len(value[0]) == len(self.numbers[0]):
-                self.arrays[name] = value
+            elif origin == "atoms":
+                raise ValueError(f"Origin 'atoms' is not allowed for {name}")
             else:
-                self.info[name] = value
+                raise ValueError(f"Unknown origin: {origin}")
+        else:
+            # infer the origin from the shape of the array
+            print(f"infer origin from shape of array: {name}")
+            if len(value.shape) == 1:
+                data = value.tolist()
+                if isinstance(data[0], bytes):
+                    data = [json.loads(v) for v in data]
+                    if isinstance(data[0], list) and len(data[0]) == len(
+                        self.numbers[0]
+                    ):
+                        self.arrays[name] = data
+                    else:
+                        self.info[name] = data
+                else:
+                    self.arrays[name] = data
+            else:
+                value = decompose_varying_shape_arrays(value, np.nan)
+                if len(value[0]) == len(self.numbers[0]):
+                    self.arrays[name] = value
+                else:
+                    self.info[name] = value
 
 
 def getitem(
@@ -46,48 +69,48 @@ def getitem(
     if isinstance(index, int):
         is_single_item = True
         index = [index]
-
+    
     with open_file(self.filename, self.file_handle, mode="r") as f:
         particles = f[f"/particles/{self.particles_group}"]
         # first do species then the rest so we know the length of the arrays
         #  for sorting into arrays, info, calc
         grp = particles["species/value"]
-        update_frames(frames, H5MDToASEMapping.species.value, grp[index])
+        update_frames(frames, H5MDToASEMapping.species.value, grp[index], None)
 
         for grp_name in particles:
             if grp_name == "species":
                 continue
             grp = particles[grp_name]  # Access the subgroup or dataset
+            origin = grp.attrs.get(AttributePath.origin.value, None)
             if grp_name == "box":
-                update_frames(frames, "cell", grp["edges/value"][index])
-                update_frames(frames, "pbc", grp["pbc/value"][index])
+                update_frames(frames, "cell", grp["edges/value"][index], origin)
+                update_frames(frames, "pbc", grp["pbc/value"][index], origin)
             else:
                 try:
                     try:
                         update_frames(frames, 
-                            H5MDToASEMapping[grp_name].value, grp["value"][index]
+                            H5MDToASEMapping[grp_name].value, grp["value"][index], origin
                         )
                     except KeyError:
-                        update_frames(frames, grp_name, grp["value"][index])
+                        update_frames(frames, grp_name, grp["value"][index], origin)
                 except KeyError:
                     raise KeyError(
                         f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."
                     )
 
-        try:
+        if f"/observables/{self.particles_group}" in f:
             observables = f[f"/observables/{self.particles_group}"]
-        except KeyError:
-            raise KeyError("No observables found in the file.")
-        for grp_name in observables:
-            grp = observables[grp_name]
-            try:
+            for grp_name in observables:
+                grp = observables[grp_name]
+                origin = grp.attrs.get(AttributePath.origin.value, None)
                 try:
-                    update_frames(frames, H5MDToASEMapping[grp_name].value, grp["value"][index])
+                    try:
+                        update_frames(frames, H5MDToASEMapping[grp_name].value, grp["value"][index], origin)
+                    except KeyError:
+                        update_frames(frames, grp_name, grp["value"][index], origin)
                 except KeyError:
-                    update_frames(frames, grp_name, grp["value"][index])
-            except KeyError:
-                raise KeyError(
-                    f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."
-                )
+                    raise KeyError(
+                        f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."
+                    )
 
     return list(frames) if not is_single_item else frames[0]

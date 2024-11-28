@@ -5,6 +5,13 @@ if t.TYPE_CHECKING:
     from znh5md.serialization import Frames
 
 
+class AttributePath(str, Enum):
+    origin = "ASE_ENTRY_ORIGIN"
+    unit = "unit"
+    boundary = "boundary"
+    dimension = "dimension"
+
+
 class H5MDPath(str, Enum):
     # https://www.nongnu.org/h5md/h5md.html#particles-group
     position = "/particles/{}/position"

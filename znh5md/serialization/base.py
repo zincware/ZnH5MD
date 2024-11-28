@@ -6,10 +6,22 @@ import ase
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from znh5md.misc import decompose_varying_shape_arrays
+from znh5md.units import get_unit
 
-CONTENT_TYPE = dict[str, np.ndarray | dict | float | int | str | bool]
+ALLOWED_TYPES = np.ndarray | dict | float | int | str | bool | list
+CONTENT_TYPE = dict[str, ALLOWED_TYPES]
+ORIGIN_TYPE = t.Literal["calc", "info", "arrays", "atoms"]
 
+@dataclasses.dataclass
+class Entry:
+    value: list[ALLOWED_TYPES] = dataclasses.field(repr=False)
+    origin: ORIGIN_TYPE
+    name: str
+    unit: str|None = None
+
+    def __post_init__(self):
+        if self.unit is None:
+            self.unit = get_unit(self.name)
 
 def process_category(
     target: dict[str, list], content: CONTENT_TYPE, index: int
@@ -78,18 +90,18 @@ class Frames:
         for key in self.calc:
             yield key
 
-    def items(self) -> t.Iterator[t.Tuple[str, t.Any]]:
+    def items(self) -> t.Iterator[Entry]:
         """Iterate over the items."""
-        yield "positions", self.positions
-        yield "numbers", self.numbers
-        yield "pbc", self.pbc
-        yield "cell", self.cell
+        yield Entry(self.positions, "atoms", name="positions")
+        yield Entry(self.numbers, "atoms", name="numbers")
+        yield Entry(self.pbc, "atoms", name="pbc")
+        yield Entry(self.cell, "atoms", name="cell")
         for key in self.arrays:
-            yield key, self.arrays[key]
+            yield Entry(self.arrays[key], "arrays", name=key)
         for key in self.info:
-            yield key, self.info[key]
+            yield Entry(self.info[key], "info", name=key)
         for key in self.calc:
-            yield key, self.calc[key]
+            yield Entry(self.calc[key], "calc", name=key)
 
     def check(self) -> None:
         if len(list(self.keys())) != len(set(self.keys())):

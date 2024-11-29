@@ -1,12 +1,7 @@
 import ase.build
-import h5py
-import numpy as np
-import numpy.testing as npt
 import pytest
-from ase.calculators.singlepoint import SinglePointCalculator
 
 import znh5md
-
 
 # def test_h5md_time(tmp_path):
 #     io = znh5md.IO(tmp_path / "test_time_step.h5", store="time")

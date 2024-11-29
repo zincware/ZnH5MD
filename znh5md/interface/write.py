@@ -3,7 +3,7 @@ import typing as t
 import ase
 import h5py
 
-from znh5md.misc import open_file, fill_dataset
+from znh5md.misc import fill_dataset, open_file
 from znh5md.path import AttributePath, get_h5md_path
 from znh5md.serialization import Entry, Frames
 
@@ -18,12 +18,24 @@ def create_group(f, path, entry: Entry, ref_length: int) -> None:
     data, dtype = entry.dump()
     # TODO: needs shift as well!
     if dtype == h5py.string_dtype():
-        ds = grp.create_dataset("value", shape=(ref_length + len(data),), maxshape=(None,), fillvalue=entry.fillvalue, dtype=dtype)
+        ds = grp.create_dataset(
+            "value",
+            shape=(ref_length + len(data),),
+            maxshape=(None,),
+            fillvalue=entry.fillvalue,
+            dtype=dtype,
+        )
         ds[ref_length:] = data
     else:
         maxshape = tuple(None for _ in data.shape)
         shape = (ref_length + len(data),) + data.shape[1:]
-        ds = grp.create_dataset("value", shape=shape, maxshape=maxshape, fillvalue=entry.fillvalue, dtype=dtype)
+        ds = grp.create_dataset(
+            "value",
+            shape=shape,
+            maxshape=maxshape,
+            fillvalue=entry.fillvalue,
+            dtype=dtype,
+        )
         ds[ref_length:] = data
     if entry.origin is not None:
         grp.attrs.create(AttributePath.origin.value, entry.origin)
@@ -39,7 +51,7 @@ def create_group(f, path, entry: Entry, ref_length: int) -> None:
 def extend_group(f, path, entry: Entry, ref_length: int) -> None:
     if path not in f:
         raise ValueError(f"Group {path} not found exists")
-    
+
     grp = f[path]
     data, dtype = entry.dump()
     # print("extending group", path, len(data), len(grp["value"]))
@@ -60,7 +72,6 @@ def extend_group(f, path, entry: Entry, ref_length: int) -> None:
         grp["value"][len(grp["value"]) - len(data) :] = data
     else:
         fill_dataset(grp["value"], data, shift, entry.fillvalue)
-
 
 
 def extend(self: "IO", data: list[ase.Atoms]) -> None:

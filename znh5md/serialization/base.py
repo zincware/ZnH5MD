@@ -176,7 +176,7 @@ class Frames:
 
     def items(self) -> t.Iterator[Entry]:
         """Iterate over the items."""
-        yield Entry(self.numbers, "atoms", name="numbers") # numbers has to be first!
+        yield Entry(self.numbers, "atoms", name="numbers")  # numbers has to be first!
         yield Entry(self.positions, "atoms", name="positions")
         yield Entry(self.pbc, "atoms", name="pbc")
         yield Entry(self.cell, "atoms", name="cell")

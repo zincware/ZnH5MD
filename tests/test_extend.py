@@ -1,6 +1,7 @@
-import znh5md
-import rdkit2ase
 import h5py
+import rdkit2ase
+
+import znh5md
 
 
 def test_extend_same_size(tmp_path):
@@ -12,7 +13,7 @@ def test_extend_same_size(tmp_path):
 
     with h5py.File(io.filename, "r") as f:
         assert f["particles/atoms/position/value"].shape == (1, 3, 3)
-    
+
     io.append(water)
     assert len(io) == 2
 
@@ -38,6 +39,7 @@ def test_extend_different_size(tmp_path):
     with h5py.File(io.filename, "r") as f:
         assert f["particles/atoms/position/value"].shape == (2, 4, 3)
 
+
 def test_extend_misssing(tmp_path):
     water = rdkit2ase.smiles2atoms("O")
     ammonia = rdkit2ase.smiles2atoms("N")
@@ -62,7 +64,7 @@ def test_extend_misssing(tmp_path):
         assert f["particles/atoms/position/value"].shape == (2, 4, 3)
         assert f["observables/atoms/val/value"].shape == (2,)
         assert f["particles/atoms/mass/value"].shape == (2, 4)
-    
+
     # io.append(water)
 
     # with h5py.File(io.filename, "r") as f:

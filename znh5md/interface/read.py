@@ -92,7 +92,7 @@ def getitem(
                     except KeyError:
                         update_frames(frames, grp_name, grp["value"][index], origin)
                     except IndexError:
-                        pass # values must not be backfilled to the length of the species
+                        pass  # values must not be backfilled to the length of the species
                 except KeyError:
                     raise KeyError(
                         f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."
@@ -114,7 +114,7 @@ def getitem(
                     except KeyError:
                         update_frames(frames, grp_name, grp["value"][index], origin)
                     except IndexError:
-                        pass # values must not be backfilled to the length of the species
+                        pass  # values must not be backfilled to the length of the species
                 except KeyError:
                     raise KeyError(
                         f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."

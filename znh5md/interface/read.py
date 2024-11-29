@@ -91,7 +91,7 @@ def getitem(
                         )
                     except KeyError:
                         update_frames(frames, grp_name, grp["value"][index], origin)
-                    except IndexError:
+                    except (OSError, IndexError):
                         pass  # values must not be backfilled to the length of the species
                 except KeyError:
                     raise KeyError(
@@ -113,7 +113,7 @@ def getitem(
                         )
                     except KeyError:
                         update_frames(frames, grp_name, grp["value"][index], origin)
-                    except IndexError:
+                    except (OSError, IndexError):
                         pass  # values must not be backfilled to the length of the species
                 except KeyError:
                     raise KeyError(

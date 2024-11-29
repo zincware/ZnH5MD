@@ -103,8 +103,6 @@ def fill_dataset(dataset, new_data, shift, fill_value):
 
     if len(old_shape) == 1 and len(new_shape) == 1:
         dataset.resize((old_shape[0] + new_shape[0] + shift,))
-        if shift > 0:
-            dataset[old_shape[0] :] = fill_value
         dataset[old_shape[0] + shift :] = new_data
         return
 
@@ -118,11 +116,6 @@ def fill_dataset(dataset, new_data, shift, fill_value):
     # Resize the dataset to the new shape
     dataset.resize(max_shape)
 
-    # Fill the new columns of the existing data with np.nan
-    # we might not need this!
-    # if old_shape[1] < max_shape[1]:
-    #     dataset[:, old_shape[1] :] = fill_value
-
     # Fill the new data rows with np.nan if necessary
     if new_shape[1] < max_shape[1]:
         padded_new_data = np.full(
@@ -132,7 +125,4 @@ def fill_dataset(dataset, new_data, shift, fill_value):
     else:
         padded_new_data = new_data
 
-    # Append the new data to the dataset
-    if shift > 0:
-        dataset[old_shape[0] :] = fill_value
     dataset[old_shape[0] + shift :] = padded_new_data

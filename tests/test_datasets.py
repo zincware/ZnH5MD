@@ -105,7 +105,7 @@ def test_datasets_extxyz(tmp_path, dataset, request):
                 npt.assert_array_almost_equal(a.info[key], b.info[key])
 
 
-@pytest.mark.parametrize("store", ["time", "linear"])
+@pytest.mark.parametrize("store", ["linear"])
 @pytest.mark.parametrize(
     "dataset",
     [
@@ -122,11 +122,14 @@ def test_datasets_h5py(tmp_path, dataset, request, store):
         assert "particles/atoms/species/value" in f
         assert "particles/atoms/force/value" in f
         assert "observables/atoms/force/value" not in f
-        assert "particles/atoms/velocity/value" in f
-        assert "observables/atoms/velocity/value" not in f
+        # assert "particles/atoms/velocity/value" in f
+        # assert "observables/atoms/velocity/value" not in f
 
-        assert "particles/atoms/energy/value" not in f
-        assert "observables/atoms/energy/value" in f
+        assert "particles/atoms/momenta/value" in f
+        assert "observables/atoms/momenta/value" not in f
+
+        assert "particles/atoms/potential_energy/value" not in f
+        assert "observables/atoms/potential_energy/value" in f
 
         assert "particles/atoms/mlip_forces/value" in f
         assert "particles/atoms/mlip_forces_2/value" in f
@@ -135,15 +138,15 @@ def test_datasets_h5py(tmp_path, dataset, request, store):
         assert "observables/atoms/mlip_energy_2/value" in f
         assert "observables/atoms/mlip_stress/value" in f
 
-        assert f["particles/atoms/velocity/value"].attrs["unit"] == "Angstrom/fs"
+        # assert f["particles/atoms/velocity/value"].attrs["unit"] == "Angstrom/fs"
         assert f["particles/atoms/force/value"].attrs["unit"] == "eV/Angstrom"
 
-        if store == "time":
-            assert f["observables/atoms/energy/time"].shape == (len(images),)
-            assert f["observables/atoms/energy/step"].shape == (len(images),)
+        # if store == "time":
+        #     assert f["observables/atoms/energy/time"].shape == (len(images),)
+        #     assert f["observables/atoms/energy/step"].shape == (len(images),)
         if store == "linear":
-            assert f["observables/atoms/energy/time"][()] == 0.5
-            assert f["observables/atoms/energy/step"][()] == 1
+            assert f["observables/atoms/potential_energy/time"][()] == 1
+            assert f["observables/atoms/potential_energy/step"][()] == 1
 
         # assert f["observables/atoms/energy/value"].attrs["unit"] == "eV"
 

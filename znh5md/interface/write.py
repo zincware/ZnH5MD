@@ -11,12 +11,12 @@ if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
 
-def create_group(f, path, entry: Entry, ref_length: int) -> None:
+def create_group(f, path, entry: Entry, ref_length: int, particles_goup: str) -> None:
     if path in f:
         raise ValueError(f"Group {path} already exists")
     grp = f.create_group(path)
     data, dtype = entry.dump()
-    # TODO: needs shift as well!
+
     if dtype == h5py.string_dtype():
         ds = grp.create_dataset(
             "value",
@@ -37,10 +37,16 @@ def create_group(f, path, entry: Entry, ref_length: int) -> None:
             dtype=dtype,
         )
         ds[ref_length:] = data
+        # special case for box
+        if entry.name == "pbc":
+            box_grp = f[f"/particles/{particles_goup}/box"]
+            box_grp.attrs.create(AttributePath.boundary.value, ["periodic" if x else "none" for x in entry.ref])
+            box_grp.attrs.create(AttributePath.dimension.value, 3)
+            
     if entry.origin is not None:
         grp.attrs.create(AttributePath.origin.value, entry.origin)
     if entry.unit is not None:
-        grp.attrs.create(AttributePath.unit.value, entry.unit)
+        ds.attrs.create(AttributePath.unit.value, entry.unit)
 
     # We use linear time and step for now
     # because most of the time we don't have an step / offset ...
@@ -87,4 +93,4 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
             else:
                 if not self._store_ase_origin:
                     entry.origin = None
-                create_group(f, path, entry, ref_length)
+                create_group(f, path, entry, ref_length, self.particles_group)

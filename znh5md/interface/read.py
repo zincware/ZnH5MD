@@ -13,7 +13,9 @@ if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
 
-def update_frames(self, name: str, value: np.ndarray, origin: ORIGIN_TYPE, use_ase_calc: bool) -> None:
+def update_frames(
+    self, name: str, value: np.ndarray, origin: ORIGIN_TYPE, use_ase_calc: bool
+) -> None:
     if name in ["positions", "numbers", "pbc", "cell"]:
         setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
     else:
@@ -22,7 +24,7 @@ def update_frames(self, name: str, value: np.ndarray, origin: ORIGIN_TYPE, use_a
         else:
             data = decompose_varying_shape_arrays(value, np.nan)
             data = [x if not np.all(np.isnan(x)) else MISSING for x in data]
-        
+
         if origin is not None and use_ase_calc:
             if origin == "calc":
                 self.calc[name] = data
@@ -39,15 +41,20 @@ def update_frames(self, name: str, value: np.ndarray, origin: ORIGIN_TYPE, use_a
                 if use_ase_calc:
                     self.calc[name] = data
                 else:
-                    if not isinstance(data[0], (float, int, bool, dict, str)) and len(data[0]) == len(self.numbers[0]):
+                    if not isinstance(data[0], (float, int, bool, dict, str)) and len(
+                        data[0]
+                    ) == len(self.numbers[0]):
                         self.arrays[name] = data
                     else:
                         self.info[name] = data
             else:
-                if not isinstance(data[0], (float, int, bool, dict, str)) and len(data[0]) == len(self.numbers[0]):
+                if not isinstance(data[0], (float, int, bool, dict, str)) and len(
+                    data[0]
+                ) == len(self.numbers[0]):
                     self.arrays[name] = data
                 else:
-                    self.info[name] = data  
+                    self.info[name] = data
+
 
 def getitem(
     self: "IO", index: int | np.int_ | slice | np.ndarray | list[int]
@@ -63,7 +70,9 @@ def getitem(
         # first do species then the rest so we know the length of the arrays
         #  for sorting into arrays, info, calc
         grp = particles["species/value"]
-        update_frames(frames, H5MDToASEMapping.species.value, grp[index], None, self.use_ase_calc)
+        update_frames(
+            frames, H5MDToASEMapping.species.value, grp[index], None, self.use_ase_calc
+        )
 
         for grp_name in particles:
             if grp_name == "species":
@@ -71,9 +80,17 @@ def getitem(
             grp = particles[grp_name]  # Access the subgroup or dataset
             origin = grp.attrs.get(AttributePath.origin.value, None)
             if grp_name == "box":
-                update_frames(frames, "cell", grp["edges/value"][index], origin, self.use_ase_calc)
+                update_frames(
+                    frames, "cell", grp["edges/value"][index], origin, self.use_ase_calc
+                )
                 try:
-                    update_frames(frames, "pbc", grp["pbc/value"][index], origin, self.use_ase_calc)
+                    update_frames(
+                        frames,
+                        "pbc",
+                        grp["pbc/value"][index],
+                        origin,
+                        self.use_ase_calc,
+                    )
                 except KeyError:
                     pbc = grp.attrs.get(AttributePath.boundary.value, ["none"] * 3)
                     pbc = np.array([b != "none" for b in pbc], dtype=bool)
@@ -86,10 +103,16 @@ def getitem(
                             H5MDToASEMapping[grp_name].value,
                             grp["value"][index],
                             origin,
-                            self.use_ase_calc
+                            self.use_ase_calc,
                         )
                     except KeyError:
-                        update_frames(frames, grp_name, grp["value"][index], origin, self.use_ase_calc)
+                        update_frames(
+                            frames,
+                            grp_name,
+                            grp["value"][index],
+                            origin,
+                            self.use_ase_calc,
+                        )
                     except (OSError, IndexError):
                         pass  # values must not be backfilled to the length of the species
                 except KeyError:
@@ -109,10 +132,16 @@ def getitem(
                             H5MDToASEMapping[grp_name].value,
                             grp["value"][index],
                             origin,
-                            self.use_ase_calc
+                            self.use_ase_calc,
                         )
                     except KeyError:
-                        update_frames(frames, grp_name, grp["value"][index], origin, self.use_ase_calc)
+                        update_frames(
+                            frames,
+                            grp_name,
+                            grp["value"][index],
+                            origin,
+                            self.use_ase_calc,
+                        )
                     except (OSError, IndexError):
                         pass  # values must not be backfilled to the length of the species
                 except KeyError:

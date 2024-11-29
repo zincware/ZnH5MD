@@ -88,3 +88,51 @@ def open_file(
     else:
         with h5py.File(filename, **kwargs) as f:
             yield f
+
+
+def fill_dataset(dataset, new_data, shift, fill_value):
+    # shift is applied along axis 0:
+    #  a dataset might not have been extenden in the last step because no data was added.
+    #  with the shift we ensure that the missing data along axis 0 is filled with np.nan
+    # Axis 0 is the configuration axis
+    # Axis 1 is the number of particles axis
+    # all following axis are optional, e.g 2 can be (x, y, z) or 1 can already be energy
+
+    old_shape = dataset.shape
+    new_shape = new_data.shape
+
+    if len(old_shape) == 1 and len(new_shape) == 1:
+        dataset.resize((old_shape[0] + new_shape[0] + shift,))
+        if shift > 0:
+            dataset[old_shape[0] :] = fill_value
+        dataset[old_shape[0] + shift :] = new_data
+        return
+
+    # Determine the new shape of the dataset
+    max_shape = (
+        old_shape[0] + new_shape[0] + shift,
+        max(old_shape[1], new_shape[1]),
+        *old_shape[2:],
+    )
+
+    # Resize the dataset to the new shape
+    dataset.resize(max_shape)
+
+    # Fill the new columns of the existing data with np.nan
+    # we might not need this!
+    # if old_shape[1] < max_shape[1]:
+    #     dataset[:, old_shape[1] :] = fill_value
+
+    # Fill the new data rows with np.nan if necessary
+    if new_shape[1] < max_shape[1]:
+        padded_new_data = np.full(
+            (new_shape[0], max_shape[1], *old_shape[2:]), fill_value
+        )
+        padded_new_data[:, : new_shape[1]] = new_data
+    else:
+        padded_new_data = new_data
+
+    # Append the new data to the dataset
+    if shift > 0:
+        dataset[old_shape[0] :] = fill_value
+    dataset[old_shape[0] + shift :] = padded_new_data

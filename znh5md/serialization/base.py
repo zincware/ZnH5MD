@@ -163,8 +163,8 @@ class Frames:
 
     def keys(self) -> t.Iterator[str]:
         """Iterate over the keys."""
-        yield "positions"
         yield "numbers"
+        yield "positions"
         yield "pbc"
         yield "cell"
         for key in self.arrays:
@@ -176,8 +176,8 @@ class Frames:
 
     def items(self) -> t.Iterator[Entry]:
         """Iterate over the items."""
+        yield Entry(self.numbers, "atoms", name="numbers") # numbers has to be first!
         yield Entry(self.positions, "atoms", name="positions")
-        yield Entry(self.numbers, "atoms", name="numbers")
         yield Entry(self.pbc, "atoms", name="pbc")
         yield Entry(self.cell, "atoms", name="cell")
         for key in self.arrays:

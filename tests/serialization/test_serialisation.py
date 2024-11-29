@@ -6,7 +6,7 @@ from znh5md import serialization as zns
 
 
 def test_serialisation_s22(s22):
-    frames = zns.encode(s22)
+    frames = zns.Frames.from_ase(s22)
 
     assert len(frames.positions) == 22
     assert len(frames.numbers) == 22

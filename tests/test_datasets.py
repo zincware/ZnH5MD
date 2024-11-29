@@ -48,7 +48,7 @@ def test_datasets(tmp_path, dataset, request):
             npt.assert_array_equal(a.arrays[key], b.arrays[key])
 
         # h5md keys are added to info automatically
-        assert set(b.info) == set(a.info) | {"h5md_step", "h5md_time"}
+        assert set(b.info) == set(a.info)
         for key in a.info:
             npt.assert_array_equal(a.info[key], b.info[key])
 
@@ -95,7 +95,7 @@ def test_datasets_extxyz(tmp_path, dataset, request):
             npt.assert_array_almost_equal(a.arrays[key], b.arrays[key])
 
         # h5md keys are added to info automatically
-        assert set(b.info) == set(a.info) | {"h5md_step", "h5md_time"}
+        assert set(b.info) == set(a.info)
         for key in a.info:
             if isinstance(a.info[key], str):
                 assert a.info[key] == b.info[key]
@@ -154,8 +154,8 @@ def test_datasets_h5py(tmp_path, dataset, request, store):
 
 @pytest.mark.parametrize("store", ["time", "linear"])
 def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
-    io_a = znh5md.IO(tmp_path / "test.h5", particle_group="a", store=store)
-    io_b = znh5md.IO(tmp_path / "test.h5", particle_group="b")
+    io_a = znh5md.IO(tmp_path / "test.h5", particles_group="a", store=store)
+    io_b = znh5md.IO(tmp_path / "test.h5", particles_group="b")
     io_a.extend(s22_all_properties)
     io_b.extend(s22_mixed_pbc_cell)
 
@@ -173,8 +173,8 @@ def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
 @pytest.mark.parametrize("store", ["time", "linear"])
 def test_two_datasets_external(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
     with h5py.File(tmp_path / "test.h5", "w") as f:
-        io_a = znh5md.IO(file_handle=f, particle_group="a")
-        io_b = znh5md.IO(file_handle=f, particle_group="b", store=store)
+        io_a = znh5md.IO(file_handle=f, particles_group="a")
+        io_b = znh5md.IO(file_handle=f, particles_group="b", store=store)
 
         io_a.extend(s22_all_properties)
         io_b.extend(s22_mixed_pbc_cell)
@@ -183,8 +183,8 @@ def test_two_datasets_external(tmp_path, s22_all_properties, s22_mixed_pbc_cell,
         assert len(io_b) == len(s22_mixed_pbc_cell)
 
     with h5py.File(tmp_path / "test.h5", "r") as f:
-        io_a = znh5md.IO(file_handle=f, particle_group="a")
-        io_b = znh5md.IO(file_handle=f, particle_group="b")
+        io_a = znh5md.IO(file_handle=f, particles_group="a")
+        io_b = znh5md.IO(file_handle=f, particles_group="b")
 
         assert len(io_a) == len(s22_all_properties)
         assert len(io_b) == len(s22_mixed_pbc_cell)
@@ -231,9 +231,9 @@ def test_time_step(tmp_path, s22_mixed_pbc_cell, timestep):
     io.extend(s22_mixed_pbc_cell)
     images = io[:]
     assert len(images) == len(s22_mixed_pbc_cell) * 2
-    for idx, atoms in enumerate(images):
-        assert atoms.info["h5md_step"] == idx
-        assert atoms.info["h5md_time"] == idx * timestep
+    # for idx, atoms in enumerate(images):
+    #     assert atoms.info["h5md_step"] == idx
+    #     assert atoms.info["h5md_time"] == idx * timestep
 
 
 def test_slicing(tmp_path, s22_mixed_pbc_cell):

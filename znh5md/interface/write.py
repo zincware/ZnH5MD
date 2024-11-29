@@ -42,14 +42,14 @@ def extend_group(f, path, entry: Entry, ref_length: int) -> None:
     
     grp = f[path]
     data, dtype = entry.dump()
-    print("extending group", path, len(data), len(grp["value"]))
+    # print("extending group", path, len(data), len(grp["value"]))
 
     shift = ref_length - len(grp["value"]) - len(data)
     shift = max(0, shift)
     # print(f"{len(f[species_path]['value']) =}")
     # print(f"{len(grp['value']) =}")
     # print(f"{len(data) =}")
-    print(f"{shift =}")
+    # print(f"{shift =}")
     if dtype == h5py.string_dtype():
         # print(grp["value"].shape)
         # print(len(data))

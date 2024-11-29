@@ -35,7 +35,7 @@ def update_frames(self, name: str, value: np.ndarray, origin: ORIGIN_TYPE) -> No
                 raise ValueError(f"Unknown origin: {origin}")
         else:
             # infer the origin from the shape of the array
-            print(f"infer origin from shape of array: {name}")
+            # print(f"infer origin from shape of array: {name}")
             if len(value.shape) == 1:
                 data = value.tolist()
                 if isinstance(data[0], bytes):
@@ -91,6 +91,8 @@ def getitem(
                         )
                     except KeyError:
                         update_frames(frames, grp_name, grp["value"][index], origin)
+                    except IndexError:
+                        pass # values must not be backfilled to the length of the species
                 except KeyError:
                     raise KeyError(
                         f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."
@@ -111,6 +113,8 @@ def getitem(
                         )
                     except KeyError:
                         update_frames(frames, grp_name, grp["value"][index], origin)
+                    except IndexError:
+                        pass # values must not be backfilled to the length of the species
                 except KeyError:
                     raise KeyError(
                         f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."

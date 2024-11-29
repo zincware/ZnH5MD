@@ -6,6 +6,7 @@ import znh5md
 
 def test_append_new_calc(tmp_path, s22, s22_energy):
     io = znh5md.IO(tmp_path / "test.h5")
+    
     io.extend(s22)
     io.extend(s22_energy)
     io.extend(s22)

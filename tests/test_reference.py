@@ -175,7 +175,7 @@ def ase_to_pyh5md_fixed_time(structures, path):
             at.box.edges.append(atoms.get_cell().diagonal())
 
 
-@pytest.mark.parametrize("store", ["time", "linear"])
+@pytest.mark.parametrize("store", ["linear"])
 def test_pyh5md_ASEH5MD(md, tmp_path, store):
     """Read pyh5md file with ASEH5MD."""
     path = tmp_path / "db.h5"

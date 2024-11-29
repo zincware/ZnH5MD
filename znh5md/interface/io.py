@@ -99,6 +99,10 @@ class IO(MutableSequence):
     ) -> ase.Atoms | list[ase.Atoms]:
         try:
             return getitem(self, index)
+        except FileNotFoundError:
+            # FileNotFoundError is an OSError, but we want to handle it
+            #  separately from the OSError h5py raises
+            raise
         except OSError:
             raise IndexError("Index out of range")
 

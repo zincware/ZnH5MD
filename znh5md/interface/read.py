@@ -72,7 +72,12 @@ def getitem(
             origin = grp.attrs.get(AttributePath.origin.value, None)
             if grp_name == "box":
                 update_frames(frames, "cell", grp["edges/value"][index], origin, self.use_ase_calc)
-                update_frames(frames, "pbc", grp["pbc/value"][index], origin, self.use_ase_calc)
+                try:
+                    update_frames(frames, "pbc", grp["pbc/value"][index], origin, self.use_ase_calc)
+                except KeyError:
+                    pbc = grp.attrs.get(AttributePath.boundary.value, ["none"] * 3)
+                    pbc = np.array([b != "none" for b in pbc], dtype=bool)
+                    frames.pbc = np.array([pbc] * len(frames))
             else:
                 try:
                     try:

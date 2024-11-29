@@ -189,7 +189,15 @@ class Frames:
 
     def check(self) -> None:
         if len(list(self.keys())) != len(set(self.keys())):
-            raise ValueError("Duplicate keys found in Frames object")
+            # find duplicates
+            duplicates = []
+            seen = set()
+            for key in self.keys():
+                if key in seen:
+                    duplicates.append(key)
+                else:
+                    seen.add(key)
+            raise ValueError(f"Duplicate keys found in Frames object: {duplicates}")
 
     def __iter__(self) -> t.Iterator[ase.Atoms]:
         """Iterate over the frames."""
@@ -203,9 +211,9 @@ class Frames:
 
     def __len__(self) -> int:
         """Return the number of frames."""
-        if self.positions is None:
+        if self.numbers is None:
             return 0
-        return len(self.positions)
+        return len(self.numbers)
 
     def __getitem__(self, idx: int) -> ase.Atoms:
         """Return a single frame."""

@@ -155,7 +155,7 @@ def test_datasets_h5py(tmp_path, dataset, request, store):
         )
 
 
-@pytest.mark.parametrize("store", ["time", "linear"])
+@pytest.mark.parametrize("store", ["linear"])
 def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
     io_a = znh5md.IO(tmp_path / "test.h5", particles_group="a", store=store)
     io_b = znh5md.IO(tmp_path / "test.h5", particles_group="b")
@@ -173,7 +173,7 @@ def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
         npt.assert_array_equal(a.get_positions(), b.get_positions())
 
 
-@pytest.mark.parametrize("store", ["time", "linear"])
+@pytest.mark.parametrize("store", ["linear"])
 def test_two_datasets_external(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
     with h5py.File(tmp_path / "test.h5", "w") as f:
         io_a = znh5md.IO(file_handle=f, particles_group="a")

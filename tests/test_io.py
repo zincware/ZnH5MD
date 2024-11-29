@@ -7,6 +7,7 @@ from ase.calculators.calculator import all_properties
 from ase.calculators.singlepoint import SinglePointCalculator
 
 import znh5md
+from znh5md.serialization import Frames
 
 
 def test_IO_extend(tmp_path):
@@ -165,6 +166,10 @@ def test_not_use_ase_calc_write_info_arrays(tmp_path, info_key, arrays_key):
 def test_ase_info_key_value_error_info(tmp_path, key):
     water = ase.build.molecule("H2O")
     water.info[key] = np.random.rand()
+    water.calc = SinglePointCalculator(water, **{key: np.random.rand()})
+    with pytest.raises(ValueError):
+        Frames.from_ase([water]).check()
+
     assert key in water.info
 
     io = znh5md.IO(tmp_path / "test.h5")
@@ -176,6 +181,10 @@ def test_ase_info_key_value_error_info(tmp_path, key):
 def test_ase_info_key_value_error_arrays(tmp_path, key):
     water = ase.build.molecule("H2O")
     water.arrays[key] = np.random.rand(len(water), 3)
+    water.calc = SinglePointCalculator(water, **{key: np.random.rand()})
+    with pytest.raises(ValueError):
+        Frames.from_ase([water]).check()
+
     assert key in water.arrays
 
     io = znh5md.IO(tmp_path / "test.h5")

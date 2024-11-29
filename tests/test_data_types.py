@@ -1,7 +1,6 @@
 import ase.build
 import ase.io
 import numpy.testing as npt
-import pytest
 
 import znh5md
 

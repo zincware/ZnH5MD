@@ -11,14 +11,19 @@ if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
 
-def create_group(f, path, entry: Entry, ref_length: int, particles_goup: str, pbc_grp: bool) -> None:
+def create_group(
+    f, path, entry: Entry, ref_length: int, particles_goup: str, pbc_grp: bool
+) -> None:
     if path in f:
         raise ValueError(f"Group {path} already exists")
     data, dtype = entry.dump()
 
     if entry.name == "pbc":
         box_grp = f[f"/particles/{particles_goup}"].create_group("box")
-        box_grp.attrs.create(AttributePath.boundary.value, ["periodic" if x else "none" for x in entry.ref])
+        box_grp.attrs.create(
+            AttributePath.boundary.value,
+            ["periodic" if x else "none" for x in entry.ref],
+        )
         box_grp.attrs.create(AttributePath.dimension.value, 3)
         if not pbc_grp:
             return
@@ -45,7 +50,7 @@ def create_group(f, path, entry: Entry, ref_length: int, particles_goup: str, pb
             dtype=dtype,
         )
         ds[ref_length:] = data
-            
+
     if entry.origin is not None:
         grp.attrs.create(AttributePath.origin.value, entry.origin)
     if entry.unit is not None:
@@ -97,4 +102,11 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
                 if not self._store_ase_origin:
                     entry.origin = None
                 # TODO: what about extending with pbc group false?
-                create_group(f, path, entry, ref_length, self.particles_group, pbc_grp=self.pbc_group)
+                create_group(
+                    f,
+                    path,
+                    entry,
+                    ref_length,
+                    self.particles_group,
+                    pbc_grp=self.pbc_group,
+                )

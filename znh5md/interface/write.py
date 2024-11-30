@@ -2,6 +2,7 @@ import typing as t
 
 import ase
 import h5py
+import numpy as np
 
 from znh5md.misc import fill_dataset, open_file
 from znh5md.path import AttributePath, get_h5md_path
@@ -12,7 +13,14 @@ if t.TYPE_CHECKING:
 
 
 def create_group(
-    f, path, entry: Entry, ref_length: int, particles_goup: str, pbc_grp: bool
+    f,
+    path,
+    entry: Entry,
+    ref_length: int,
+    particles_goup: str,
+    pbc_grp: bool,
+    store: t.Literal["time", "linear"],
+    save_units: bool,
 ) -> None:
     if path in f:
         raise ValueError(f"Group {path} already exists")
@@ -53,16 +61,35 @@ def create_group(
 
     if entry.origin is not None:
         grp.attrs.create(AttributePath.origin.value, entry.origin)
-    if entry.unit is not None:
+    if entry.unit is not None and save_units:
         ds.attrs.create(AttributePath.unit.value, entry.unit)
 
     # We use linear time and step for now
     # because most of the time we don't have an step / offset ...
-    step_ds = grp.create_dataset("step", data=1)
-    time_ds = grp.create_dataset("time", data=1)
+    if store == "time":
+        step_ds = grp.create_dataset(
+            "step", data=np.arange(1, len(ds) + 1), maxshape=(None,)
+        )
+    else:
+        step_ds = grp.create_dataset("step", data=1)
+    step_ds.attrs.create(AttributePath.unit.value, "fs")
+
+    if store == "time":
+        time_ds = grp.create_dataset(
+            "time", data=np.arange(1, len(ds) + 1), maxshape=(None,)
+        )
+    else:
+        time_ds = grp.create_dataset("time", data=1)
+    time_ds.attrs.create(AttributePath.unit.value, "fs")
 
 
-def extend_group(f, path, entry: Entry, ref_length: int) -> None:
+def extend_group(
+    f,
+    path,
+    entry: Entry,
+    ref_length: int,
+    store: t.Literal["time", "linear"] = "linear",
+) -> None:
     if path not in f:
         raise ValueError(f"Group {path} not found exists")
 
@@ -75,6 +102,14 @@ def extend_group(f, path, entry: Entry, ref_length: int) -> None:
         grp["value"][len(grp["value"]) - len(data) :] = data
     else:
         fill_dataset(grp["value"], data, shift, entry.fillvalue)
+
+    if store == "time":
+        step_ds = grp["step"]
+        step_ds.resize((ref_length,))
+        step_ds[:] = np.arange(1, ref_length + 1)
+        time_ds = grp["time"]
+        time_ds.resize((ref_length,))
+        time_ds[:] = np.arange(1, ref_length + 1)
 
 
 def extend(self: "IO", data: list[ase.Atoms]) -> None:
@@ -97,7 +132,7 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
         for entry in frames.items():
             path = get_h5md_path(entry.name, self.particles_group, frames)
             if path in f:
-                extend_group(f, path, entry, ref_length)
+                extend_group(f, path, entry, ref_length, store=self.store)
             else:
                 if not self._store_ase_origin:
                     entry.origin = None
@@ -109,4 +144,6 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
                     ref_length,
                     self.particles_group,
                     pbc_grp=self.pbc_group,
+                    store=self.store,
+                    save_units=self.save_units,
                 )

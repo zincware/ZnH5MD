@@ -17,7 +17,7 @@ typer = {extras = ["all"], version = "^0"}
 pytest = "^7.2.0"
 pre-commit = "^2.20.0"
 ruff = "^0.4"
-mdanalysis = "^2.7.0"
+mdanalysis = "^2.8"
 coverage = "^7.5.3"
 pyh5md = "^1.0.0"
 pytest-benchmark = {extras = ["histogram"], version = "^4.0.0"}

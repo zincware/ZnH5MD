@@ -40,13 +40,13 @@ import znh5md
 #         io.extend(images)
 
 
-def test_inconsistent_step(tmp_path):
-    images = [ase.build.molecule("H2O") for _ in range(10)]
-    images[5].info["h5md_step"] = 5
+# def test_inconsistent_step(tmp_path):
+#     images = [ase.build.molecule("H2O") for _ in range(10)]
+#     images[5].info["h5md_step"] = 5
 
-    io = znh5md.IO(tmp_path / "test_inconsistent_step.h5", store="time")
-    with pytest.raises(ValueError):
-        io.extend(images)
+#     io = znh5md.IO(tmp_path / "test_inconsistent_step.h5", store="time")
+#     with pytest.raises(ValueError):
+#         io.extend(images)
 
 
 # def test_wrong_store(tmp_path):

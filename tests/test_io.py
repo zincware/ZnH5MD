@@ -266,6 +266,7 @@ def test_index_error(tmp_path):
         io[-2]
 
 
+@pytest.mark.skip("ASE 3.23 does not support this anymore")
 def test_np_int_getitem(tmp_path):
     io = znh5md.IO(tmp_path / "test.h5")
     io.append(ase.build.molecule("H2O"))

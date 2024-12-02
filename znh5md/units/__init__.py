@@ -5,7 +5,7 @@ class H5MDUnits(str, Enum):
     energy = "eV"
     forces = "eV/Angstrom"
     stress = "eV/Angstrom^3"
-    velocity = "Angstrom/fs"
+    velocities = "Angstrom/fs"
     positions = "Angstrom"
     time = "fs"
     cell = "Angstrom"

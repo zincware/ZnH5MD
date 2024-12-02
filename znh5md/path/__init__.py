@@ -45,6 +45,7 @@ class H5MDToASEMapping(str, Enum):
     box_edges = "cell"
     box_pbc = "pbc"
     species = "numbers"
+    velocity = "velocities"
 
 
 def get_h5md_path(name: str, particles_group: str, frames: "Frames") -> str:

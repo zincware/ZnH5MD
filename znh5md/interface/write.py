@@ -21,6 +21,7 @@ def create_group(
     pbc_grp: bool,
     store: t.Literal["time", "linear"],
     save_units: bool,
+    timestep: float,
 ) -> None:
     if path in f:
         raise ValueError(f"Group {path} already exists")
@@ -72,14 +73,14 @@ def create_group(
         )
     else:
         step_ds = grp.create_dataset("step", data=1)
-    step_ds.attrs.create(AttributePath.unit.value, "fs")
+    # step_ds.attrs.create(AttributePath.unit.value, "fs")
 
     if store == "time":
         time_ds = grp.create_dataset(
-            "time", data=np.arange(1, len(ds) + 1), maxshape=(None,)
+            "time", data=np.arange(1, len(ds) + 1) * timestep, maxshape=(None,)
         )
     else:
-        time_ds = grp.create_dataset("time", data=1)
+        time_ds = grp.create_dataset("time", data=timestep)
     time_ds.attrs.create(AttributePath.unit.value, "fs")
 
 
@@ -88,7 +89,8 @@ def extend_group(
     path,
     entry: Entry,
     ref_length: int,
-    store: t.Literal["time", "linear"] = "linear",
+    store: t.Literal["time", "linear"],
+    timestep: float
 ) -> None:
     if path not in f:
         raise ValueError(f"Group {path} not found exists")
@@ -109,7 +111,7 @@ def extend_group(
         step_ds[:] = np.arange(1, ref_length + 1)
         time_ds = grp["time"]
         time_ds.resize((ref_length,))
-        time_ds[:] = np.arange(1, ref_length + 1)
+        time_ds[:] = np.arange(1, ref_length + 1) * timestep
 
 
 def extend(self: "IO", data: list[ase.Atoms]) -> None:
@@ -132,7 +134,7 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
         for entry in frames.items():
             path = get_h5md_path(entry.name, self.particles_group, frames)
             if path in f:
-                extend_group(f, path, entry, ref_length, store=self.store)
+                extend_group(f, path, entry, ref_length, store=self.store, timestep=self.timestep)
             else:
                 if not self._store_ase_origin:
                     entry.origin = None
@@ -146,4 +148,5 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
                     pbc_grp=self.pbc_group,
                     store=self.store,
                     save_units=self.save_units,
+                    timestep=self.timestep
                 )

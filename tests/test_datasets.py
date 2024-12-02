@@ -122,11 +122,11 @@ def test_datasets_h5py(tmp_path, dataset, request, store):
         assert "particles/atoms/species/value" in f
         assert "particles/atoms/force/value" in f
         assert "observables/atoms/force/value" not in f
-        # assert "particles/atoms/velocity/value" in f
-        # assert "observables/atoms/velocity/value" not in f
+        assert "particles/atoms/velocity/value" in f
+        assert "observables/atoms/velocity/value" not in f
 
-        assert "particles/atoms/momenta/value" in f
-        assert "observables/atoms/momenta/value" not in f
+        # assert "particles/atoms/momenta/value" in f
+        # assert "observables/atoms/momenta/value" not in f
 
         assert "particles/atoms/potential_energy/value" not in f
         assert "observables/atoms/potential_energy/value" in f
@@ -138,14 +138,14 @@ def test_datasets_h5py(tmp_path, dataset, request, store):
         assert "observables/atoms/mlip_energy_2/value" in f
         assert "observables/atoms/mlip_stress/value" in f
 
-        # assert f["particles/atoms/velocity/value"].attrs["unit"] == "Angstrom/fs"
+        assert f["particles/atoms/velocity/value"].attrs["unit"] == "Angstrom/fs"
         assert f["particles/atoms/force/value"].attrs["unit"] == "eV/Angstrom"
 
         # if store == "time":
         #     assert f["observables/atoms/energy/time"].shape == (len(images),)
         #     assert f["observables/atoms/energy/step"].shape == (len(images),)
         if store == "linear":
-            assert f["observables/atoms/potential_energy/time"][()] == 1
+            assert f["observables/atoms/potential_energy/time"][()] == 0.5
             assert f["observables/atoms/potential_energy/step"][()] == 1
 
         # assert f["observables/atoms/energy/value"].attrs["unit"] == "eV"

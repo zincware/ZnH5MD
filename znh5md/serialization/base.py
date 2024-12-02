@@ -107,6 +107,16 @@ class Entry:
             raise
 
 
+def process_momenta(target: dict[str, list], atoms: ase.Atoms, index: int) -> None:
+    if "velocities" not in target:
+        if "momenta" in atoms.arrays:
+            target["velocities"] = [MISSING] * index + [atoms.get_velocities()]
+    else:
+        if "momenta" in atoms.arrays:
+            target["velocities"].append(atoms.get_velocities())
+        else:
+            target["velocities"].append(MISSING)
+
 def process_category(
     target: dict[str, list], content: CONTENT_TYPE, index: int
 ) -> None:
@@ -123,10 +133,13 @@ def process_category(
     index : int
         The index of the current frame.
     """
-    seen = set(content.keys())
+    seen = set(content.keys()) | {"momenta", "velocities"}
     unseen = set(target.keys()) - seen
 
     for key in content:
+        if key == "momenta":
+            # Momenta are handled separately via velocities
+            continue
         if key not in target:
             # Backfill existing entries with MISSING for the new key
             target[key] = [MISSING] * index + [content[key]]
@@ -224,8 +237,14 @@ class Frames:
             pbc=self.pbc[idx],
         )
         for key in self.arrays:
-            if not isinstance(self.arrays[key][idx], _MISSING):
+
+            if isinstance(self.arrays[key][idx], _MISSING):
+                continue
+            if key == "velocities":
+                atoms.set_velocities(self.arrays[key][idx])
+            else:
                 atoms.arrays[key] = self.arrays[key][idx]
+            
         for key in self.info:
             if not isinstance(self.info[key][idx], _MISSING):
                 atoms.info[key] = self.info[key][idx]
@@ -259,6 +278,8 @@ class Frames:
                 if key not in ["positions", "numbers"]
             }
             process_category(self.arrays, atoms_arrays, idx)
+
+            process_momenta(self.arrays, atoms, idx)
 
             # Process info
             process_category(self.info, atoms.info, idx)

@@ -150,7 +150,13 @@ def test_not_use_ase_calc_write_info_arrays(tmp_path, info_key, arrays_key):
     assert arrays_key in water.arrays
 
     io = znh5md.IO(tmp_path / "test.h5", use_ase_calc=False)
-    io.append(water)
+    if info_key == arrays_key:
+        with pytest.raises(ValueError):
+            io.append(water)
+            
+        return
+    else:
+        io.append(water)
 
     assert io[0].calc is None
     assert info_key in io[0].info

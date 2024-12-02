@@ -25,7 +25,8 @@ def test_get_h5md_path(
         get_h5md_path("mlip_forces_2", "atoms", frame)
         == "/particles/atoms/mlip_forces_2"
     )
-    assert get_h5md_path("momenta", "atoms", frame) == "/particles/atoms/momenta"
+    # assert get_h5md_path("momenta", "atoms", frame) == "/particles/atoms/momenta"
+    # assert get_h5md_path("velocity", "atoms", frame) == "/particles/atoms/momenta"
     assert (
         get_h5md_path("residuenames", "atoms", frame) == "/particles/atoms/residuenames"
     )

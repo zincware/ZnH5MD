@@ -153,7 +153,7 @@ def test_not_use_ase_calc_write_info_arrays(tmp_path, info_key, arrays_key):
     if info_key == arrays_key:
         with pytest.raises(ValueError):
             io.append(water)
-            
+
         return
     else:
         io.append(water)

@@ -90,7 +90,7 @@ def extend_group(
     entry: Entry,
     ref_length: int,
     store: t.Literal["time", "linear"],
-    timestep: float
+    timestep: float,
 ) -> None:
     if path not in f:
         raise ValueError(f"Group {path} not found exists")
@@ -134,7 +134,9 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
         for entry in frames.items():
             path = get_h5md_path(entry.name, self.particles_group, frames)
             if path in f:
-                extend_group(f, path, entry, ref_length, store=self.store, timestep=self.timestep)
+                extend_group(
+                    f, path, entry, ref_length, store=self.store, timestep=self.timestep
+                )
             else:
                 if not self._store_ase_origin:
                     entry.origin = None
@@ -148,5 +150,5 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
                     pbc_grp=self.pbc_group,
                     store=self.store,
                     save_units=self.save_units,
-                    timestep=self.timestep
+                    timestep=self.timestep,
                 )

@@ -117,6 +117,7 @@ def process_momenta(target: dict[str, list], atoms: ase.Atoms, index: int) -> No
         else:
             target["velocities"].append(MISSING)
 
+
 def process_category(
     target: dict[str, list], content: CONTENT_TYPE, index: int
 ) -> None:
@@ -237,14 +238,13 @@ class Frames:
             pbc=self.pbc[idx],
         )
         for key in self.arrays:
-
             if isinstance(self.arrays[key][idx], _MISSING):
                 continue
             if key == "velocities":
                 atoms.set_velocities(self.arrays[key][idx])
             else:
                 atoms.arrays[key] = self.arrays[key][idx]
-            
+
         for key in self.info:
             if not isinstance(self.info[key][idx], _MISSING):
                 atoms.info[key] = self.info[key][idx]

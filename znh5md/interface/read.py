@@ -41,14 +41,14 @@ def update_frames(
                 if use_ase_calc:
                     self.calc[name] = data
                 else:
-                    if not isinstance(data[0], (float, int, bool, dict, str)) and len(
+                    if isinstance(data[0], t.Sized) and len(
                         data[0]
                     ) == len(self.numbers[0]):
                         self.arrays[name] = data
                     else:
                         self.info[name] = data
             else:
-                if not isinstance(data[0], (float, int, bool, dict, str)) and len(
+                if isinstance(data[0], t.Sized) and len(
                     data[0]
                 ) == len(self.numbers[0]):
                     self.arrays[name] = data

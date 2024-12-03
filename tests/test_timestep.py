@@ -19,15 +19,20 @@ import znh5md
 
 #     with h5py.File(tmp_path / "test_time_step.h5") as f:
 #         npt.assert_array_equal(
-#             f["particles/atoms/position/time"][:], np.arange(1, 10) * 0.5
+#             f["particles/atoms/position/time"][:], 
+#             np.arange(1, 10) * 0.5
 #         )
-#         npt.assert_array_equal(f["particles/atoms/position/step"][:], np.arange(1, 10))
+#         npt.assert_array_equal(f["particles/atoms/position/step"][:],
+#                                 np.arange(1, 10))
 #         npt.assert_array_equal(
-#             f["observables/atoms/energy/time"][:], np.arange(1, 10) * 0.5
+#             f["observables/atoms/energy/time"][:],
+#               np.arange(1, 10) * 0.5
 #         )
-#         npt.assert_array_equal(f["observables/atoms/energy/step"][:], np.arange(1, 10))
+#         npt.assert_array_equal(f["observables/atoms/energy/step"][:], 
+#                                np.arange(1, 10))
 #         npt.assert_array_equal(
-#             f["observables/atoms/energy/value"][:], np.arange(1, 10) * 0.1
+#             f["observables/atoms/energy/value"][:],
+#               np.arange(1, 10) * 0.1
 #         )
 
 

@@ -16,44 +16,133 @@ if t.TYPE_CHECKING:
 def update_frames(
     self, name: str, value: np.ndarray, origin: ORIGIN_TYPE, use_ase_calc: bool
 ) -> None:
+    """
+    Updates the specified frame data with appropriate transformations and storage logic.
+
+    Parameters
+    ----------
+    name : str
+        The name of the attribute to update.
+    value : np.ndarray
+        The array containing the new values to be set.
+    origin : ORIGIN_TYPE
+        The origin of the data (e.g., "calc", "info", "arrays").
+    use_ase_calc : bool
+        Whether to use ASE calculator for storing the data.
+    """
     if name in ["positions", "numbers", "pbc", "cell"]:
         setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
-    else:
-        if value.dtype.kind in ["O", "S", "U"]:
-            data = [json.loads(v) if v != b"" else MISSING for v in value]
-        else:
-            data = decompose_varying_shape_arrays(value, np.nan)
-            data = [x if not np.all(np.isnan(x)) else MISSING for x in data]
+        return
 
-        if origin is not None and use_ase_calc:
-            if origin == "calc":
-                self.calc[name] = data
-            elif origin == "info":
-                self.info[name] = data
-            elif origin == "arrays":
-                self.arrays[name] = data
-            elif origin == "atoms":
-                raise ValueError(f"Origin 'atoms' is not allowed for {name}")
-            else:
-                raise ValueError(f"Unknown origin: {origin}")
+    data = preprocess_data(value)
+    store_data(self, name, data, origin, use_ase_calc)
+
+
+def preprocess_data(value: np.ndarray) -> list:
+    """
+    Preprocess the input data by handling object, string, or numeric types.
+
+    Parameters
+    ----------
+    value : np.ndarray
+        The array containing the input data.
+
+    Returns
+    -------
+    list
+        The processed list of data.
+    """
+    if value.dtype.kind in ["O", "S", "U"]:
+        return [json.loads(v) if v != b"" else MISSING for v in value]
+    else:
+        data = decompose_varying_shape_arrays(value, np.nan)
+        return [x if not np.all(np.isnan(x)) else MISSING for x in data]
+
+
+def store_data(
+    self, name: str, data: list, origin: ORIGIN_TYPE, use_ase_calc: bool
+) -> None:
+    """
+    Store processed data into the appropriate attribute based on origin and conditions.
+
+    Parameters
+    ----------
+    name : str
+        The name of the property to store.
+    data : list
+        The processed data to store.
+    origin : ORIGIN_TYPE
+        The origin of the data (e.g., "calc", "info", "arrays").
+    use_ase_calc : bool
+        Whether to use ASE calculator for storing the data.
+
+    Raises
+    ------
+    ValueError
+        If the origin is invalid or disallowed.
+    """
+    if origin is not None and use_ase_calc:
+        handle_origin_data(self, name, data, origin)
+    else:
+        assign_data_to_property(self, name, data, use_ase_calc)
+
+
+def handle_origin_data(self, name: str, data: list, origin: ORIGIN_TYPE) -> None:
+    """
+    Handle data storage based on the specified origin.
+
+    Parameters
+    ----------
+    name : str
+        The name of the property to store.
+    data : list
+        The processed data to store.
+    origin : ORIGIN_TYPE
+        The origin of the data (e.g., "calc", "info", "arrays").
+
+    Raises
+    ------
+    ValueError
+        If the origin is invalid or disallowed.
+    """
+    if origin == "calc":
+        self.calc[name] = data
+    elif origin == "info":
+        self.info[name] = data
+    elif origin == "arrays":
+        self.arrays[name] = data
+    elif origin == "atoms":
+        raise ValueError(f"Origin 'atoms' is not allowed for {name}")
+    else:
+        raise ValueError(f"Unknown origin: {origin}")
+
+
+def assign_data_to_property(self, name: str, data: list, use_ase_calc: bool) -> None:
+    """
+    Assign data to the appropriate property based on its size and conditions.
+
+    Parameters
+    ----------
+    name : str
+        The name of the property to store.
+    data : list
+        The processed data to store.
+    use_ase_calc : bool
+        Whether to use ASE calculator for storing the data.
+    """
+    if name in all_properties:
+        if use_ase_calc:
+            self.calc[name] = data
         else:
-            if name in all_properties:
-                if use_ase_calc:
-                    self.calc[name] = data
-                else:
-                    if isinstance(data[0], t.Sized) and len(
-                        data[0]
-                    ) == len(self.numbers[0]):
-                        self.arrays[name] = data
-                    else:
-                        self.info[name] = data
+            if isinstance(data[0], t.Sized) and len(data[0]) == len(self.numbers[0]):
+                self.arrays[name] = data
             else:
-                if isinstance(data[0], t.Sized) and len(
-                    data[0]
-                ) == len(self.numbers[0]):
-                    self.arrays[name] = data
-                else:
-                    self.info[name] = data
+                self.info[name] = data
+    else:
+        if isinstance(data[0], t.Sized) and len(data[0]) == len(self.numbers[0]):
+            self.arrays[name] = data
+        else:
+            self.info[name] = data
 
 
 def getitem(

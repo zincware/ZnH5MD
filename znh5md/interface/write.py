@@ -68,9 +68,7 @@ def create_group(
     # We use linear time and step for now
     # because most of the time we don't have an step / offset ...
     if store == "time":
-        grp.create_dataset(
-            "step", data=np.arange(1, len(ds) + 1), maxshape=(None,)
-        )
+        grp.create_dataset("step", data=np.arange(1, len(ds) + 1), maxshape=(None,))
     else:
         grp.create_dataset("step", data=1)
     # step_ds.attrs.create(AttributePath.unit.value, "fs")

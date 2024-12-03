@@ -2,7 +2,7 @@ import znh5md
 
 
 def test_version():
-    assert znh5md.__version__ == "0.3.7"
+    assert znh5md.__version__ == "0.4.0"
 
 
 def test_creator(tmp_path):

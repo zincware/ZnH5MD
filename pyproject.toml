@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "znh5md"
-version = "0.3.7"
+version = "0.4.0"
 description = "ASE Interface for the H5MD format."
 authors = ["zincwarecode <zincwarecode@gmail.com>"]
 license = "Apache-2.0"
@@ -17,17 +17,19 @@ typer = {extras = ["all"], version = "^0"}
 pytest = "^7.2.0"
 pre-commit = "^2.20.0"
 ruff = "^0.4"
-mdanalysis = "^2.7.0"
+mdanalysis = "^2.8"
 coverage = "^7.5.3"
 pyh5md = "^1.0.0"
 pytest-benchmark = {extras = ["histogram"], version = "^4.0.0"}
 networkx = "^3.3"
+rdkit2ase = "^0.1.4"
 
 
 [tool.poetry.group.benchmark.dependencies]
 pandas = "^2.2.2"
 chemfiles = "^0.10.4"
 mdtraj = "^1.10.0"
+
 
 [tool.poetry.scripts]
 znh5md = 'znh5md.cli:app'

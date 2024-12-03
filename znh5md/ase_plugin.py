@@ -4,7 +4,7 @@ from typing import Generator
 from ase.atoms import Atoms
 from ase.utils.plugins import ExternalIOFormat
 
-from znh5md.io import IO
+from znh5md.interface import IO
 
 znh5md_format = ExternalIOFormat(
     desc="ZnH5MD h5 file",

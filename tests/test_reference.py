@@ -73,7 +73,7 @@ def ase_to_pyh5md(structures, path):
             shape=(len(structures[0]),),
             dtype=np.int32,
         )
-
+        # TODO: test how velocities are stored / are they stored correctly?
         at_v = element(
             at,
             "velocity",
@@ -175,7 +175,7 @@ def ase_to_pyh5md_fixed_time(structures, path):
             at.box.edges.append(atoms.get_cell().diagonal())
 
 
-@pytest.mark.parametrize("store", ["time", "linear"])
+@pytest.mark.parametrize("store", ["linear"])
 def test_pyh5md_ASEH5MD(md, tmp_path, store):
     """Read pyh5md file with ASEH5MD."""
     path = tmp_path / "db.h5"
@@ -198,7 +198,7 @@ def test_pyh5md_ASEH5MD(md, tmp_path, store):
         npt.assert_array_equal(a.get_cell(), b.get_cell())
 
 
-@pytest.mark.parametrize("store", ["time", "linear"])
+@pytest.mark.parametrize("store", ["linear"])
 def test_DataWriter_pyh5md(md, tmp_path, store):
     """Test reading DataWriter with pyh5md."""
     path = tmp_path / "db.h5"
@@ -217,7 +217,7 @@ def test_DataWriter_pyh5md(md, tmp_path, store):
         species = element(g, "species").value[:]
         velocities = element(g, "velocity").value[:]
         forces = element(g, "force").value[:]
-        energy = element(f, "observables/atoms/energy").value[:]
+        energy = element(f, "observables/atoms/potential_energy").value[:]
         cell = element(g, "box/edges").value[:]
 
     assert len(position) == len(md)

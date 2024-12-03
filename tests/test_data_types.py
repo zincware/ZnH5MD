@@ -1,7 +1,6 @@
 import ase.build
 import ase.io
 import numpy.testing as npt
-import pytest
 
 import znh5md
 
@@ -27,8 +26,8 @@ def test_very_long_text_data(tmp_path):
     molecule = ase.build.molecule("H2O")
 
     molecule.info["test"] = f"{list(range(1_000))}"
-    with pytest.raises(ValueError, match="String test is too long to be stored."):
-        io.append(molecule)
+    io.append(molecule)
+    assert io[0].info["test"] == f"{list(range(1_000))}"
 
 
 def test_int_info_data(tmp_path):

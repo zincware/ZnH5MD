@@ -19,7 +19,7 @@ def concatenate_varying_shape_arrays(
             The fillvalue also determines the dtype of the output array.
 
     Returns:
-        np.ndarray: A new array containing the input arrays, 
+        np.ndarray: A new array containing the input arrays,
         padded to match the maximum shape.
     """
 
@@ -65,7 +65,7 @@ def decompose_varying_shape_arrays(
 
     for value in dataset:
         slices = []
-        # Collapse all other dimensions to find non-fillvalue 
+        # Collapse all other dimensions to find non-fillvalue
         # regions along the current axis
         if is_nan:
             mask = ~np.isnan(value)
@@ -98,7 +98,7 @@ def open_file(
 
 def fill_dataset(dataset, new_data, shift, fill_value):
     # shift is applied along axis 0:
-    #  a dataset might not have been extenden in the last step 
+    #  a dataset might not have been extenden in the last step
     #  because no data was added.
     #  with the shift we ensure that the missing data along axis 0 is filled with np.nan
     # Axis 0 is the configuration axis

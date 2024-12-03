@@ -42,7 +42,6 @@ def create_group(
 
     grp = f.create_group(path)
 
-
     if dtype == h5py.string_dtype():
         chunks = True if chunk_size is None else (chunk_size,)
         ds = grp.create_dataset(
@@ -53,13 +52,15 @@ def create_group(
             dtype=dtype,
             compression=compression,
             compression_opts=compression_opts,
-            chunks=chunks
+            chunks=chunks,
         )
         ds[ref_length:] = data
     else:
         maxshape = tuple(None for _ in data.shape)
         shape = (ref_length + len(data),) + data.shape[1:]
-        chunks=True if chunk_size is None else tuple([chunk_size] + list(data.shape[1:]))
+        chunks = (
+            True if chunk_size is None else tuple([chunk_size] + list(data.shape[1:]))
+        )
 
         ds = grp.create_dataset(
             "value",
@@ -69,7 +70,7 @@ def create_group(
             dtype=dtype,
             compression=compression,
             compression_opts=compression_opts,
-            chunks=chunks
+            chunks=chunks,
         )
         ds[ref_length:] = data
 

@@ -53,7 +53,11 @@ def preprocess_data(value: np.ndarray) -> list:
         The processed list of data.
     """
     if value.dtype.kind in ["O", "S", "U"]:
-        return [json.loads(v) if v != b"" else MISSING for v in value]
+        try:
+            return [json.loads(v) if v != b"" else MISSING for v in value]
+        except json.JSONDecodeError:
+            # compatibility for non-JSON data from other sources
+            return [v.decode() if v != b"" else MISSING for v in value]
     else:
         data = decompose_varying_shape_arrays(value, np.nan)
         return [x if not np.all(np.isnan(x)) else MISSING for x in data]
@@ -220,12 +224,15 @@ def process_particle_groups(self, frames: Frames, particles, index) -> None:
     for grp_name in particles:
         if grp_name == "species":
             continue
-        grp = particles[grp_name]
-        origin = grp.attrs.get(AttributePath.origin.value, None)
-        if grp_name == "box":
-            process_box_group(self, frames, grp, index, origin)
-        else:
-            process_generic_group(self, frames, grp_name, grp, index, origin)
+        try:
+            grp = particles[grp_name]
+            origin = grp.attrs.get(AttributePath.origin.value, None)
+            if grp_name == "box":
+                process_box_group(self, frames, grp, index, origin)
+            else:
+                process_generic_group(self, frames, grp_name, grp, index, origin)
+        except Exception as err:
+            raise ValueError(f"Error processing group '{grp_name}'") from err
 
 
 def process_box_group(self, frames: Frames, grp, index, origin) -> None:
@@ -340,3 +347,5 @@ def process_observables(self, frames: Frames, observables, index) -> None:
                 f"Key '{grp_name}' does not seem to be a valid H5MD group"
                 " - missing 'value' dataset."
             )
+        except Exception as err:
+            raise ValueError(f"Error processing group '{grp_name}'") from err

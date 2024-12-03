@@ -24,6 +24,7 @@ def create_group(
     timestep: float,
     compression: str | None,
     compression_opts: int | None,
+    chunk_size: int | None,
 ) -> None:
     if path in f:
         raise ValueError(f"Group {path} already exists")
@@ -41,7 +42,9 @@ def create_group(
 
     grp = f.create_group(path)
 
+
     if dtype == h5py.string_dtype():
+        chunks = True if chunk_size is None else (chunk_size,)
         ds = grp.create_dataset(
             "value",
             shape=(ref_length + len(data),),
@@ -50,11 +53,14 @@ def create_group(
             dtype=dtype,
             compression=compression,
             compression_opts=compression_opts,
+            chunks=chunks
         )
         ds[ref_length:] = data
     else:
         maxshape = tuple(None for _ in data.shape)
         shape = (ref_length + len(data),) + data.shape[1:]
+        chunks=True if chunk_size is None else tuple([chunk_size] + list(data.shape[1:]))
+
         ds = grp.create_dataset(
             "value",
             shape=shape,
@@ -63,6 +69,7 @@ def create_group(
             dtype=dtype,
             compression=compression,
             compression_opts=compression_opts,
+            chunks=chunks
         )
         ds[ref_length:] = data
 
@@ -157,4 +164,5 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
                     timestep=self.timestep,
                     compression=self.compression,
                     compression_opts=self.compression_opts,
+                    chunk_size=self.chunk_size,
                 )

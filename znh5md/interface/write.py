@@ -22,6 +22,8 @@ def create_group(
     store: t.Literal["time", "linear"],
     save_units: bool,
     timestep: float,
+    compression: str | None,
+    compression_opts: int | None,
 ) -> None:
     if path in f:
         raise ValueError(f"Group {path} already exists")
@@ -46,6 +48,8 @@ def create_group(
             maxshape=(None,),
             fillvalue=entry.fillvalue,
             dtype=dtype,
+            compression=compression,
+            compression_opts=compression_opts,
         )
         ds[ref_length:] = data
     else:
@@ -57,6 +61,8 @@ def create_group(
             maxshape=maxshape,
             fillvalue=entry.fillvalue,
             dtype=dtype,
+            compression=compression,
+            compression_opts=compression_opts,
         )
         ds[ref_length:] = data
 
@@ -149,4 +155,6 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
                     store=self.store,
                     save_units=self.save_units,
                     timestep=self.timestep,
+                    compression=self.compression,
+                    compression_opts=self.compression_opts,
                 )

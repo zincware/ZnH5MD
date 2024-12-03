@@ -6,7 +6,7 @@ import ase
 from znh5md.interface import IO
 
 
-def read(filename, index: int | slice | list[int] = -1) -> ase.Atoms:
+def read(filename, index: int | slice | list[int] = -1) -> ase.Atoms | list[ase.Atoms]:
     io = IO(filename)
     return io[index]
 

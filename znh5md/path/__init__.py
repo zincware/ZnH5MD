@@ -66,7 +66,8 @@ def get_h5md_path(name: str, particles_group: str, frames: "Frames") -> str:
                 in_particles = (
                     frames.calc[name][0].shape[0] == frames.positions[0].shape[0]
                 )
-                # it could be a coincidence that the shape of the property is the same as the shape of the positions
+                # it could be a coincidence that the shape of the property is the same
+                #  as the shape of the positions
                 # e.g for 3, or 6 particles!
             except (AttributeError, IndexError):
                 # e.g. object has no attribute 'shape'

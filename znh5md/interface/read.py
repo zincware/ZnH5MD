@@ -161,7 +161,8 @@ def getitem(
     Returns
     -------
     ase.Atoms or list[ase.Atoms]
-        A single `ase.Atoms` object or a list of `ase.Atoms` objects, depending on the index.
+        A single `ase.Atoms` object or a list of `ase.Atoms` objects,
+        depending on the index.
     """
     frames = Frames()
     is_single_item = isinstance(index, int)
@@ -296,7 +297,8 @@ def process_generic_group(
             pass  # Handle backfilling for invalid values
     except KeyError:
         raise KeyError(
-            f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."
+            f"Key '{grp_name}' does not seem to be a valid H5MD group"
+            " - missing 'value' dataset."
         )
 
 
@@ -335,5 +337,6 @@ def process_observables(self, frames: Frames, observables, index) -> None:
                 pass  # Handle backfilling for invalid values
         except KeyError:
             raise KeyError(
-                f"Key '{grp_name}' does not seem to be a valid H5MD group - missing 'value' dataset."
+                f"Key '{grp_name}' does not seem to be a valid H5MD group"
+                " - missing 'value' dataset."
             )

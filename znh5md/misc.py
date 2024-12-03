@@ -19,7 +19,8 @@ def concatenate_varying_shape_arrays(
             The fillvalue also determines the dtype of the output array.
 
     Returns:
-        np.ndarray: A new array containing the input arrays, padded to match the maximum shape.
+        np.ndarray: A new array containing the input arrays, 
+        padded to match the maximum shape.
     """
 
     # Determine the maximum shape along all dimensions
@@ -48,11 +49,15 @@ def decompose_varying_shape_arrays(
     """
     Decomposes a concatenated array with padding into a list of original arrays.
 
-    Args:
-        dataset (np.ndarray): The concatenated array with padding.
-        fillvalue (str | int | float | bool | np.ndarray): Value used to fill missing entries in the original concatenation.
+    Parameters
+    ----------
+        dataset: np.ndarray
+            The concatenated array with padding.
+        fillvalue: (str | int | float | bool | np.ndarray)
+            Value used to fill missing entries in the original concatenation.
 
-    Returns:
+    Returns
+    -------
         list: List of numpy arrays with the padding removed.
     """
     decomposed = []
@@ -60,7 +65,8 @@ def decompose_varying_shape_arrays(
 
     for value in dataset:
         slices = []
-        # Collapse all other dimensions to find non-fillvalue regions along the current axis
+        # Collapse all other dimensions to find non-fillvalue 
+        # regions along the current axis
         if is_nan:
             mask = ~np.isnan(value)
         else:
@@ -92,7 +98,8 @@ def open_file(
 
 def fill_dataset(dataset, new_data, shift, fill_value):
     # shift is applied along axis 0:
-    #  a dataset might not have been extenden in the last step because no data was added.
+    #  a dataset might not have been extenden in the last step 
+    #  because no data was added.
     #  with the shift we ensure that the missing data along axis 0 is filled with np.nan
     # Axis 0 is the configuration axis
     # Axis 1 is the number of particles axis

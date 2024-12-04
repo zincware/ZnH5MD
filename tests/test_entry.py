@@ -218,3 +218,14 @@ def test_list_list_str_special():
     assert isinstance(val, list)
     assert val == [json.dumps(["Cl", "H"]), json.dumps(["O", "O"]), "null", '""']
     assert dtype == h5py.string_dtype()
+
+
+def test_list_list_ndarray():
+    e = Entry(value=[[np.array([1, 2]), np.array([3, 4])]], origin=None, name="test")
+    npt.assert_array_equal(e.ref, np.array([np.array([1, 2]), np.array([3, 4])]))
+    assert np.isnan(e.fillvalue)
+
+    val, dtype = e.dump()
+    assert isinstance(val, np.ndarray)
+    npt.assert_array_equal(val[0], [[1, 2], [3, 4]])
+    assert dtype == np.float64

@@ -16,6 +16,7 @@ import znh5md
         "s22_mixed_pbc_cell",
         "s22_illegal_calc_results",
         "water",
+        "s22_nested_calc",
     ],
 )
 def test_datasets(tmp_path, dataset, request):

@@ -179,9 +179,11 @@ def s22_nested_calc() -> list[ase.Atoms]:
         atoms: ase.Atoms
         atoms.calc = SinglePointCalculator(atoms)
         atoms.calc.results["forces"] = np.random.rand(len(atoms), 3)
-        atoms.calc.results["forces_contributions"] = [[
-            np.random.rand(len(atoms), 3),
-            np.random.rand(len(atoms), 3),
-        ]]
+        atoms.calc.results["forces_contributions"] = [
+            [
+                np.random.rand(len(atoms), 3),
+                np.random.rand(len(atoms), 3),
+            ]
+        ]
         images.append(atoms)
     return images

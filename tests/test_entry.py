@@ -219,6 +219,7 @@ def test_list_list_str_special():
     assert val == [json.dumps(["Cl", "H"]), json.dumps(["O", "O"]), "null", '""']
     assert dtype == h5py.string_dtype()
 
+
 def test_list_list_ndarray():
     e = Entry(value=[[np.array([1, 2]), np.array([3, 4])]], origin=None, name="test")
     npt.assert_array_equal(e.ref, np.array([np.array([1, 2]), np.array([3, 4])]))

@@ -40,7 +40,7 @@ class Entry:
     def __post_init__(self):
         if self.unit is None:
             self.unit = get_unit(self.name)
-        
+
         if isinstance(self.value, list):
             if isinstance(self.value[0], list):
                 try:

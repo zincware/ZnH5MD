@@ -170,3 +170,18 @@ def s22_info_arrays_calc_missing_inbetween() -> list[ase.Atoms]:
                 atoms.calc = calc
         images.append(atoms)
     return images
+
+
+@pytest.fixture
+def s22_nested_calc() -> list[ase.Atoms]:
+    images = []
+    for atoms in ase.collections.s22:
+        atoms: ase.Atoms
+        atoms.calc = SinglePointCalculator(atoms)
+        atoms.calc.results["forces"] = np.random.rand(len(atoms), 3)
+        atoms.calc.results["forces_contributions"] = [[
+            np.random.rand(len(atoms), 3),
+            np.random.rand(len(atoms), 3),
+        ]]
+        images.append(atoms)
+    return images

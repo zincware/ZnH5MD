@@ -40,6 +40,13 @@ class Entry:
     def __post_init__(self):
         if self.unit is None:
             self.unit = get_unit(self.name)
+        
+        if isinstance(self.value, list):
+            if isinstance(self.value[0], list):
+                try:
+                    self.value = [np.array(v, dtype=np.float64) for v in self.value]
+                except ValueError:
+                    pass
 
     @functools.cached_property
     def ref(self) -> t.Any:

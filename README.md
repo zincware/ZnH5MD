@@ -52,42 +52,24 @@ ZnH5MD circumvents two current limitations of the H5MD standard.
 
 ### `atoms.arrays`
 
-|               | ZnH5MD |
-| ------------- | ------------- |
-| `dict[str, np.ndarray]`  | ✅  |
-| `dict[str, list]`  | ❌  |
+| | ZnH5MD | | ------------- | ------------- | | `dict[str, np.ndarray]` | ✅ | |
+`dict[str, list]` | ❌ |
 
 ### `atoms.info`
 
-|               | ZnH5MD |
-| ------------- | ------------- |
-| `dict[str, np.ndarray]`  | ✅  |
-| `dict[str, float]`  | ✅  |
-| `dict[str, int]`  | ✅  |
-| `dict[str, str]`  | ✅  |
-| `dict[str, dict]`  | ✅  |
-| `dict[str, list[float]`  | ✅  |
-| `dict[str, list[int]`  | ✅  |
-| `dict[str, list[str]`  | ❌  |
-| `dict[str, list[np.ndarray]`  | ❌  |
-| `dict[str, list[dict]`  | ❌ |
+| | ZnH5MD | | ------------- | ------------- | | `dict[str, np.ndarray]` | ✅ | |
+`dict[str, float]` | ✅ | | `dict[str, int]` | ✅ | | `dict[str, str]` | ✅ | |
+`dict[str, dict]` | ✅ | | `dict[str, list[float]` | ✅ | | `dict[str, list[int]`
+| ✅ | | `dict[str, list[str]` | ❌ | | `dict[str, list[np.ndarray]` | ❌ | |
+`dict[str, list[dict]` | ❌ |
 
 ### `atoms.calc.results`
 
-|               | ZnH5MD |
-| ------------- | ------------- |
-| `dict[str, np.ndarray]`  | ✅  |
-| `dict[str, float]`  | ✅  |
-| `dict[str, int]`  | ✅  |
-| `dict[str, str]`  | ✅  |
-| `dict[str, dict]`  | ✅  |
-| `dict[str, list[float]`  | ✅  |
-| `dict[str, list[int]`  | ✅  |
-| `dict[str, list[str]`  | ✅  |
-| `dict[str, list[np.ndarray]`  | ✅  |
-| `dict[str, list[dict]`  | ❌ |
-
-
+| | ZnH5MD | | ------------- | ------------- | | `dict[str, np.ndarray]` | ✅ | |
+`dict[str, float]` | ✅ | | `dict[str, int]` | ✅ | | `dict[str, str]` | ✅ | |
+`dict[str, dict]` | ✅ | | `dict[str, list[float]` | ✅ | | `dict[str, list[int]`
+| ✅ | | `dict[str, list[str]` | ✅ | | `dict[str, list[np.ndarray]` | ✅ | |
+`dict[str, list[dict]` | ❌ |
 
 ## Current limitations
 

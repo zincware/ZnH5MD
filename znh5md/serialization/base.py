@@ -1,8 +1,8 @@
+import contextlib
 import dataclasses
 import functools
 import json
 import typing as t
-import contextlib
 
 import ase
 import h5py

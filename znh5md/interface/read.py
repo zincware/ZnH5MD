@@ -342,7 +342,6 @@ def process_observables(self, frames: Frames, observables, index) -> None:
                         frames, grp_name, grp["value"][index], origin, self.use_ase_calc
                     )
             except (OSError, IndexError):
-                # ??? why is this not triggering?
                 pass  # Handle backfilling for invalid values
         except KeyError:
             raise KeyError(

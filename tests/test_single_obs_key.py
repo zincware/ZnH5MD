@@ -3,6 +3,7 @@ from ase.calculators.singlepoint import SinglePointCalculator
 
 import znh5md
 import znh5md.serialization
+import numpy.testing as npt
 
 
 def test_single_entry_info(tmp_path):
@@ -17,6 +18,8 @@ def test_single_entry_info(tmp_path):
     assert len(io) == 6
     assert len(list(io)) == 6
     assert len(io[:]) == 6
+    assert io[0].info["density"] == 0.997
+    assert "density" not in io[1].info
 
     frames = znh5md.serialization.Frames.from_ase(list(io))
     assert len(frames) == 6
@@ -36,6 +39,8 @@ def test_single_entry_arrays(tmp_path):
     assert len(io) == 6
     assert len(list(io)) == 6
     assert len(io[:]) == 6
+    npt.assert_array_equal(io[0].arrays["density"], [0.997, 0.998, 0.999])
+    assert "density" not in io[1].arrays
 
     frames = znh5md.serialization.Frames.from_ase(list(io))
     assert len(frames) == 6
@@ -54,6 +59,8 @@ def test_single_entry_calc(tmp_path):
     assert len(io) == 6
     assert len(list(io)) == 6
     assert len(io[:]) == 6
+    assert io[0].calc.results["energy"] == 0.0
+    assert io[1].calc is None
 
     frames = znh5md.serialization.Frames.from_ase(list(io))
     assert len(frames) == 6

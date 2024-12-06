@@ -181,7 +181,7 @@ def getitem(
         if f"/observables/{self.particles_group}" in f:
             observables = f[f"/observables/{self.particles_group}"]
             process_observables(self, frames, observables, index)
-    
+
     print(len(frames))
     print(particles)
     print(is_single_item)

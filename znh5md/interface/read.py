@@ -329,18 +329,20 @@ def process_observables(self, frames: Frames, observables, index) -> None:
         origin = grp.attrs.get(AttributePath.origin.value, None)
         try:
             try:
-                update_frames(
-                    frames,
-                    H5MDToASEMapping[grp_name].value,
-                    grp["value"][index],
-                    origin,
-                    self.use_ase_calc,
-                )
-            except KeyError:
-                update_frames(
-                    frames, grp_name, grp["value"][index], origin, self.use_ase_calc
-                )
+                try:
+                    update_frames(
+                        frames,
+                        H5MDToASEMapping[grp_name].value,
+                        grp["value"][index],
+                        origin,
+                        self.use_ase_calc,
+                    )
+                except KeyError:
+                    update_frames(
+                        frames, grp_name, grp["value"][index], origin, self.use_ase_calc
+                    )
             except (OSError, IndexError):
+                # ??? why is this not triggering?
                 pass  # Handle backfilling for invalid values
         except KeyError:
             raise KeyError(
@@ -348,4 +350,5 @@ def process_observables(self, frames: Frames, observables, index) -> None:
                 " - missing 'value' dataset."
             )
         except Exception as err:
+            print(err)
             raise ValueError(f"Error processing group '{grp_name}'") from err

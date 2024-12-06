@@ -104,7 +104,6 @@ class IO(MutableSequence):
             #  separately from the OSError h5py raises
             raise
         except OSError as err:
-            print(err)
             raise IndexError("Index out of range")
 
     def extend(self, frames: list[ase.Atoms]) -> None:

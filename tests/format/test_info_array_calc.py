@@ -1,9 +1,10 @@
-import pytest
-import znh5md
 import numpy as np
-from ase.build import molecule
 import numpy.testing as npt
+import pytest
+from ase.build import molecule
 from ase.calculators.singlepoint import SinglePointCalculator
+
+import znh5md
 
 
 # Define assertion functions for different data types
@@ -72,8 +73,6 @@ def test_info(io_fixture, water_molecule, key, value, assert_fn):
     assert io_fixture[0].calc is None
 
 
-
-
 @pytest.mark.parametrize(
     "key,value,assert_fn",
     [
@@ -107,7 +106,6 @@ def test_calc(io_fixture, water_molecule, key, value, assert_fn):
     assert_fn(io_fixture[0].calc.results[key], value)
     assert key not in io_fixture[0].arrays
     assert io_fixture[0].info == {}
-    
 
 
 @pytest.mark.parametrize(

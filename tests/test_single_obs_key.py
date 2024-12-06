@@ -1,9 +1,9 @@
+import numpy.testing as npt
 from ase.build import molecule
 from ase.calculators.singlepoint import SinglePointCalculator
 
 import znh5md
 import znh5md.serialization
-import numpy.testing as npt
 
 
 def test_single_entry_info(tmp_path):

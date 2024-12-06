@@ -1,6 +1,8 @@
 from ase.build import molecule
 from ase.calculators.singlepoint import SinglePointCalculator
+
 import znh5md
+
 
 def test_single_entry_info(tmp_path):
     # Test a special case where only the first config has the key

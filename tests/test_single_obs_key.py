@@ -15,7 +15,7 @@ def test_single_entry_info(tmp_path):
     io.extend([water for _ in range(5)])
     assert len(io) == 6
     assert len(list(io)) == 6
-    # assert len(io[:]) == 6
+    assert len(io[:]) == 6
 
 def test_single_entry_arrays(tmp_path):
     # Test a special case where only the first config has the key
@@ -28,7 +28,7 @@ def test_single_entry_arrays(tmp_path):
     io.extend([water for _ in range(5)])
     assert len(io) == 6
     assert len(list(io)) == 6
-    # assert len(io[:]) == 6
+    assert len(io[:]) == 6
 
 
 def test_single_entry_calc(tmp_path):
@@ -42,4 +42,4 @@ def test_single_entry_calc(tmp_path):
     io.extend([water for _ in range(5)])
     assert len(io) == 6
     assert len(list(io)) == 6
-    # assert len(io[:]) == 6
+    assert len(io[:]) == 6

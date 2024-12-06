@@ -2,6 +2,7 @@ import dataclasses
 import functools
 import json
 import typing as t
+import contextlib
 
 import ase
 import h5py
@@ -247,19 +248,23 @@ class Frames:
         for key in self.arrays:
             if isinstance(self.arrays[key][idx], _MISSING):
                 continue
-            if key == "velocities":
-                atoms.set_velocities(self.arrays[key][idx])
-            else:
-                atoms.arrays[key] = self.arrays[key][idx]
+            with contextlib.suppress(KeyError):
+                if key == "velocities":
+                    atoms.set_velocities(self.arrays[key][idx])
+                else:
+                    atoms.arrays[key] = self.arrays[key][idx]
 
         for key in self.info:
             if not isinstance(self.info[key][idx], _MISSING):
-                atoms.info[key] = self.info[key][idx]
+                with contextlib.suppress(KeyError):
+                    atoms.info[key] = self.info[key][idx]
         for key in self.calc:
             if not isinstance(self.calc[key][idx], _MISSING):
-                if atoms.calc is None:
-                    atoms.calc = SinglePointCalculator(atoms)
-                atoms.calc.results[key] = self.calc[key][idx]
+                with contextlib.suppress(KeyError):
+                    value = self.calc[key][idx]
+                    if atoms.calc is None:
+                        atoms.calc = SinglePointCalculator(atoms)
+                    atoms.calc.results[key] = value
 
         return atoms
 

@@ -181,8 +181,13 @@ def getitem(
         if f"/observables/{self.particles_group}" in f:
             observables = f[f"/observables/{self.particles_group}"]
             process_observables(self, frames, observables, index)
+    
+    print(len(frames))
+    print(particles)
+    print(is_single_item)
 
-    return list(frames) if not is_single_item else frames[0]
+    # return list(frames) if not is_single_item else frames[0]
+    return frames
 
 
 def process_species_group(self, frames: Frames, particles, index) -> None:
@@ -341,10 +346,12 @@ def process_observables(self, frames: Frames, observables, index) -> None:
                     update_frames(
                         frames, grp_name, grp["value"][index], origin, self.use_ase_calc
                     )
-            except (OSError, IndexError):
+            except (OSError, IndexError) as err:
+                print(err)
                 # ??? why is this not triggering?
                 pass  # Handle backfilling for invalid values
-        except KeyError:
+        except KeyError as err:
+            print(err)
             raise KeyError(
                 f"Key '{grp_name}' does not seem to be a valid H5MD group"
                 " - missing 'value' dataset."

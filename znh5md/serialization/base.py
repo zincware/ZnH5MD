@@ -257,11 +257,11 @@ class Frames:
                     atoms.arrays[key] = self.arrays[key][idx]
 
         for key in self.info:
-            with contextlib.suppress(KeyError):
+            with contextlib.suppress(IndexError):
                 if not isinstance(self.info[key][idx], _MISSING):
                     atoms.info[key] = self.info[key][idx]
         for key in self.calc:
-            with contextlib.suppress(KeyError):
+            with contextlib.suppress(IndexError):
                 if not isinstance(self.calc[key][idx], _MISSING):
                     if atoms.calc is None:
                         atoms.calc = SinglePointCalculator(atoms)

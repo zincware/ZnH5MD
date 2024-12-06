@@ -1,5 +1,7 @@
 from ase.build import molecule
+
 import znh5md
+
 
 def test_single_obs_key_info(tmp_path):
     # Test a special case where only the first config has the key

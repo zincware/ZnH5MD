@@ -86,10 +86,16 @@ def s22_info_arrays_calc() -> list[ase.Atoms]:
                 "mlip_stress": np.random.rand(6),
                 "collection": "s22",
                 "metadata": {"author": "Jane Doe", "date": "2021-09-01"},
+                "lst": [1, 2, 3],
+                # "lst_str": ["Jane Doe", "John Doe"],
+                # "lst_array": [np.random.rand(3), np.random.rand(3)],
             }
         )
         atoms.new_array("mlip_forces", np.random.rand(len(atoms), 3))
         atoms.new_array("mlip_forces_2", np.random.rand(len(atoms), 3))
+        # atoms.arrays["arr_lst_arr"] = [np.random.rand(3) for _ in range(len(atoms))]
+        # atoms.arrays["arr_lst"] = [[1, 2, 3] for _ in range(len(atoms))]
+        # atoms.new_array("arr_str", np.array(["abc" for _ in range(len(atoms))]))
         atoms.set_velocities(np.random.rand(len(atoms), 3))
         calc = SinglePointCalculator(
             atoms, energy=np.random.rand(), forces=np.random.rand(len(atoms), 3)
@@ -115,7 +121,17 @@ def s22_illegal_calc_results() -> list[ase.Atoms]:
     for atoms in ase.collections.s22:
         atoms.calc = SinglePointCalculator(atoms)
         atoms.calc.results["mlip_energy"] = np.random.rand()
-
+        atoms.calc.results["dict"] = {"author": "Jane Doe", "date": "2021-09-01"}
+        atoms.calc.results["float"] = 3.14
+        atoms.calc.results["int"] = 42
+        atoms.calc.results["list"] = [1, 2, 3]
+        atoms.calc.results["str"] = '{"author": "Jane Doe", "date": "2021-09-01"}'
+        atoms.calc.results["list_array"] = [np.random.rand(3), np.random.rand(3)]
+        atoms.calc.results["list_str"] = ["Jane Doe", "John Doe"]
+        # atoms.calc.results["list_dict"] = [
+        #     {"author": "Jane Doe", "date": "2021-09-01"},
+        #     {"author": "John Doe", "date": "2021-09-02"},
+        # ]
         images.append(atoms)
     return images
 

@@ -48,6 +48,50 @@ ZnH5MD circumvents two current limitations of the H5MD standard.
   first frame. Using this feature will not typically not break ompatibility with
   other H5MD tools but can lead to unexpected behaviour.
 
+## Supported
+
+### `atoms.info` entry
+
+`dict` and `list` entries assume python standard types if not otherwise specified.
+
+| Type                     | ZnH5MD |
+|--------------------------|--------|
+| `np.ndarray`             | ✅     |
+| `float`                  | ✅     |
+| `str`                    | ✅     |
+| `dict`                   | ✅     |
+| `list`                   | ✅     |
+| `list[np.ndarray]`       | ✅     |
+| `dict[str, np.ndarray]`  | ❌     |
+| `list[dict]`             | ❌     |
+
+### `atoms.arrays`
+
+| Type                     | ZnH5MD |
+|--------------------------|--------|
+| `np.ndarray`             | ✅     |
+| `float`                  | ✅     |
+| `str`                    | ✅     |
+| `dict`                   | ✅     |
+| `list`                   | ✅     |
+| `list[np.ndarray]`       | ✅     |
+| `dict[str, np.ndarray]`  | ❌     |
+| `list[dict]`             | ❌     |
+
+
+### `atoms.calc.results`
+
+| Type                     | ZnH5MD |
+|--------------------------|--------|
+| `np.ndarray`             | ✅     |
+| `float`                  | ✅     |
+| `str`                    | ✅     |
+| `dict`                   | ✅     |
+| `list`                   | ✅     |
+| `list[np.ndarray]`       | ✅     |
+| `dict[str, np.ndarray]`  | ❌     |
+| `list[dict]`             | ❌     |
+
 ## Current limitations
 
 This is a not necessarily complete list of Limitations that will be fixed

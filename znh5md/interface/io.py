@@ -103,7 +103,7 @@ class IO(MutableSequence):
             # FileNotFoundError is an OSError, but we want to handle it
             #  separately from the OSError h5py raises
             raise
-        except OSError as err:
+        except OSError:
             raise IndexError("Index out of range")
 
     def extend(self, frames: list[ase.Atoms]) -> None:

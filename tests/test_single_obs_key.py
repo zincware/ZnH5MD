@@ -21,7 +21,6 @@ def test_single_entry_info(tmp_path):
     frames = znh5md.serialization.Frames.from_ase(list(io))
     assert len(frames) == 6
     assert len(list(frames)) == 6
-    
 
 
 def test_single_entry_arrays(tmp_path):

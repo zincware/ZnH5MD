@@ -186,9 +186,7 @@ def getitem(
     print(particles)
     print(is_single_item)
 
-    # return list(frames) if not is_single_item else frames[0]
-    return frames
-
+    return list(frames) if not is_single_item else frames[0]
 
 def process_species_group(self, frames: Frames, particles, index) -> None:
     """

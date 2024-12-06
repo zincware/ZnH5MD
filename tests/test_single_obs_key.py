@@ -2,6 +2,7 @@ from ase.build import molecule
 from ase.calculators.singlepoint import SinglePointCalculator
 
 import znh5md
+import znh5md.serialization
 
 
 def test_single_entry_info(tmp_path):
@@ -17,6 +18,11 @@ def test_single_entry_info(tmp_path):
     assert len(list(io)) == 6
     assert len(io[:]) == 6
 
+    frames = znh5md.serialization.Frames.from_ase(list(io))
+    assert len(frames) == 6
+    assert len(list(frames)) == 6
+    
+
 
 def test_single_entry_arrays(tmp_path):
     # Test a special case where only the first config has the key
@@ -31,6 +37,10 @@ def test_single_entry_arrays(tmp_path):
     assert len(list(io)) == 6
     assert len(io[:]) == 6
 
+    frames = znh5md.serialization.Frames.from_ase(list(io))
+    assert len(frames) == 6
+    assert len(list(frames)) == 6
+
 
 def test_single_entry_calc(tmp_path):
     # Test a special case where only the first config has the key
@@ -44,3 +54,7 @@ def test_single_entry_calc(tmp_path):
     assert len(io) == 6
     assert len(list(io)) == 6
     assert len(io[:]) == 6
+
+    frames = znh5md.serialization.Frames.from_ase(list(io))
+    assert len(frames) == 6
+    assert len(list(frames)) == 6

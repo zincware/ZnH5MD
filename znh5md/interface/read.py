@@ -188,6 +188,7 @@ def getitem(
 
     return list(frames) if not is_single_item else frames[0]
 
+
 def process_species_group(self, frames: Frames, particles, index) -> None:
     """
     Process the 'species' group and update the frames.

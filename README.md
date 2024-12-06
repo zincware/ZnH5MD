@@ -50,26 +50,47 @@ ZnH5MD circumvents two current limitations of the H5MD standard.
 
 ## Supported
 
+### `atoms.info` entry
+
+`dict` and `list` entries assume python standard types if not otherwise specified.
+
+| Type                     | ZnH5MD |
+|--------------------------|--------|
+| `np.ndarray`             | ✅     |
+| `float`                  | ✅     |
+| `str`                    | ✅     |
+| `dict`                   | ✅     |
+| `list`                   | ✅     |
+| `list[np.ndarray]`       | ✅     |
+| `dict[str, np.ndarray]`  | ❌     |
+| `list[dict]`             | ❌     |
+
 ### `atoms.arrays`
 
-| | ZnH5MD | | ------------- | ------------- | | `dict[str, np.ndarray]` | ✅ | |
-`dict[str, list]` | ❌ |
+| Type                     | ZnH5MD |
+|--------------------------|--------|
+| `np.ndarray`             | ✅     |
+| `float`                  | ✅     |
+| `str`                    | ✅     |
+| `dict`                   | ✅     |
+| `list`                   | ✅     |
+| `list[np.ndarray]`       | ✅     |
+| `dict[str, np.ndarray]`  | ❌     |
+| `list[dict]`             | ❌     |
 
-### `atoms.info`
-
-| | ZnH5MD | | ------------- | ------------- | | `dict[str, np.ndarray]` | ✅ | |
-`dict[str, float]` | ✅ | | `dict[str, int]` | ✅ | | `dict[str, str]` | ✅ | |
-`dict[str, dict]` | ✅ | | `dict[str, list[float]` | ✅ | | `dict[str, list[int]`
-| ✅ | | `dict[str, list[str]` | ❌ | | `dict[str, list[np.ndarray]` | ❌ | |
-`dict[str, list[dict]` | ❌ |
 
 ### `atoms.calc.results`
 
-| | ZnH5MD | | ------------- | ------------- | | `dict[str, np.ndarray]` | ✅ | |
-`dict[str, float]` | ✅ | | `dict[str, int]` | ✅ | | `dict[str, str]` | ✅ | |
-`dict[str, dict]` | ✅ | | `dict[str, list[float]` | ✅ | | `dict[str, list[int]`
-| ✅ | | `dict[str, list[str]` | ✅ | | `dict[str, list[np.ndarray]` | ✅ | |
-`dict[str, list[dict]` | ❌ |
+| Type                     | ZnH5MD |
+|--------------------------|--------|
+| `np.ndarray`             | ✅     |
+| `float`                  | ✅     |
+| `str`                    | ✅     |
+| `dict`                   | ✅     |
+| `list`                   | ✅     |
+| `list[np.ndarray]`       | ✅     |
+| `dict[str, np.ndarray]`  | ❌     |
+| `list[dict]`             | ❌     |
 
 ## Current limitations
 

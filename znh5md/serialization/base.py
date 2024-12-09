@@ -1,3 +1,4 @@
+import contextlib
 import dataclasses
 import functools
 import json
@@ -238,28 +239,33 @@ class Frames:
 
     def __getitem__(self, idx: int) -> ase.Atoms:
         """Return a single frame."""
+        # this raises the IndexError to determine the length of the Frames object
         atoms = ase.Atoms(
             numbers=self.numbers[idx],
             positions=self.positions[idx],
             cell=self.cell[idx],
             pbc=self.pbc[idx],
         )
+        # all data following here can be missing
         for key in self.arrays:
-            if isinstance(self.arrays[key][idx], _MISSING):
-                continue
-            if key == "velocities":
-                atoms.set_velocities(self.arrays[key][idx])
-            else:
-                atoms.arrays[key] = self.arrays[key][idx]
+            with contextlib.suppress(IndexError):
+                if isinstance(self.arrays[key][idx], _MISSING):
+                    continue
+                if key == "velocities":
+                    atoms.set_velocities(self.arrays[key][idx])
+                else:
+                    atoms.arrays[key] = self.arrays[key][idx]
 
         for key in self.info:
-            if not isinstance(self.info[key][idx], _MISSING):
-                atoms.info[key] = self.info[key][idx]
+            with contextlib.suppress(IndexError):
+                if not isinstance(self.info[key][idx], _MISSING):
+                    atoms.info[key] = self.info[key][idx]
         for key in self.calc:
-            if not isinstance(self.calc[key][idx], _MISSING):
-                if atoms.calc is None:
-                    atoms.calc = SinglePointCalculator(atoms)
-                atoms.calc.results[key] = self.calc[key][idx]
+            with contextlib.suppress(IndexError):
+                if not isinstance(self.calc[key][idx], _MISSING):
+                    if atoms.calc is None:
+                        atoms.calc = SinglePointCalculator(atoms)
+                    atoms.calc.results[key] = self.calc[key][idx]
 
         return atoms
 

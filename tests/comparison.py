@@ -1,13 +1,14 @@
-import mdtraj
-import pandas as pd
-import numpy as np
-import chemfiles
-import pytest
-import ase.io
 import uuid
-import znh5md
 import warnings
 
+import ase.io
+import chemfiles
+import mdtraj
+import numpy as np
+import pandas as pd
+import pytest
+
+import znh5md
 
 # n_steps, n_atoms
 
@@ -16,6 +17,7 @@ import warnings
 WRITE = [(1000, 1000)]
 READ = [(1000, 1000)]
 
+
 def collect_file_sizes(tmp_path) -> str:
     # compute the mean and standard deviation of the file sizes in the given directory
     sizes = []
@@ -23,6 +25,7 @@ def collect_file_sizes(tmp_path) -> str:
         sizes.append(file.stat().st_size)
     # print mean and standard deviation in megabytes
     return f"Mean: {np.mean(sizes) / 1e6:.2f} MB, Std: {np.std(sizes) / 1e6:.2f} MB"
+
 
 def create_topology(n_atoms):
     """Create an MDTraj topology for a given number of atoms."""
@@ -38,6 +41,7 @@ def create_topology(n_atoms):
     )
     return mdtraj.Topology().from_dataframe(data)
 
+
 def generate_frames(n_steps, n_atoms) -> list[ase.Atoms]:
     """Generate a list of Chemfiles frames with random atomic positions."""
     frames = []
@@ -46,6 +50,7 @@ def generate_frames(n_steps, n_atoms) -> list[ase.Atoms]:
         frames.append(atoms)
     return frames
 
+
 def convert_atoms_to_chemfiles(atoms: ase.Atoms) -> chemfiles.Frame:
     """Convert an ASE atoms object to a Chemfiles frame."""
     frame = chemfiles.Frame()
@@ -53,11 +58,13 @@ def convert_atoms_to_chemfiles(atoms: ase.Atoms) -> chemfiles.Frame:
     frame.positions[:] = atoms.positions
     return frame
 
+
 @pytest.fixture
 def frames(request):
     """Fixture to create frames based on n_steps and n_atoms from the request."""
     n_steps, n_atoms = request.param
     return list(generate_frames(n_steps, n_atoms))
+
 
 @pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
@@ -105,6 +112,7 @@ def test_write_znh5md(tmp_path, frames, benchmark, compression):
     benchmark(write_znh5md)
     warnings.warn(collect_file_sizes(tmp_path))
 
+
 @pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
 def test_write_xtc(tmp_path, frames, benchmark):
@@ -114,13 +122,12 @@ def test_write_xtc(tmp_path, frames, benchmark):
     def write_xtc():
         """Inner function for benchmarking."""
         filename = tmp_path / f"{uuid.uuid4()}.xtc"
-        traj = mdtraj.Trajectory(
-            positions, topology
-        )
+        traj = mdtraj.Trajectory(positions, topology)
         traj.save_xtc(filename.as_posix())
 
     benchmark(write_xtc)
     warnings.warn(collect_file_sizes(tmp_path))
+
 
 @pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
@@ -144,6 +151,7 @@ def test_write_ase_xyz(tmp_path, frames, benchmark):
 
     benchmark(write_ase_xyz)
     warnings.warn(collect_file_sizes(tmp_path))
+
 
 @pytest.mark.benchmark(group="read")
 @pytest.mark.parametrize("frames", READ, indirect=True)
@@ -170,6 +178,7 @@ def test_read_ase_xyz(tmp_path, frames, benchmark):
 
     benchmark(read_ase_traj)
 
+
 @pytest.mark.parametrize("compression", ["lzf", "gzip", None])
 @pytest.mark.benchmark(group="read")
 @pytest.mark.parametrize("frames", READ, indirect=True)
@@ -190,9 +199,7 @@ def test_read_xtc(tmp_path, frames, benchmark):
     topology = create_topology(len(frames[0]))
     positions = np.array([frame.positions for frame in frames])
     filename = tmp_path / f"{uuid.uuid4()}.xtc"
-    traj = mdtraj.Trajectory(
-        positions, topology
-    )
+    traj = mdtraj.Trajectory(positions, topology)
     traj.save_xtc(filename.as_posix())
 
     def read_xtc():
@@ -221,7 +228,6 @@ def test_read_chemfiles_pdb(tmp_path, frames, benchmark):
                 _ = frame.positions
 
     benchmark(read_chemfiles_pdb)
-
 
 
 @pytest.mark.benchmark(group="read")

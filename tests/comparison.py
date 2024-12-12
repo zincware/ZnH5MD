@@ -14,6 +14,7 @@ import warnings
 # N_ATOMS = np.logspace(1, 3, 20, dtype=int)
 # N_STEPS = 1000
 WRITE = [(1000, 1000)]
+READ = [(1000, 1000)]
 
 def collect_file_sizes(tmp_path) -> str:
     # compute the mean and standard deviation of the file sizes in the given directory
@@ -58,6 +59,7 @@ def frames(request):
     n_steps, n_atoms = request.param
     return list(generate_frames(n_steps, n_atoms))
 
+@pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
 def test_write_chemfiles_pdb(tmp_path, frames, benchmark):
     """Benchmark the PDB writing process."""
@@ -73,6 +75,7 @@ def test_write_chemfiles_pdb(tmp_path, frames, benchmark):
     benchmark(write_chemfiles_pdb)
     warnings.warn(collect_file_sizes(tmp_path))
 
+@pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
 def test_write_znh5md(tmp_path, frames, benchmark):
     def write_znh5md():
@@ -83,7 +86,7 @@ def test_write_znh5md(tmp_path, frames, benchmark):
     benchmark(write_znh5md)
     warnings.warn(collect_file_sizes(tmp_path))
 
-
+@pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
 def test_write_znh5md_compressed(tmp_path, frames, benchmark):
     def write_znh5md():
@@ -94,7 +97,7 @@ def test_write_znh5md_compressed(tmp_path, frames, benchmark):
     benchmark(write_znh5md)
     warnings.warn(collect_file_sizes(tmp_path))
 
-
+@pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
 def test_write_xtc(tmp_path, frames, benchmark):
     topology = create_topology(len(frames[0]))
@@ -111,8 +114,9 @@ def test_write_xtc(tmp_path, frames, benchmark):
     benchmark(write_xtc)
     warnings.warn(collect_file_sizes(tmp_path))
 
+@pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
-def test_ase_traj(tmp_path, frames, benchmark):
+def test_write_ase_traj(tmp_path, frames, benchmark):
     def write_ase_traj():
         """Inner function for benchmarking."""
         filename = tmp_path / f"{uuid.uuid4()}.traj"
@@ -120,3 +124,40 @@ def test_ase_traj(tmp_path, frames, benchmark):
 
     benchmark(write_ase_traj)
     warnings.warn(collect_file_sizes(tmp_path))
+
+@pytest.mark.benchmark(group="read")
+@pytest.mark.parametrize("frames", READ, indirect=True)
+def test_read_ase_traj(tmp_path, frames, benchmark):
+    filename = tmp_path / f"{uuid.uuid4()}.traj"
+    ase.io.write(filename.as_posix(), frames)
+
+    def read_ase_traj():
+        """Inner function for benchmarking."""
+        ase.io.read(filename.as_posix(), index=":")
+
+    benchmark(read_ase_traj)
+
+
+@pytest.mark.benchmark(group="read")
+@pytest.mark.parametrize("frames", READ, indirect=True)
+def test_read_znh5md(tmp_path, frames, benchmark):
+    filename = tmp_path / f"{uuid.uuid4()}.h5"
+    znh5md.write(filename, frames, compression=None)
+
+    def read_znh5md():
+        """Inner function for benchmarking."""
+        _ = znh5md.IO(filename)[:]
+
+    benchmark(read_znh5md)
+
+@pytest.mark.benchmark(group="read")
+@pytest.mark.parametrize("frames", READ, indirect=True)
+def test_read_znh5md_compressed(tmp_path, frames, benchmark):
+    filename = tmp_path / f"{uuid.uuid4()}.h5"
+    znh5md.write(filename, frames)
+
+    def read_znh5md():
+        """Inner function for benchmarking."""
+        _ = znh5md.IO(filename)[:]
+
+    benchmark(read_znh5md)

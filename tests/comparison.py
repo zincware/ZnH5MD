@@ -75,24 +75,32 @@ def test_write_chemfiles_pdb(tmp_path, frames, benchmark):
     benchmark(write_chemfiles_pdb)
     warnings.warn(collect_file_sizes(tmp_path))
 
+
 @pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
-def test_write_znh5md(tmp_path, frames, benchmark):
-    def write_znh5md():
-        """Inner function for benchmarking."""
-        filename = tmp_path / f"{uuid.uuid4()}.h5"
-        znh5md.write(filename, frames, compression=None)
+def test_write_chemfiles_xyz(tmp_path, frames, benchmark):
+    """Benchmark the XYZ writing process."""
+    chemfiles_frames = [convert_atoms_to_chemfiles(frame) for frame in frames]
 
-    benchmark(write_znh5md)
+    def write_chemfiles_xyz():
+        """Inner function for benchmarking."""
+        filename = tmp_path / f"{uuid.uuid4()}.xyz"
+        with chemfiles.Trajectory(filename.as_posix(), "w") as traj:
+            for frame in chemfiles_frames:
+                traj.write(frame)
+
+    benchmark(write_chemfiles_xyz)
     warnings.warn(collect_file_sizes(tmp_path))
 
+
+@pytest.mark.parametrize("compression", ["lzf", "gzip", None])
 @pytest.mark.benchmark(group="write")
 @pytest.mark.parametrize("frames", WRITE, indirect=True)
-def test_write_znh5md_compressed(tmp_path, frames, benchmark):
+def test_write_znh5md(tmp_path, frames, benchmark, compression):
     def write_znh5md():
         """Inner function for benchmarking."""
         filename = tmp_path / f"{uuid.uuid4()}.h5"
-        znh5md.write(filename, frames)
+        znh5md.write(filename, frames, compression=compression)
 
     benchmark(write_znh5md)
     warnings.warn(collect_file_sizes(tmp_path))
@@ -125,6 +133,18 @@ def test_write_ase_traj(tmp_path, frames, benchmark):
     benchmark(write_ase_traj)
     warnings.warn(collect_file_sizes(tmp_path))
 
+
+@pytest.mark.benchmark(group="write")
+@pytest.mark.parametrize("frames", WRITE, indirect=True)
+def test_write_ase_xyz(tmp_path, frames, benchmark):
+    def write_ase_xyz():
+        """Inner function for benchmarking."""
+        filename = tmp_path / f"{uuid.uuid4()}.xyz"
+        ase.io.write(filename.as_posix(), frames)
+
+    benchmark(write_ase_xyz)
+    warnings.warn(collect_file_sizes(tmp_path))
+
 @pytest.mark.benchmark(group="read")
 @pytest.mark.parametrize("frames", READ, indirect=True)
 def test_read_ase_traj(tmp_path, frames, benchmark):
@@ -140,24 +160,83 @@ def test_read_ase_traj(tmp_path, frames, benchmark):
 
 @pytest.mark.benchmark(group="read")
 @pytest.mark.parametrize("frames", READ, indirect=True)
-def test_read_znh5md(tmp_path, frames, benchmark):
+def test_read_ase_xyz(tmp_path, frames, benchmark):
+    filename = tmp_path / f"{uuid.uuid4()}.xyz"
+    ase.io.write(filename.as_posix(), frames)
+
+    def read_ase_traj():
+        """Inner function for benchmarking."""
+        ase.io.read(filename.as_posix(), index=":")
+
+    benchmark(read_ase_traj)
+
+@pytest.mark.parametrize("compression", ["lzf", "gzip", None])
+@pytest.mark.benchmark(group="read")
+@pytest.mark.parametrize("frames", READ, indirect=True)
+def test_read_znh5md(tmp_path, frames, benchmark, compression):
     filename = tmp_path / f"{uuid.uuid4()}.h5"
-    znh5md.write(filename, frames, compression=None)
+    znh5md.write(filename, frames, compression=compression)
 
     def read_znh5md():
         """Inner function for benchmarking."""
         _ = znh5md.IO(filename)[:]
 
     benchmark(read_znh5md)
+
 
 @pytest.mark.benchmark(group="read")
 @pytest.mark.parametrize("frames", READ, indirect=True)
-def test_read_znh5md_compressed(tmp_path, frames, benchmark):
-    filename = tmp_path / f"{uuid.uuid4()}.h5"
-    znh5md.write(filename, frames)
+def test_read_xtc(tmp_path, frames, benchmark):
+    topology = create_topology(len(frames[0]))
+    positions = np.array([frame.positions for frame in frames])
+    filename = tmp_path / f"{uuid.uuid4()}.xtc"
+    traj = mdtraj.Trajectory(
+        positions, topology
+    )
+    traj.save_xtc(filename.as_posix())
 
-    def read_znh5md():
+    def read_xtc():
         """Inner function for benchmarking."""
-        _ = znh5md.IO(filename)[:]
+        traj = mdtraj.load_xtc(filename.as_posix(), top=topology)
+        for frame in traj:
+            # access to actually read the data?
+            _ = frame.xyz
 
-    benchmark(read_znh5md)
+    benchmark(read_xtc)
+
+
+@pytest.mark.benchmark(group="read")
+@pytest.mark.parametrize("frames", READ, indirect=True)
+def test_read_chemfiles_pdb(tmp_path, frames, benchmark):
+    chemfiles_frames = [convert_atoms_to_chemfiles(frame) for frame in frames]
+    filename = tmp_path / f"{uuid.uuid4()}.pdb"
+    with chemfiles.Trajectory(filename.as_posix(), "w") as traj:
+        for frame in chemfiles_frames:
+            traj.write(frame)
+
+    def read_chemfiles_pdb():
+        """Inner function for benchmarking."""
+        with chemfiles.Trajectory(filename.as_posix(), "r") as traj:
+            for frame in traj:
+                _ = frame.positions
+
+    benchmark(read_chemfiles_pdb)
+
+
+
+@pytest.mark.benchmark(group="read")
+@pytest.mark.parametrize("frames", READ, indirect=True)
+def test_read_chemfiles_xyz(tmp_path, frames, benchmark):
+    chemfiles_frames = [convert_atoms_to_chemfiles(frame) for frame in frames]
+    filename = tmp_path / f"{uuid.uuid4()}.xyz"
+    with chemfiles.Trajectory(filename.as_posix(), "w") as traj:
+        for frame in chemfiles_frames:
+            traj.write(frame)
+
+    def read_chemfiles_xyz():
+        """Inner function for benchmarking."""
+        with chemfiles.Trajectory(filename.as_posix(), "r") as traj:
+            for frame in traj:
+                _ = frame.positions
+
+    benchmark(read_chemfiles_xyz)

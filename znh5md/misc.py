@@ -32,7 +32,7 @@ def concatenate_varying_shape_arrays(
 
     # Create the array filled with the fillvalue
     dataset = np.full(maxshape, fillvalue, dtype=dtype)
-    
+
     # Get the slices for each value and assign them all at once
     for i, value in enumerate(values):
         slices = (i,) + tuple(slice(0, dim) for dim in value.shape)

@@ -28,7 +28,8 @@ rdkit2ase = "^0.1.4"
 [tool.poetry.group.benchmark.dependencies]
 pandas = "^2.2.2"
 chemfiles = "^0.10.4"
-mdtraj = "^1.10.0"
+mdtraj = "^1.10.2"
+mdanalysis = "^2.8.0"
 
 
 [tool.poetry.scripts]

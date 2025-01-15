@@ -1,5 +1,6 @@
 import json
 import typing as t
+import warnings
 
 import ase
 import numpy as np
@@ -114,7 +115,14 @@ def handle_origin_data(self, name: str, data: list, origin: ORIGIN_TYPE) -> None
     elif origin == "info":
         self.info[name] = data
     elif origin == "arrays":
-        self.arrays[name] = data
+        try:
+            self.arrays[name] = np.array(data)
+        except ValueError:
+            warnings.warn(
+                f"Could not convert data to array for '{name}'. "
+                "Storing as list instead."
+            )
+            self.arrays[name] = data
     elif origin == "atoms":
         raise ValueError(f"Origin 'atoms' is not allowed for {name}")
     else:

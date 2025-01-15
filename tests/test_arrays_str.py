@@ -1,5 +1,6 @@
 import numpy as np
 import rdkit2ase
+import numpy.testing as npt
 
 import znh5md
 
@@ -14,3 +15,4 @@ def test_pdb_repeat(tmp_path):
 
     atoms = io[0]
     assert isinstance(atoms.arrays["atomtypes"], np.ndarray)
+    npt.assert_array_equal(atoms.arrays["atomtypes"], water.arrays["atomtypes"])

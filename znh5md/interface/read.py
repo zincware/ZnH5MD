@@ -55,7 +55,6 @@ def preprocess_data(value: np.ndarray) -> list:
     """
     if value.dtype.kind in ["O", "S", "U"]:
         try:
-            # TODO: what it the input was not list[str] but array[str]?
             return [json.loads(v) if v != b"" else MISSING for v in value]
         except json.JSONDecodeError:
             # compatibility for non-JSON data from other sources

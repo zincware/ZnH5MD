@@ -1,6 +1,6 @@
 import numpy as np
-import rdkit2ase
 import numpy.testing as npt
+import rdkit2ase
 
 import znh5md
 

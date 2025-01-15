@@ -9,7 +9,7 @@ import znh5md
 
 # Define assertion functions for different data types
 def assert_equal(actual, expected):
-    assert actual == expected
+    npt.assert_equal(actual, expected)
 
 
 def assert_allclose(actual, expected):

@@ -3,6 +3,7 @@ import typing as t
 
 import ase
 import numpy as np
+import warnings
 from ase.calculators.calculator import all_properties
 
 from znh5md.misc import decompose_varying_shape_arrays, open_file
@@ -54,6 +55,7 @@ def preprocess_data(value: np.ndarray) -> list:
     """
     if value.dtype.kind in ["O", "S", "U"]:
         try:
+            # TODO: what it the input was not list[str] but array[str]?
             return [json.loads(v) if v != b"" else MISSING for v in value]
         except json.JSONDecodeError:
             # compatibility for non-JSON data from other sources
@@ -114,7 +116,14 @@ def handle_origin_data(self, name: str, data: list, origin: ORIGIN_TYPE) -> None
     elif origin == "info":
         self.info[name] = data
     elif origin == "arrays":
-        self.arrays[name] = data
+        try:
+            self.arrays[name] = np.array(data)
+        except ValueError:
+            warnings.warn(
+                f"Could not convert data to array for '{name}'. "
+                "Storing as list instead."
+            )
+            self.arrays[name] = data
     elif origin == "atoms":
         raise ValueError(f"Origin 'atoms' is not allowed for {name}")
     else:

@@ -1,9 +1,9 @@
 import json
 import typing as t
+import warnings
 
 import ase
 import numpy as np
-import warnings
 from ase.calculators.calculator import all_properties
 
 from znh5md.misc import decompose_varying_shape_arrays, open_file

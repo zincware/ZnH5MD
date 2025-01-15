@@ -1,6 +1,8 @@
-import rdkit2ase
-import znh5md
 import numpy as np
+import rdkit2ase
+
+import znh5md
+
 
 def test_pdb_repeat(tmp_path):
     water = rdkit2ase.smiles2conformers(smiles="O", numConfs=1)[0]

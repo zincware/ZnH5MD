@@ -1,5 +1,6 @@
 import ase.build
 import pytest
+import warnings
 
 import znh5md
 
@@ -69,7 +70,7 @@ def test_no_warn_correct(tmp_path):
     atoms = ase.build.molecule("H2O")
 
     # Ensure no warning is issued
-    with pytest.warns(None) as record:
+    # https://docs.pytest.org/en/latest/how-to/capture-warnings.html#additional-use-cases-of-warnings-in-tests
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         io.append(atoms)
-
-    assert len(record) == 0

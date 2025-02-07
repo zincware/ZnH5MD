@@ -1,6 +1,6 @@
-import ase.build
-import pytest
 import warnings
+
+import ase.build
 
 import znh5md
 

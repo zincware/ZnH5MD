@@ -7,7 +7,7 @@
 
 # ZnH5MD - ASE Interface for the H5MD format.
 
-ZnH5MD provides and interface from [ASE] to [H5MD] and vice versa. Install via
+ZnH5MD provides and interface from [ASE](https://wiki.fysik.dtu.dk/ase/) to [H5MD](https://www.nongnu.org/h5md/) and vice versa. Install via
 `pip install znh5md`. Similar to ASE ZnH5MD provides `read` and `write`
 functionality:
 

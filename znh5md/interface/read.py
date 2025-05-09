@@ -1,6 +1,5 @@
 import json
 import typing as t
-import warnings
 
 import ase
 import numpy as np
@@ -15,7 +14,7 @@ if t.TYPE_CHECKING:
 
 
 def update_frames(
-    self, name: str, value: np.ndarray, origin: ORIGIN_TYPE, use_ase_calc: bool
+    self: Frames, name: str, value: np.ndarray, origin: ORIGIN_TYPE, use_ase_calc: bool
 ) -> None:
     """
     Updates the specified frame data with appropriate transformations and storage logic.
@@ -65,7 +64,7 @@ def preprocess_data(value: np.ndarray) -> list:
 
 
 def store_data(
-    self, name: str, data: list, origin: ORIGIN_TYPE, use_ase_calc: bool
+    self: Frames, name: str, data: list, origin: ORIGIN_TYPE, use_ase_calc: bool
 ) -> None:
     """
     Store processed data into the appropriate attribute based on origin and conditions.
@@ -92,7 +91,9 @@ def store_data(
         assign_data_to_property(self, name, data, use_ase_calc)
 
 
-def handle_origin_data(self, name: str, data: list, origin: ORIGIN_TYPE) -> None:
+def handle_origin_data(
+    self: Frames, name: str, data: list, origin: ORIGIN_TYPE
+) -> None:
     """
     Handle data storage based on the specified origin.
 
@@ -118,18 +119,17 @@ def handle_origin_data(self, name: str, data: list, origin: ORIGIN_TYPE) -> None
         try:
             self.arrays[name] = np.array(data)
         except ValueError:
-            warnings.warn(
-                f"Could not convert data to array for '{name}'. "
-                "Storing as list instead."
-            )
-            self.arrays[name] = data
+            # Try individual arrays
+            self.arrays[name] = [np.array(d) for d in data]
     elif origin == "atoms":
         raise ValueError(f"Origin 'atoms' is not allowed for {name}")
     else:
         raise ValueError(f"Unknown origin: {origin}")
 
 
-def assign_data_to_property(self, name: str, data: list, use_ase_calc: bool) -> None:
+def assign_data_to_property(
+    self: Frames, name: str, data: list, use_ase_calc: bool
+) -> None:
     """
     Assign data to the appropriate property based on its size and conditions.
 

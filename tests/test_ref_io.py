@@ -22,7 +22,7 @@ from znh5md.interface import IO
         "s22_info_arrays_calc_missing_inbetween",
     ],
 )
-@pytest.mark.parametrize("append", [False]) # TODO: True raises error!!
+@pytest.mark.parametrize("append", [False])  # TODO: True raises error!!
 # @pytest.mark.parametrize("store_ase_origin ", [False, True])
 def test_frames_iter(dataset_name, append, request, tmp_path):
     dataset = request.getfixturevalue(dataset_name)

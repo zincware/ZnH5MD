@@ -1,6 +1,5 @@
 import json
 import typing as t
-import warnings
 
 import ase
 import numpy as np
@@ -92,7 +91,9 @@ def store_data(
         assign_data_to_property(self, name, data, use_ase_calc)
 
 
-def handle_origin_data(self: Frames, name: str, data: list, origin: ORIGIN_TYPE) -> None:
+def handle_origin_data(
+    self: Frames, name: str, data: list, origin: ORIGIN_TYPE
+) -> None:
     """
     Handle data storage based on the specified origin.
 
@@ -126,7 +127,9 @@ def handle_origin_data(self: Frames, name: str, data: list, origin: ORIGIN_TYPE)
         raise ValueError(f"Unknown origin: {origin}")
 
 
-def assign_data_to_property(self: Frames, name: str, data: list, use_ase_calc: bool) -> None:
+def assign_data_to_property(
+    self: Frames, name: str, data: list, use_ase_calc: bool
+) -> None:
     """
     Assign data to the appropriate property based on its size and conditions.
 

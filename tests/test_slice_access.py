@@ -1,6 +1,8 @@
-import pytest
-import znh5md
 import numpy as np
+import pytest
+
+import znh5md
+
 
 @pytest.mark.parametrize(
     "dataset_name",
@@ -27,11 +29,11 @@ def test_frames_iter(dataset_name, append, request, tmp_path):
             io.append(frame)
     else:
         io.extend(dataset)
-    
+
     for atoms in io:
         for value in atoms.arrays.values():
             assert isinstance(value, np.ndarray), f"Exp. np.ndarray, got {type(value)}"
-    
+
     for atoms in io[:]:
         for value in atoms.arrays.values():
             assert isinstance(value, np.ndarray), f"Exp. np.ndarray, got {type(value)}"

@@ -38,5 +38,6 @@ jobs:
 
           echo '## Read: Comparison with other packages' >> report.md
           echo '![](./trajectory_read_benchmark.png "Read benchmark, comparison with other packages")' >> report.md
+          echo '![](./fastest_readers.png "Read benchmark, comparison with other packages")' >> report.md
 
           cml comment update report.md

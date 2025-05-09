@@ -148,9 +148,11 @@ class ChemfilesIO:
     def read(self):
         if self.current_format in ["xyz", "pdb", "xtc"]:
             trajectory = chemfiles.Trajectory(self.filename, "r")
-            frames = list(trajectory)  # Read all frames into a list
+            # access data to ensure loading
+            for frame in trajectory:
+                _  = frame.positions
             trajectory.close()
-            return frames
+            return trajectory
         else:
             raise ValueError(f"Unsupported format: {self.current_format}")
 
@@ -209,7 +211,7 @@ def benchmark_read(reader_object, num_repeats: int = 5) -> float:
 
 
 def main():
-    n_frames_list = np.logspace(1, 3, num=4, dtype=int)
+    n_frames_list = np.logspace(1, 4, num=10, dtype=int)
     n_atoms_list = [100, 200]
     num_benchmark_repeats = 10
     formats_to_benchmark = ["xyz", "pdb", "h5", "xtc"]
@@ -325,6 +327,37 @@ def main():
     plt.savefig(plot_filename)
     # plt.show()  # Show the plot interactively
     print(f"\nBenchmark complete. Plot saved to {plot_filename}")
+
+    # find the fastest reader for each format
+    fastest_readers = {}
+    for fmt in formats_to_benchmark:
+        fastest_readers[fmt] = {}
+        for n_atoms in n_atoms_list:
+            fastest_time = np.inf
+            fastest_lib = None
+            for lib_name, times in results[fmt][n_atoms].items():
+                mean_time = np.nanmean(times)
+                if mean_time < fastest_time:
+                    fastest_time = mean_time
+                    fastest_lib = lib_name
+            fastest_readers[fmt][n_atoms] = (fastest_lib, fastest_time)
+            print(
+                f"Fastest reader for {fmt.upper()} with {n_atoms} atoms: {fastest_lib} ({fastest_time:.4f} seconds)"
+            )
+    # now make a plot of the fastest readers
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for fmt in formats_to_benchmark:
+        n_atoms = n_atoms_list[0]  # Use the first n_atoms for plotting
+        fastest_lib, fastest_time = fastest_readers[fmt][n_atoms]
+        ax.bar(fmt, fastest_time, label=fastest_lib)
+    ax.set_xlabel("File Format")
+    ax.set_ylabel("Fastest Read Time (seconds)")
+    ax.set_title("Fastest Reader for Each File Format")
+    ax.legend()
+    ax.grid(True, which="both", ls="-", alpha=0.5)
+    plt.tight_layout()
+    plt.savefig("fastest_readers.png")
+
 
 
 if __name__ == "__main__":

@@ -37,6 +37,6 @@ jobs:
           echo '![](./benchmark-read-size.svg "Read benchmark, varying size")' >> report.md
 
           echo '## Read: Comparison with other packages' >> report.md
-          echo '![](./benchmarks/trajectory_read_benchmark.png "Read benchmark, comparison with other packages")' >> report.md
+          echo '![](./trajectory_read_benchmark.png "Read benchmark, comparison with other packages")' >> report.md
 
           cml comment update report.md

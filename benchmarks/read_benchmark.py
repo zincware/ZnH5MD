@@ -150,7 +150,7 @@ class ChemfilesIO:
             trajectory = chemfiles.Trajectory(self.filename, "r")
             # access data to ensure loading
             for frame in trajectory:
-                _  = frame.positions
+                _ = frame.positions
             trajectory.close()
             return trajectory
         else:
@@ -357,7 +357,6 @@ def main():
     ax.grid(True, which="both", ls="-", alpha=0.5)
     plt.tight_layout()
     plt.savefig("fastest_readers.png")
-
 
 
 if __name__ == "__main__":

@@ -6,13 +6,13 @@ import ase.io
 import chemfiles
 import matplotlib.pyplot as plt
 import MDAnalysis as mda
-from MDAnalysis.coordinates.H5MD import H5MDReader
 import mdtraj as md
 import numpy as np
 import pandas as pd
+from ase.io.proteindatabank import write_proteindatabank
+from MDAnalysis.coordinates.H5MD import H5MDReader
+
 import znh5md
-from ase.calculators.singlepoint import SinglePointCalculator
-from ase.io.proteindatabank import write_proteindatabank, read_proteindatabank
 
 np.random.seed(42)
 
@@ -53,6 +53,7 @@ class ZnH5MDIO:
     def write(self, frames: list[ase.Atoms]):
         pass
 
+
 class ASEIO:
     def __init__(self):
         self.filename = None
@@ -67,6 +68,7 @@ class ASEIO:
             return ase.io.read(self.filename, index=":")
         elif self.current_format == "pdb":
             from ase.io.proteindatabank import read_proteindatabank
+
             return read_proteindatabank(self.filename)
         else:
             raise ValueError(f"Unsupported format: {self.current_format}")
@@ -75,7 +77,6 @@ class ASEIO:
         if self.current_format in ["xyz"]:
             ase.io.write(self.filename, frames)
         elif self.current_format == "pdb":
-            
             write_proteindatabank(self.filename, frames)
         elif self.current_format == "h5":
             io = znh5md.IO(self.filename, save_units=False, store="time")
@@ -111,7 +112,6 @@ class MDTrajIO:
         )
         self.topology = md.Topology.from_dataframe(top_df)
 
-
     def read(self):
         if self.current_format == "xyz":
             # Loads an XYZ trajectory. Uses the predefined topology.
@@ -134,8 +134,6 @@ class MDTrajIO:
             traj.save_xtc(self.filename)
             # remove the temporary file
             os.remove("ase_pdb_to_xtc_tmp.pdb")
-            
-
 
 
 class ChemfilesIO:
@@ -216,7 +214,6 @@ def main():
     num_benchmark_repeats = 10
     formats_to_benchmark = ["xyz", "pdb", "h5", "xtc"]
 
-
     file_readers = {
         "ASE": ASEIO(),
         "MDTraj": MDTrajIO(),
@@ -228,8 +225,7 @@ def main():
     # Dictionary to store results: results[format][n_atoms][lib_name] = [time1, time2, ...]
     results = {
         fmt: {
-            atoms: {lib_name: [] for lib_name in file_readers}
-            for atoms in n_atoms_list
+            atoms: {lib_name: [] for lib_name in file_readers} for atoms in n_atoms_list
         }
         for fmt in formats_to_benchmark
     }
@@ -248,7 +244,9 @@ def main():
             print(f"\n  --- Benchmarking for {n_atoms} atoms ---")
             for n_frames in n_frames_list:
                 # Generate a unique temporary filename
-                filename = f"temp_trajectory_{n_frames}f_{n_atoms}a_{tmp_file_counter}.{fmt}"
+                filename = (
+                    f"temp_trajectory_{n_frames}f_{n_atoms}a_{tmp_file_counter}.{fmt}"
+                )
                 tmp_file_counter += 1
 
                 print(
@@ -279,8 +277,12 @@ def main():
                         results[fmt][n_atoms][lib_name].append(avg_time)
                         print(f"      {lib_name:<12}: {avg_time:.4f} seconds")
                     except ValueError as e:
-                        print(f"      {lib_name:<12}: Not supported for {fmt.upper()} ({e})")
-                        results[fmt][n_atoms][lib_name].append(np.nan) # Mark as not supported
+                        print(
+                            f"      {lib_name:<12}: Not supported for {fmt.upper()} ({e})"
+                        )
+                        results[fmt][n_atoms][lib_name].append(
+                            np.nan
+                        )  # Mark as not supported
 
                 os.remove(filename)
             print(f"  --- Finished benchmarking for {n_atoms} atoms ---")

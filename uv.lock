@@ -234,6 +234,15 @@ wheels = [
 ]
 
 [[package]]
+name = "dill"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/12/80/630b4b88364e9a8c8c5797f4602d0f76ef820909ee32f0bacb9f90654042/dill-0.4.0.tar.gz", hash = "sha256:0633f1d2df477324f53a895b02c901fb961bdbf65a17122586ea7019292cbcf0", size = 186976 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/3d/9373ad9c56321fdab5b41197068e1d8c25883b3fea29dd361f9b55116869/dill-0.4.0-py3-none-any.whl", hash = "sha256:44f54bf6412c2c8464c14e8243eb163690a9800dbe2c367330883b19c7561049", size = 119668 },
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -905,6 +914,19 @@ wheels = [
 ]
 
 [[package]]
+name = "plams"
+version = "2025.102"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dill" },
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/17/60/b606dbbba850621de05ad5fdede7c2a796cad5dd781b0f5e01ce0bfc1329/plams-2025.102.tar.gz", hash = "sha256:7780779e76e5c137a2be40fe28987c9b86f37dec016795d56bfe7ac68b6750fa", size = 15928415 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/28/7a0a80927644d15f2961e2f9f8c9fe34d95d4ebc3431b9c3c48affc15bd6/plams-2025.102-py3-none-any.whl", hash = "sha256:6496ec565db665061b834f6f6c98cd597dc36c1e3352d64ab2f02c5d12fd5ca7", size = 16115863 },
+]
+
+[[package]]
 name = "pluggy"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1311,6 +1333,7 @@ source = { editable = "." }
 dependencies = [
     { name = "ase" },
     { name = "h5py" },
+    { name = "plams" },
     { name = "tqdm" },
     { name = "typer" },
 ]
@@ -1324,6 +1347,7 @@ dev = [
     { name = "networkx" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "plams" },
     { name = "pyh5md" },
     { name = "pytest" },
     { name = "pytest-benchmark", extra = ["histogram"] },
@@ -1335,6 +1359,7 @@ dev = [
 requires-dist = [
     { name = "ase", specifier = ">=3.24.0" },
     { name = "h5py", specifier = ">=3.12.1" },
+    { name = "plams", specifier = ">=2025.102" },
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "typer", specifier = ">=0.15.1" },
 ]
@@ -1348,6 +1373,7 @@ dev = [
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "numpy", specifier = "<2" },
     { name = "pandas", specifier = ">=2.2.3" },
+    { name = "plams", specifier = ">=2025.102" },
     { name = "pyh5md", specifier = ">=1.0.0" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-benchmark", extras = ["histogram"], specifier = ">=5.1.0" },

@@ -11,6 +11,7 @@ requires-python = ">=3.10"
 dependencies = [
     "ase>=3.24.0",
     "h5py>=3.12.1",
+    "plams>=2025.102",
     "tqdm>=4.67.1",
     "typer>=0.15.1",
 ]
@@ -48,6 +49,7 @@ dev = [
     "networkx>=3.4.2",
     "numpy<2",
     "pandas>=2.2.3",
+    "plams>=2025.102",
     "pyh5md>=1.0.0",
     "pytest>=8.3.4",
     "pytest-benchmark[histogram]>=5.1.0",

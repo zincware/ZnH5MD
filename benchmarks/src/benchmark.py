@@ -1,5 +1,5 @@
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 import numpy as np
 
@@ -12,6 +12,12 @@ class BenchmarkMetrics:
     min: float
     max: float
     std: float
+
+    def asdict(self) -> dict:
+        """
+        Convert the BenchmarkMetrics to a dictionary.
+        """
+        return asdict(self)
 
 
 def benchmark_read(reader_object: IOBase, num_repeats: int = 5) -> BenchmarkMetrics:

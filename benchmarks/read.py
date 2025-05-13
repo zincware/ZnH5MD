@@ -1,4 +1,8 @@
-from ase import Atoms
+import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 from src import (
     ASEIO,
     MDAIO,
@@ -7,52 +11,94 @@ from src import (
     MDTrajIO,
     benchmark_read,
     create_frames,
+    ASECreate,
 )
 
+IO_CLASSES = [ASEIO, MDAIO, ChemfilesIO, MDTrajIO, PLAMSIO, ASECreate]
+
+def benchmark_io_for_frame_count(num_frames: int, num_atoms: int = 100, filename: str = "test_ase_io"):
+    frames = create_frames(num_frames=num_frames, num_atoms=num_atoms)
+    results = {}
+
+    for IOClass in IO_CLASSES:
+        io_obj = IOClass(filename=filename, format="xyz", num_atoms=num_atoms, num_frames=num_frames)
+        io_obj.setup()
+        if IOClass is ASEIO:
+            io_obj.write(frames)
+        metrics = benchmark_read(io_obj)
+        results[IOClass.__name__] = metrics.asdict()
+
+    os.unlink(filename)
+    return results
+
+def compute_benchmark_dfs(full_results):
+    df_mean = pd.DataFrame.from_dict({
+        k: {
+            name: values["mean"] - v[ASECreate.__name__]["mean"]
+            for name, values in v.items()
+        }
+        for k, v in full_results.items()
+    }, orient="index")
+    df_mean.index.name = "Number of Frames"
+
+    df_std = pd.DataFrame.from_dict({
+        k: {
+            name: values["std"]
+            for name, values in v.items()
+        }
+        for k, v in full_results.items()
+    }, orient="index")
+
+    df_avg = df_mean.divide(df_mean.index, axis=0) * 1000
+    df_std_avg = df_std.divide(df_std.index, axis=0) * 1000
+
+    return df_avg, df_std_avg
+
+def plot_benchmarks(df_avg, df_std_avg):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    markers = ['o', 's', '^', 'v', 'p', '*']
+
+    for i, library_name in enumerate(df_avg.columns):
+        if library_name == ASECreate.__name__:
+            continue
+        color = colors[i % len(colors)]
+        marker = markers[i % len(markers)]
+        ax.plot(
+            df_avg.index,
+            df_avg[library_name],
+            label=library_name,
+            marker=marker,
+            markersize=8,
+            color=color,
+            linewidth=2
+        )
+        ax.errorbar(
+            df_avg.index,
+            df_avg[library_name],
+            yerr=df_std_avg[library_name],
+            fmt='none',
+            capsize=5,
+            color=color,
+            alpha=0.7
+        )
+
+    ax.set_xscale("log")
+    ax.set_xlabel("Number of Frames", fontsize=12)
+    ax.set_ylabel("Mean runtime per atom (ms/atom)", fontsize=12)
+    ax.set_title("Read Benchmark", fontsize=14, fontweight="bold")
+    ax.legend(title="Library", fontsize=10)
+    plt.tight_layout()
+    plt.show()
 
 def main():
-    # Create a set of frames for testing
-    frames = create_frames(num_frames=10, num_atoms=100)
+    full_results = {
+        num_frames: benchmark_io_for_frame_count(num_frames)
+        for num_frames in tqdm(np.logspace(2, 3, num=10, dtype=int))
+    }
 
-    # Initialize the ASEIO object with the generated frames
-    ase_io = ASEIO(filename="test_ase_io", format="xyz", num_atoms=100, num_frames=10)
-    ase_io.setup()
-    ase_io.write(frames)
-
-    # Benchmark the read performance
-    metrics = benchmark_read(ase_io)
-    print(f"Read Benchmark Metrics: {metrics}")
-
-    # Initialize the MDAIO object with the generated frames
-    mda_io = MDAIO(filename="test_ase_io", format="xyz", num_atoms=100, num_frames=10)
-    mda_io.setup()
-    metrics = benchmark_read(mda_io)
-    print(f"Read Benchmark Metrics: {metrics}")
-
-    # Initialize the ChemfilesIO object with the generated frames
-    chemfiles_io = ChemfilesIO(
-        filename="test_ase_io", format="xyz", num_atoms=100, num_frames=10
-    )
-    chemfiles_io.setup()
-    metrics = benchmark_read(chemfiles_io)
-    print(f"Read Benchmark Metrics: {metrics}")
-
-    # Initialize the MDTrajIO object with the generated frames
-    mdtraj_io = MDTrajIO(
-        filename="test_ase_io", format=".xyz", num_atoms=100, num_frames=10
-    )
-    mdtraj_io.setup()
-    metrics = benchmark_read(mdtraj_io)
-    print(f"Read Benchmark Metrics: {metrics}")
-
-    # Initialize the PLAMSIO object with the generated frames
-    plams_io = PLAMSIO(
-        filename="test_ase_io", format=".xyz", num_atoms=100, num_frames=10
-    )
-    plams_io.setup()
-    metrics = benchmark_read(plams_io)
-    print(f"Read Benchmark Metrics: {metrics}")
-
+    df_avg, df_std_avg = compute_benchmark_dfs(full_results)
+    plot_benchmarks(df_avg, df_std_avg)
 
 if __name__ == "__main__":
     main()

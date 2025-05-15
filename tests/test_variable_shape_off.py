@@ -1,5 +1,6 @@
-import znh5md
 import numpy.testing as npt
+
+import znh5md
 
 
 def test_variable_shape_off(tmp_path, full_water):
@@ -26,4 +27,3 @@ def test_variable_shape_off(tmp_path, full_water):
                 val,
                 full_water.calc.results[key],
             )
-        

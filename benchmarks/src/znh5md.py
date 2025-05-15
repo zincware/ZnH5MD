@@ -21,6 +21,7 @@ class ZnH5MDIO(IOBase):
         else:
             raise ValueError(f"Unsupported format: {self.format}")
 
+
 class ZnH5MDFixedShapeIO(IOBase):
     def setup(self):
         pass

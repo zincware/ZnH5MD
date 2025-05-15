@@ -11,14 +11,23 @@ from src import (
     ASECreate,
     ChemfilesIO,
     MDTrajIO,
-    ZnH5MDIO,
     ZnH5MDFixedShapeIO,
+    ZnH5MDIO,
     benchmark_read,
     create_frames,
 )
 from tqdm import tqdm
 
-IO_CLASSES = [ASEIO, MDTrajIO, MDAIO, ChemfilesIO, PLAMSIO, ASECreate, ZnH5MDIO, ZnH5MDFixedShapeIO]
+IO_CLASSES = [
+    ASEIO,
+    MDTrajIO,
+    MDAIO,
+    ChemfilesIO,
+    PLAMSIO,
+    ASECreate,
+    ZnH5MDIO,
+    ZnH5MDFixedShapeIO,
+]
 
 
 def benchmark_io_for_frame_count(
@@ -141,7 +150,7 @@ def plot_benchmarks(df_avg, df_std_avg, format: str):
 def main():
     num_atoms = 512
     for format in ["xtc", "h5md", "xyz", "pdb"]:  # []:
-    # for format in ["h5md"]:
+        # for format in ["h5md"]:
         print(f"Running benchmark for {format.upper()} format")
         full_results = {
             num_frames: benchmark_io_for_frame_count(

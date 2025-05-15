@@ -203,3 +203,14 @@ def s22_nested_calc() -> list[ase.Atoms]:
         ]
         images.append(atoms)
     return images
+
+@pytest.fixture
+def full_water(water) -> ase.Atoms:
+    """Get a dataset with full water molecules."""
+    # add a calculator and info and arrays
+    water = water[0]
+    water.calc = SinglePointCalculator(water, energy=1.0, forces=np.zeros((len(water), 3)))
+    water.info["smiles"] = "O"
+    water.arrays["mlip_forces"] = np.zeros((len(water), 3))
+
+    return water

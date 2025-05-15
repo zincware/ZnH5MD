@@ -14,7 +14,7 @@ if t.TYPE_CHECKING:
 
 
 def update_frames(
-    self: Frames, name: str, value: np.ndarray, origin: ORIGIN_TYPE, use_ase_calc: bool
+    self: Frames, name: str, value: np.ndarray, origin: ORIGIN_TYPE, use_ase_calc: bool, variable_shape: bool
 ) -> None:
     """
     Updates the specified frame data with appropriate transformations and storage logic.
@@ -29,16 +29,21 @@ def update_frames(
         The origin of the data (e.g., "calc", "info", "arrays").
     use_ase_calc : bool
         Whether to use ASE calculator for storing the data.
+    variable_shape : bool
+        Whether the input data has a variable shape.
     """
     if name in ["positions", "numbers", "pbc", "cell"]:
-        setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
+        if variable_shape:
+            setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
+        else:
+            setattr(self, name, value)
         return
 
-    data = preprocess_data(value)
+    data = preprocess_data(value, variable_shape)
     store_data(self, name, data, origin, use_ase_calc)
 
 
-def preprocess_data(value: np.ndarray) -> list:
+def preprocess_data(value: np.ndarray, variable_shape: bool) -> list:
     """
     Preprocess the input data by handling object, string, or numeric types.
 
@@ -46,6 +51,8 @@ def preprocess_data(value: np.ndarray) -> list:
     ----------
     value : np.ndarray
         The array containing the input data.
+    variable_shape : bool
+        Whether the input data has a variable shape.
 
     Returns
     -------
@@ -59,8 +66,12 @@ def preprocess_data(value: np.ndarray) -> list:
             # compatibility for non-JSON data from other sources
             return [v.decode() if v != b"" else MISSING for v in value]
     else:
-        data = decompose_varying_shape_arrays(value, np.nan)
-        return [x if not np.all(np.isnan(x)) else MISSING for x in data]
+        if variable_shape:
+            data = decompose_varying_shape_arrays(value, np.nan)
+            return [x if not np.all(np.isnan(x)) else MISSING for x in data]
+        else:
+            return value
+        
 
 
 def store_data(
@@ -210,7 +221,7 @@ def process_species_group(self, frames: Frames, particles, index) -> None:
     """
     grp = particles["species/value"]
     update_frames(
-        frames, H5MDToASEMapping.species.value, grp[index], None, self.use_ase_calc
+        frames, H5MDToASEMapping.species.value, grp[index], None, self.use_ase_calc, variable_shape=self.variable_shape
     )
 
 
@@ -260,9 +271,9 @@ def process_box_group(self, frames: Frames, grp, index, origin) -> None:
     origin : str or None
         The origin attribute of the group.
     """
-    update_frames(frames, "cell", grp["edges/value"][index], origin, self.use_ase_calc)
+    update_frames(frames, "cell", grp["edges/value"][index], origin, self.use_ase_calc, variable_shape=self.variable_shape)
     try:
-        update_frames(frames, "pbc", grp["pbc/value"][index], origin, self.use_ase_calc)
+        update_frames(frames, "pbc", grp["pbc/value"][index], origin, self.use_ase_calc, variable_shape=self.variable_shape)
     except KeyError:
         pbc = grp.attrs.get(AttributePath.boundary.value, ["none"] * 3)
         pbc = np.array([b != "none" for b in pbc], dtype=bool)
@@ -303,10 +314,11 @@ def process_generic_group(
                 grp["value"][index],
                 origin,
                 self.use_ase_calc,
+                variable_shape=self.variable_shape,
             )
         except KeyError:
             update_frames(
-                frames, grp_name, grp["value"][index], origin, self.use_ase_calc
+                frames, grp_name, grp["value"][index], origin, self.use_ase_calc, variable_shape=self.variable_shape
             )
         except (OSError, IndexError):
             pass  # Handle backfilling for invalid values
@@ -344,10 +356,11 @@ def process_observables(self, frames: Frames, observables, index) -> None:
                         grp["value"][index],
                         origin,
                         self.use_ase_calc,
+                        variable_shape=self.variable_shape,
                     )
                 except KeyError:
                     update_frames(
-                        frames, grp_name, grp["value"][index], origin, self.use_ase_calc
+                        frames, grp_name, grp["value"][index], origin, self.use_ase_calc, variable_shape=self.variable_shape
                     )
             except (OSError, IndexError):
                 pass  # Handle backfilling for invalid values

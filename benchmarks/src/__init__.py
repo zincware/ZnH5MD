@@ -5,7 +5,7 @@ from .generate import create_frames
 from .mda import MDAIO
 from .mdtraj import MDTrajIO
 from .plams import PLAMSIO
-from .znh5md import ZnH5MDIO
+from .znh5md import ZnH5MDIO, ZnH5MDFixedShapeIO
 
 __all__ = [
     "create_frames",
@@ -17,4 +17,5 @@ __all__ = [
     "MDTrajIO",
     "PLAMSIO",
     "ZnH5MDIO",
+    "ZnH5MDFixedShapeIO",
 ]

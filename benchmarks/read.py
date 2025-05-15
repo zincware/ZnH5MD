@@ -12,12 +12,13 @@ from src import (
     ChemfilesIO,
     MDTrajIO,
     ZnH5MDIO,
+    ZnH5MDFixedShapeIO,
     benchmark_read,
     create_frames,
 )
 from tqdm import tqdm
 
-IO_CLASSES = [ASEIO, MDTrajIO, MDAIO, ChemfilesIO, PLAMSIO, ASECreate, ZnH5MDIO]
+IO_CLASSES = [ASEIO, MDTrajIO, MDAIO, ChemfilesIO, PLAMSIO, ASECreate, ZnH5MDIO, ZnH5MDFixedShapeIO]
 
 
 def benchmark_io_for_frame_count(
@@ -31,6 +32,13 @@ def benchmark_io_for_frame_count(
         results = {}
         if format == "xtc":
             instance = MDTrajIO(
+                filename=filename,
+                format=format,
+                num_atoms=num_atoms,
+                num_frames=num_frames,
+            )
+        elif format == "h5md":
+            instance = ZnH5MDIO(
                 filename=filename,
                 format=format,
                 num_atoms=num_atoms,
@@ -133,12 +141,13 @@ def plot_benchmarks(df_avg, df_std_avg, format: str):
 def main():
     num_atoms = 512
     for format in ["xtc", "h5md", "xyz", "pdb"]:  # []:
+    # for format in ["h5md"]:
         print(f"Running benchmark for {format.upper()} format")
         full_results = {
             num_frames: benchmark_io_for_frame_count(
                 num_atoms=num_atoms, num_frames=num_frames, format=format
             )
-            for num_frames in tqdm(np.logspace(2, 3, num=4, dtype=int))
+            for num_frames in tqdm(np.logspace(2, 4, num=10, dtype=int))
         }
 
         df_avg, df_std_avg = compute_benchmark_dfs(full_results, num_atoms=num_atoms)

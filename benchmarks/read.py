@@ -46,8 +46,8 @@ def benchmark_io_for_frame_count(
         instance.setup()
         instance.write(frames)
 
-        for IOClass in IO_CLASSES:
-            io_obj = IOClass(
+        for io_cls in IO_CLASSES:
+            io_obj = io_cls(
                 filename=filename,
                 format=format,
                 num_atoms=num_atoms,
@@ -56,7 +56,7 @@ def benchmark_io_for_frame_count(
             io_obj.setup()
             with contextlib.suppress(ValueError):  # not supported
                 metrics = benchmark_read(io_obj)
-                results[IOClass.__name__] = metrics.asdict()
+                results[io_cls.__name__] = metrics.asdict()
     finally:
         os.unlink(filename)
     return results

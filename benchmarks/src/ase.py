@@ -20,7 +20,8 @@ class ASEIO(IOBase):
             raise ValueError("xtc format not supported")
         else:
             return ase.io.read(self.filename, format=self.format, index=":")
-        # return list(ase.io.iread(self.filename, format=self.format)) # no performance difference
+        # return list(ase.io.iread(self.filename, format=self.format))
+        # no performance difference
 
     def write(self, atoms: list[ase.Atoms]) -> None:
         if self.format == "pdb":

@@ -1,5 +1,5 @@
 import ase
-import MDAnalysis as mda
+import MDAnalysis as mda  # noqa: N813
 from MDAnalysis.coordinates.H5MD import H5MDReader
 
 from .abc import IOBase

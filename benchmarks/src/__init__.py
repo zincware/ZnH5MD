@@ -5,6 +5,7 @@ from .generate import create_frames
 from .mda import MDAIO
 from .mdtraj import MDTrajIO
 from .plams import PLAMSIO
+from .znh5md import ZnH5MDIO
 
 __all__ = [
     "create_frames",
@@ -15,4 +16,5 @@ __all__ = [
     "ChemfilesIO",
     "MDTrajIO",
     "PLAMSIO",
+    "ZnH5MDIO",
 ]

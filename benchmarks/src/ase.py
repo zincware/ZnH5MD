@@ -1,23 +1,42 @@
 import ase.io
+from ase.io.proteindatabank import read_proteindatabank, write_proteindatabank
 
 from .abc import IOBase
+import znh5md
 
 
 class ASEIO(IOBase):
+
     def setup(self):
         pass
 
     def read(self) -> list[ase.Atoms]:
-        return ase.io.read(self.filename, format=self.format, index=":")
+        if self.format == "pdb":
+            return read_proteindatabank(self.filename, index=slice(None, None, None))
+        elif self.format == "h5md":
+            # TODO
+            return list(znh5md.IO(self.filename)) # basically what ase does
+        else:
+            return ase.io.read(self.filename, format=self.format, index=":")
         # return list(ase.io.iread(self.filename, format=self.format)) # no performance difference
 
     def write(self, atoms: list[ase.Atoms]) -> None:
-        ase.io.write(self.filename, atoms, format=self.format)
+        if self.format == "pdb":
+            write_proteindatabank(self.filename, atoms)
+        elif self.format == "h5md":
+            znh5md.IO(self.filename, store="time").extend(atoms)
+        else:
+            ase.io.write(self.filename, atoms, format=self.format)
 
 
 class ASECreate(IOBase):
     def setup(self):
-        self.frames = list(ase.io.iread(self.filename, format=self.format))
+        if self.format == "pdb":
+            self.frames = read_proteindatabank(self.filename, index=slice(None, None, None))
+        elif self.format == "h5md":
+            self.frames = list(znh5md.IO(self.filename))
+        else:
+            self.frames = list(ase.io.iread(self.filename, format=self.format))
 
     def read(self) -> list[ase.Atoms]:
         frames = []

@@ -10,35 +10,39 @@ from src import (
     ASECreate,
     ChemfilesIO,
     MDTrajIO,
+    ZnH5MDIO,
     benchmark_read,
     create_frames,
 )
 from tqdm import tqdm
+import contextlib
 
-IO_CLASSES = [ASEIO, MDAIO, ChemfilesIO, MDTrajIO, PLAMSIO, ASECreate]
+IO_CLASSES = [ASEIO, MDAIO, ChemfilesIO, MDTrajIO, PLAMSIO, ASECreate, ZnH5MDIO]
 
 
 def benchmark_io_for_frame_count(
-    num_frames: int, num_atoms: int = 100, filename: str = "test_ase_io"
+    num_frames: int, num_atoms: int = 100, filename: str = "test_ase_io", format: str = "xyz"
 ):
-    frames = create_frames(num_frames=num_frames, num_atoms=num_atoms)
-    results = {}
+    try:
+        frames = create_frames(num_frames=num_frames, num_atoms=num_atoms)
+        results = {}
 
-    for IOClass in IO_CLASSES:
-        io_obj = IOClass(
-            filename=filename, format="xyz", num_atoms=num_atoms, num_frames=num_frames
-        )
-        io_obj.setup()
-        if IOClass is ASEIO:
-            io_obj.write(frames)
-        metrics = benchmark_read(io_obj)
-        results[IOClass.__name__] = metrics.asdict()
-
-    os.unlink(filename)
+        for IOClass in IO_CLASSES:
+            io_obj = IOClass(
+                filename=filename, format=format, num_atoms=num_atoms, num_frames=num_frames
+            )
+            io_obj.setup()
+            if IOClass is ASEIO:
+                io_obj.write(frames)
+            with contextlib.suppress(ValueError): # not supported
+                metrics = benchmark_read(io_obj)
+                results[IOClass.__name__] = metrics.asdict()
+    finally:
+        os.unlink(filename)
     return results
 
 
-def compute_benchmark_dfs(full_results):
+def compute_benchmark_dfs(full_results, num_atoms: int):
     df_mean = pd.DataFrame.from_dict(
         {
             k: {
@@ -58,14 +62,14 @@ def compute_benchmark_dfs(full_results):
         },
         orient="index",
     )
-
-    df_avg = df_mean.divide(df_mean.index, axis=0) * 1000
-    df_std_avg = df_std.divide(df_std.index, axis=0) * 1000
+    # convert to mus / atom
+    df_avg = df_mean.divide(df_mean.index, axis=0).divide(num_atoms) * 1e6
+    df_std_avg = df_std.divide(df_std.index, axis=0).divide(num_atoms) * 1e6
 
     return df_avg, df_std_avg
 
 
-def plot_benchmarks(df_avg, df_std_avg):
+def plot_benchmarks(df_avg, df_std_avg, format: str):
     fig, ax = plt.subplots(figsize=(10, 6))
     colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
     markers = ["o", "s", "^", "v", "p", "*"]
@@ -95,22 +99,28 @@ def plot_benchmarks(df_avg, df_std_avg):
         )
 
     ax.set_xscale("log")
-    ax.set_xlabel("Number of Frames", fontsize=12)
-    ax.set_ylabel("Mean runtime per atom (ms/atom)", fontsize=12)
-    ax.set_title("Read Benchmark", fontsize=14, fontweight="bold")
-    ax.legend(title="Library", fontsize=10)
+    ax.set_xlabel("Number of Frames")
+    ax.set_ylabel(r"Mean runtime per atom / $\mu$s/atom")
+    ax.set_title(f"Read Benchmark ({format.upper()} format)")
+    ax.set_yscale("log")
+    ax.legend(title="Library")
+    ax.grid(which="both", linestyle="--", linewidth=0.5)
     plt.tight_layout()
-    plt.show()
+    ax.set_ylim(bottom=1e-1, top=1e2)
+    plt.savefig(f"benchmark_{format}.png", dpi=300)
 
 
 def main():
-    full_results = {
-        num_frames: benchmark_io_for_frame_count(num_frames)
-        for num_frames in tqdm(np.logspace(2, 3, num=10, dtype=int))
-    }
+    num_atoms = 512
+    for format in ["h5md", "xyz", "pdb"]:
+        print(f"Running benchmark for {format.upper()} format")
+        full_results = {
+            num_frames: benchmark_io_for_frame_count(num_atoms=num_atoms, num_frames=num_frames, format=format)
+            for num_frames in tqdm(np.logspace(2, 3, num=4, dtype=int))
+        }
 
-    df_avg, df_std_avg = compute_benchmark_dfs(full_results)
-    plot_benchmarks(df_avg, df_std_avg)
+        df_avg, df_std_avg = compute_benchmark_dfs(full_results, num_atoms=num_atoms)
+        plot_benchmarks(df_avg, df_std_avg, format=format)
 
 
 if __name__ == "__main__":

@@ -9,16 +9,19 @@ class ChemfilesIO(IOBase):
         pass
 
     def read(self) -> list[ase.Atoms]:
-        with chemfiles.Trajectory(
-            self.filename, "r", format=self.format.upper()
-        ) as trajectory:
-            frames = []
-            for frame in trajectory:
-                positions = frame.positions
-                cell_vectors = frame.cell.matrix
-                atoms = ase.Atoms(positions=positions, cell=cell_vectors, pbc=True)
-                frames.append(atoms)
-        return frames
+        if self.format in ["xyz", "pdb"]:
+            with chemfiles.Trajectory(
+                self.filename, "r", format=self.format.upper()
+            ) as trajectory:
+                frames = []
+                for frame in trajectory:
+                    positions = frame.positions
+                    cell_vectors = frame.cell.matrix
+                    atoms = ase.Atoms(positions=positions, cell=cell_vectors, pbc=True)
+                    frames.append(atoms)
+            return frames
+        else:
+            raise ValueError(f"Unsupported format: {self.format}")
 
     def write(self, atoms: list[ase.Atoms]) -> None:
         raise NotImplementedError

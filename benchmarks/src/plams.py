@@ -1,5 +1,5 @@
 import ase
-from scm.plams import XYZTrajectoryFile
+from scm.plams import XYZTrajectoryFile, Molecule
 
 from .abc import IOBase
 
@@ -10,8 +10,11 @@ class PLAMSIO(IOBase):
 
     def read(self) -> list[ase.Atoms]:
         # Read the trajectory file using PLAMS
-        traj = XYZTrajectoryFile(self.filename)
-        mol = traj.get_plamsmol()
+        if self.format == "xyz":
+            traj = XYZTrajectoryFile(self.filename)
+            mol = traj.get_plamsmol()
+        else:
+            raise ValueError(f"Unsupported format: {self.format}")
         frames = []
         for i in range(traj.get_length()):
             crd, _ = traj.read_frame(i, molecule=mol)

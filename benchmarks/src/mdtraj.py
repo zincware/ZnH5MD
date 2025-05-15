@@ -27,13 +27,27 @@ class MDTrajIO(IOBase):
 
     def read(self) -> list[Atoms]:
         # Read the trajectory file using MDTraj
-        traj = md.load_xyz(self.filename, top=self.topology)
-        frames = []
-        for i in range(traj.n_frames):
-            positions = traj.xyz[i]
-            atoms = Atoms(
-                positions=positions,
-                pbc=True,
-            )
-            frames.append(atoms)
-        return frames
+        if self.format == "xyz":
+            traj = md.load_xyz(self.filename, top=self.topology)
+            frames = []
+            for i in range(traj.n_frames):
+                positions = traj.xyz[i]
+                atoms = Atoms(
+                    positions=positions,
+                    pbc=True,
+                )
+                frames.append(atoms)
+            return frames
+        elif self.format == "pdb":
+            traj = md.load_pdb(self.filename)
+            frames = []
+            for i in range(traj.n_frames):
+                positions = traj.xyz[i]
+                atoms = Atoms(
+                    positions=positions,
+                    pbc=True,
+                )
+                frames.append(atoms)
+            return frames
+        else:
+            raise ValueError(f"Unsupported format: {self.format}")

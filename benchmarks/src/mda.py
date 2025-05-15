@@ -1,5 +1,6 @@
 import ase
 import MDAnalysis as mda
+from MDAnalysis.coordinates.H5MD import H5MDReader
 
 from .abc import IOBase
 
@@ -9,7 +10,18 @@ class MDAIO(IOBase):
         pass
 
     def read(self) -> list[ase.Atoms]:
-        universe = mda.Universe(self.filename, format="XYZ")
+        if self.format == "h5md":
+            universe = mda.Universe.empty(self.num_atoms, trajectory=True)
+            reader = H5MDReader(
+                self.filename,
+                convert_units=False,
+                # dt=2,
+                # time_offset=10,
+                # foo="bar",
+            )
+            universe.trajectory = reader
+        else:
+            universe = mda.Universe(self.filename, format=self.format.upper())
         frames = []
         for ts in universe.trajectory:
             positions = ts.positions

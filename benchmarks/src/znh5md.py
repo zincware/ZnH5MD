@@ -1,11 +1,11 @@
+import ase
+
+import znh5md
 
 from .abc import IOBase
-import znh5md
-import ase
 
 
 class ZnH5MDIO(IOBase):
-
     def setup(self):
         pass
 
@@ -14,7 +14,7 @@ class ZnH5MDIO(IOBase):
             return znh5md.IO(self.filename)[:]
         else:
             raise ValueError(f"Unsupported format: {self.format}")
-    
+
     def write(self, atoms: list[ase.Atoms]) -> None:
         if self.format == "h5md":
             znh5md.IO(self.filename, store="time").extend(atoms)

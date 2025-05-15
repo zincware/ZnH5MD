@@ -1,3 +1,4 @@
+import contextlib
 import os
 
 import matplotlib.pyplot as plt
@@ -15,34 +16,45 @@ from src import (
     create_frames,
 )
 from tqdm import tqdm
-import contextlib
 
 IO_CLASSES = [ASEIO, MDTrajIO, MDAIO, ChemfilesIO, PLAMSIO, ASECreate, ZnH5MDIO]
 
 
 def benchmark_io_for_frame_count(
-    num_frames: int, num_atoms: int = 100, filename: str = "test_ase_io", format: str = "xyz"
+    num_frames: int,
+    num_atoms: int = 100,
+    filename: str = "test_ase_io",
+    format: str = "xyz",
 ):
     try:
         frames = create_frames(num_frames=num_frames, num_atoms=num_atoms)
         results = {}
         if format == "xtc":
             instance = MDTrajIO(
-                filename=filename, format=format, num_atoms=num_atoms, num_frames=num_frames
+                filename=filename,
+                format=format,
+                num_atoms=num_atoms,
+                num_frames=num_frames,
             )
         else:
             instance = ASEIO(
-                filename=filename, format=format, num_atoms=num_atoms, num_frames=num_frames
+                filename=filename,
+                format=format,
+                num_atoms=num_atoms,
+                num_frames=num_frames,
             )
         instance.setup()
         instance.write(frames)
 
         for IOClass in IO_CLASSES:
             io_obj = IOClass(
-                filename=filename, format=format, num_atoms=num_atoms, num_frames=num_frames
+                filename=filename,
+                format=format,
+                num_atoms=num_atoms,
+                num_frames=num_frames,
             )
             io_obj.setup()
-            with contextlib.suppress(ValueError): # not supported
+            with contextlib.suppress(ValueError):  # not supported
                 metrics = benchmark_read(io_obj)
                 results[IOClass.__name__] = metrics.asdict()
     finally:
@@ -120,10 +132,12 @@ def plot_benchmarks(df_avg, df_std_avg, format: str):
 
 def main():
     num_atoms = 512
-    for format in  ["xtc", "h5md", "xyz", "pdb"]: # []:
+    for format in ["xtc", "h5md", "xyz", "pdb"]:  # []:
         print(f"Running benchmark for {format.upper()} format")
         full_results = {
-            num_frames: benchmark_io_for_frame_count(num_atoms=num_atoms, num_frames=num_frames, format=format)
+            num_frames: benchmark_io_for_frame_count(
+                num_atoms=num_atoms, num_frames=num_frames, format=format
+            )
             for num_frames in tqdm(np.logspace(2, 3, num=4, dtype=int))
         }
 

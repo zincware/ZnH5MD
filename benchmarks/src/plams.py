@@ -1,5 +1,5 @@
 import ase
-from scm.plams import XYZTrajectoryFile, Molecule
+from scm.plams import XYZTrajectoryFile
 
 from .abc import IOBase
 

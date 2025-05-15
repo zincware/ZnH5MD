@@ -1,7 +1,6 @@
 import ase
 import MDAnalysis as mda
 from MDAnalysis.coordinates.H5MD import H5MDReader
-from MDAnalysis.coordinates.XTC import XTCReader
 
 from .abc import IOBase
 

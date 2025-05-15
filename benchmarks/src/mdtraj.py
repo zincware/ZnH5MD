@@ -1,9 +1,10 @@
+import os
+
 import mdtraj as md
 import numpy as np
 import pandas as pd
 from ase import Atoms
 from ase.io.proteindatabank import write_proteindatabank
-import os
 
 from .abc import IOBase
 
@@ -64,7 +65,7 @@ class MDTrajIO(IOBase):
             return frames
         else:
             raise ValueError(f"Unsupported format: {self.format}")
-        
+
     def write(self, frames: list[Atoms]):
         if self.format == "xtc":
             # use ase to write xyz, load that file and then save as xtc

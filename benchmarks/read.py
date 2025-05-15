@@ -17,7 +17,7 @@ from src import (
 from tqdm import tqdm
 import contextlib
 
-IO_CLASSES = [ASEIO, MDAIO, ChemfilesIO, MDTrajIO, PLAMSIO, ASECreate, ZnH5MDIO]
+IO_CLASSES = [ASEIO, MDTrajIO, MDAIO, ChemfilesIO, PLAMSIO, ASECreate, ZnH5MDIO]
 
 
 def benchmark_io_for_frame_count(
@@ -26,14 +26,22 @@ def benchmark_io_for_frame_count(
     try:
         frames = create_frames(num_frames=num_frames, num_atoms=num_atoms)
         results = {}
+        if format == "xtc":
+            instance = MDTrajIO(
+                filename=filename, format=format, num_atoms=num_atoms, num_frames=num_frames
+            )
+        else:
+            instance = ASEIO(
+                filename=filename, format=format, num_atoms=num_atoms, num_frames=num_frames
+            )
+        instance.setup()
+        instance.write(frames)
 
         for IOClass in IO_CLASSES:
             io_obj = IOClass(
                 filename=filename, format=format, num_atoms=num_atoms, num_frames=num_frames
             )
             io_obj.setup()
-            if IOClass is ASEIO:
-                io_obj.write(frames)
             with contextlib.suppress(ValueError): # not supported
                 metrics = benchmark_read(io_obj)
                 results[IOClass.__name__] = metrics.asdict()
@@ -106,13 +114,13 @@ def plot_benchmarks(df_avg, df_std_avg, format: str):
     ax.legend(title="Library")
     ax.grid(which="both", linestyle="--", linewidth=0.5)
     plt.tight_layout()
-    ax.set_ylim(bottom=1e-1, top=1e2)
+    ax.set_ylim(bottom=1e-2, top=1e2)
     plt.savefig(f"benchmark_{format}.png", dpi=300)
 
 
 def main():
     num_atoms = 512
-    for format in ["h5md", "xyz", "pdb"]:
+    for format in  ["xtc", "h5md", "xyz", "pdb"]: # []:
         print(f"Running benchmark for {format.upper()} format")
         full_results = {
             num_frames: benchmark_io_for_frame_count(num_atoms=num_atoms, num_frames=num_frames, format=format)

@@ -2,6 +2,8 @@ import mdtraj as md
 import numpy as np
 import pandas as pd
 from ase import Atoms
+from ase.io.proteindatabank import write_proteindatabank
+import os
 
 from .abc import IOBase
 
@@ -49,5 +51,29 @@ class MDTrajIO(IOBase):
                 )
                 frames.append(atoms)
             return frames
+        elif self.format == "xtc":
+            traj = md.load_xtc(self.filename, top=self.topology)
+            frames = []
+            for i in range(traj.n_frames):
+                positions = traj.xyz[i]
+                atoms = Atoms(
+                    positions=positions,
+                    pbc=True,
+                )
+                frames.append(atoms)
+            return frames
+        else:
+            raise ValueError(f"Unsupported format: {self.format}")
+        
+    def write(self, frames: list[Atoms]):
+        if self.format == "xtc":
+            # use ase to write xyz, load that file and then save as xtc
+            write_proteindatabank(
+                "ase_pdb_to_xtc_tmp.pdb", frames
+            )  # Write to a temporary XYZ file
+            traj = md.load_pdb("ase_pdb_to_xtc_tmp.pdb")
+            traj.save_xtc(self.filename)
+            # remove the temporary file
+            os.remove("ase_pdb_to_xtc_tmp.pdb")
         else:
             raise ValueError(f"Unsupported format: {self.format}")

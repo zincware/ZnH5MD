@@ -9,7 +9,7 @@ class ChemfilesIO(IOBase):
         pass
 
     def read(self) -> list[ase.Atoms]:
-        if self.format in ["xyz", "pdb"]:
+        if self.format in ["xyz", "pdb", "xtc"]:
             with chemfiles.Trajectory(
                 self.filename, "r", format=self.format.upper()
             ) as trajectory:

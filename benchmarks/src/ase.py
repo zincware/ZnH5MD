@@ -16,6 +16,8 @@ class ASEIO(IOBase):
         elif self.format == "h5md":
             # TODO
             return list(znh5md.IO(self.filename)) # basically what ase does
+        elif self.format == "xtc":
+            raise ValueError("xtc format not supported")
         else:
             return ase.io.read(self.filename, format=self.format, index=":")
         # return list(ase.io.iread(self.filename, format=self.format)) # no performance difference
@@ -25,6 +27,8 @@ class ASEIO(IOBase):
             write_proteindatabank(self.filename, atoms)
         elif self.format == "h5md":
             znh5md.IO(self.filename, store="time").extend(atoms)
+        elif self.format == "xtc":
+            raise ValueError("xtc format not supported")
         else:
             ase.io.write(self.filename, atoms, format=self.format)
 
@@ -35,6 +39,8 @@ class ASECreate(IOBase):
             self.frames = read_proteindatabank(self.filename, index=slice(None, None, None))
         elif self.format == "h5md":
             self.frames = list(znh5md.IO(self.filename))
+        elif self.format == "xtc":
+            self.frames = [] # TODO!
         else:
             self.frames = list(ase.io.iread(self.filename, format=self.format))
 

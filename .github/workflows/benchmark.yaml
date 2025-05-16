@@ -20,6 +20,7 @@ jobs:
         run: |
           uv run python --version
           uv run pytest --benchmark-histogram benchmark -m benchmark
+          uv run python benchmarks/read.py
       - name: Create report
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -34,5 +35,11 @@ jobs:
           echo '![](./benchmark-read-count.svg "Read benchmark, varying count")' >> report.md
           echo '## Read: Varying number of atoms' >> report.md
           echo '![](./benchmark-read-size.svg "Read benchmark, varying size")' >> report.md
+
+          echo '## Read: Comparison with other packages' >> report.md
+          echo '![](./benchmark_h5md.png "Read benchmark, comparison with other packages")' >> report.md
+          echo '![](./benchmark_xyz.png "Read benchmark, comparison with other packages")' >> report.md
+          echo '![](./benchmark_pdb.png "Read benchmark, comparison with other packages")' >> report.md
+          echo '![](./benchmark_xtc.png "Read benchmark, comparison with other packages")' >> report.md
 
           cml comment update report.md

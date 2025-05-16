@@ -38,6 +38,7 @@ class IO(MutableSequence):
     tqdm_limit: int = 100
     chunk_size: int | None = 64
     use_ase_calc: bool = True
+    variable_shape: bool = True
 
     _store_ase_origin: bool = True  # for testing purposes only
 

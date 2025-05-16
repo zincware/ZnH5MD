@@ -156,7 +156,7 @@ def main():
             num_frames: benchmark_io_for_frame_count(
                 num_atoms=num_atoms, num_frames=num_frames, format=format
             )
-            for num_frames in tqdm(np.logspace(2, 4, num=10, dtype=int))
+            for num_frames in tqdm(np.logspace(2, 3, num=10, dtype=int))
         }
 
         df_avg, df_std_avg = compute_benchmark_dfs(full_results, num_atoms=num_atoms)

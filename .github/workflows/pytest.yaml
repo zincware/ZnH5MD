@@ -34,10 +34,13 @@ jobs:
       - name: Run pytest
         run: |
           uv run python --version
-          uv run coverage run -m pytest
-          uv run coverage lcov
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
+          uv run pytest --cov --junitxml=junit.xml -o junit_family=legacy
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: coverage.lcov
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

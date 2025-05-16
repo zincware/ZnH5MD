@@ -53,6 +53,7 @@ dev = [
     "pyh5md>=1.0.0",
     "pytest>=8.3.4",
     "pytest-benchmark[histogram]>=5.1.0",
+    "pytest-cov>=6.1.1",
     "rdkit2ase>=0.1.4",
     "ruff>=0.11.8",
 ]

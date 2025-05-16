@@ -1,5 +1,5 @@
 [![zincware](https://img.shields.io/badge/Powered%20by-zincware-darkcyan)](https://github.com/zincware)
-[![Coverage Status](https://coveralls.io/repos/github/zincware/ZnH5MD/badge.svg?branch=main)](https://coveralls.io/github/zincware/ZnH5MD?branch=main)
+[![codecov](https://codecov.io/gh/zincware/ZnH5MD/graph/badge.svg?token=175KQEKA0S)](https://codecov.io/gh/zincware/ZnH5MD)
 [![PyPI version](https://badge.fury.io/py/znh5md.svg)](https://badge.fury.io/py/znh5md)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/zincware/ZnH5MD/HEAD)
 [![H5MD](https://img.shields.io/badge/format-H5MD-darkmagenta)](https://www.nongnu.org/h5md/)
@@ -38,7 +38,7 @@ print(io[5:10])
 
 ZnH5MD circumvents two current limitations of the H5MD standard.
 
-- support `images` with varying particle counts by padding the dataset with
+- support `atoms` with varying particle counts by padding the dataset with
   `np.nan`. Using varying species counts might break the compatibility with
   other H5MD tools.
 - support varying `pbc` within a single particle group by introducing

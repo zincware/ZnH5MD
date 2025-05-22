@@ -163,3 +163,4 @@ cython_debug/
 
 .vscode/
 *.h5
+.DS_Store

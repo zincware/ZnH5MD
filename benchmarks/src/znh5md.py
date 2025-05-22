@@ -17,7 +17,7 @@ class ZnH5MDIO(IOBase):
 
     def write(self, atoms: list[ase.Atoms]) -> None:
         if self.format == "h5md":
-            znh5md.IO(self.filename, store="time").extend(atoms)
+            znh5md.IO(self.filename, store="time", compression=None).extend(atoms)
         else:
             raise ValueError(f"Unsupported format: {self.format}")
 

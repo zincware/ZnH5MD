@@ -250,7 +250,7 @@ def process_particle_groups(self: "IO", frames: Frames, particles, index) -> Non
     for grp_name in particles:
         if grp_name == "species":
             continue
-        if self.keys is not None and grp_name not in self.keys:
+        if self.include is not None and grp_name not in self.include:
             continue
         try:
             grp = particles[grp_name]
@@ -373,7 +373,7 @@ def process_observables(self: "IO", frames: Frames, observables, index) -> None:
         Indices specifying the frames to retrieve.
     """
     for grp_name in observables:
-        if self.keys is not None and grp_name not in self.keys:
+        if self.include is not None and grp_name not in self.include:
             continue
         grp = observables[grp_name]
         origin = grp.attrs.get(AttributePath.origin.value, None)

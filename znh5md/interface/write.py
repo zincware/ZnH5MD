@@ -132,7 +132,7 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
 
     # TODO: flag to save with origin=None to test against files no coming from znh5md
 
-    frames = Frames.from_ase(data, include=self.keys)
+    frames = Frames.from_ase(data, include=self.include)
     frames.check()
 
     species_path = get_h5md_path("numbers", self.particles_group, frames)

@@ -16,7 +16,7 @@ def test_restricted_read_position(tmp_path, dataset, request):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(frames)
 
-    rio = znh5md.IO(tmp_path / "test.h5", keys=["position"])
+    rio = znh5md.IO(tmp_path / "test.h5", include=["position"])
     assert len(rio) == len(rio[:])
     assert len(rio) == len(frames)
 
@@ -32,7 +32,7 @@ def test_restricted_read_position(tmp_path, dataset, request):
 
 def test_restricted_read_empty(tmp_path):
     with pytest.raises(ValueError):
-        znh5md.IO(tmp_path / "test.h5", keys=[])
+        znh5md.IO(tmp_path / "test.h5", include=[])
 
 
 @pytest.mark.parametrize(
@@ -46,7 +46,7 @@ def test_restricted_read_box(tmp_path, dataset, request):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(frames)
 
-    rio = znh5md.IO(tmp_path / "test.h5", keys=["position", "box"])
+    rio = znh5md.IO(tmp_path / "test.h5", include=["position", "box"])
     assert len(rio) == len(rio[:])
     assert len(rio) == len(frames)
 
@@ -71,7 +71,7 @@ def test_restricted_read_potential_energy(tmp_path, dataset, request):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(frames)
 
-    rio = znh5md.IO(tmp_path / "test.h5", keys=["position", "potential_energy"])
+    rio = znh5md.IO(tmp_path / "test.h5", include=["position", "potential_energy"])
     assert len(rio) == len(rio[:])
     assert len(rio) == len(frames)
 
@@ -96,7 +96,7 @@ def test_restricted_read_forces(tmp_path, dataset, request):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(frames)
 
-    rio = znh5md.IO(tmp_path / "test.h5", keys=["position", "force"])
+    rio = znh5md.IO(tmp_path / "test.h5", include=["position", "force"])
     assert len(rio) == len(rio[:])
     assert len(rio) == len(frames)
 
@@ -121,7 +121,7 @@ def test_restricted_read_info(tmp_path, dataset, request):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(frames)
 
-    rio = znh5md.IO(tmp_path / "test.h5", keys=["position", "mlip_energy"])
+    rio = znh5md.IO(tmp_path / "test.h5", include=["position", "mlip_energy"])
     assert len(rio) == len(rio[:])
     assert len(rio) == len(frames)
 
@@ -145,7 +145,7 @@ def test_restricted_read_arrays(tmp_path, dataset, request):
     io = znh5md.IO(tmp_path / "test.h5")
     io.extend(frames)
 
-    rio = znh5md.IO(tmp_path / "test.h5", keys=["position", "mlip_forces"])
+    rio = znh5md.IO(tmp_path / "test.h5", include=["position", "mlip_forces"])
     assert len(rio) == len(rio[:])
     assert len(rio) == len(frames)
 
@@ -170,7 +170,7 @@ def test_restricted_read_arrays(tmp_path, dataset, request):
 def test_restricted_write_position(tmp_path, dataset, request):
     frames = request.getfixturevalue(dataset)
     # Write only 'position'
-    io = znh5md.IO(tmp_path / "test.h5", keys=["position"])
+    io = znh5md.IO(tmp_path / "test.h5", include=["position"])
     io.extend(frames)
 
     # Read everything back
@@ -197,7 +197,7 @@ def test_restricted_write_position(tmp_path, dataset, request):
 def test_restricted_write_box(tmp_path, dataset, request):
     frames = request.getfixturevalue(dataset)
     # Write only 'position' and 'box'
-    io = znh5md.IO(tmp_path / "test.h5", keys=["position", "box"])
+    io = znh5md.IO(tmp_path / "test.h5", include=["position", "box"])
     io.extend(frames)
 
     # Read everything back
@@ -227,7 +227,7 @@ def test_restricted_write_potential_energy(tmp_path, dataset, request):
     frames = request.getfixturevalue(dataset)
     # Write only 'position' and 'potential_energy'
     io = znh5md.IO(
-        tmp_path / "test.h5", keys=["position", "energy"]
+        tmp_path / "test.h5", include=["position", "energy"]
     )  # TODO: either use ASE keys of H5MD keys but don't mix them
     io.extend(frames)
 
@@ -255,7 +255,7 @@ def test_restricted_write_forces(tmp_path, dataset, request):
     frames = request.getfixturevalue(dataset)
     # Write only 'position' and 'force'
     io = znh5md.IO(
-        tmp_path / "test.h5", keys=["position", "forces"]
+        tmp_path / "test.h5", include=["position", "forces"]
     )  # TODO: either use ASE keys of H5MD keys but don't mix them
     io.extend(frames)
 
@@ -282,7 +282,7 @@ def test_restricted_write_forces(tmp_path, dataset, request):
 def test_restricted_write_info(tmp_path, dataset, request):
     frames = request.getfixturevalue(dataset)
     # Write only 'position' and 'mlip_energy' from info
-    io = znh5md.IO(tmp_path / "test.h5", keys=["position", "mlip_energy"])
+    io = znh5md.IO(tmp_path / "test.h5", include=["position", "mlip_energy"])
     io.extend(frames)
 
     # Read everything back
@@ -307,7 +307,7 @@ def test_restricted_write_info(tmp_path, dataset, request):
 def test_restricted_write_arrays(tmp_path, dataset, request):
     frames = request.getfixturevalue(dataset)
     # Write only 'position' and 'mlip_forces' from arrays
-    io = znh5md.IO(tmp_path / "test.h5", keys=["position", "mlip_forces"])
+    io = znh5md.IO(tmp_path / "test.h5", include=["position", "mlip_forces"])
     io.extend(frames)
 
     # Read everything back

@@ -13,7 +13,7 @@ from znh5md.misc import MISSING, concatenate_varying_shape_arrays
 from znh5md.units import get_unit
 
 # Define allowed types
-ALLOWED_TYPES = t.Union[np.ndarray, dict, float, int, str, bool, list, t.Type[MISSING]]
+ALLOWED_TYPES = t.Union[np.ndarray, dict, float, int, str, bool, list, type(MISSING)]
 
 # Define content type
 CONTENT_TYPE = dict[str, ALLOWED_TYPES]

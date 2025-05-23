@@ -52,7 +52,17 @@ def benchmark_io_for_frame_count(
                 format=format,
                 num_atoms=num_atoms,
                 num_frames=num_frames,
+                compression="gzip",
             )
+        elif format == "h5md-uncompressed":
+            instance = ZnH5MDIO(
+                filename=filename,
+                format=format,
+                num_atoms=num_atoms,
+                num_frames=num_frames,
+                compression=None,
+            )
+            format = "h5md"
         else:
             instance = ASEIO(
                 filename=filename,
@@ -143,13 +153,13 @@ def plot_benchmarks(df_avg, df_std_avg, format: str):
     ax.legend(title="Library")
     ax.grid(which="both", linestyle="--", linewidth=0.5)
     plt.tight_layout()
-    ax.set_ylim(bottom=1e-2, top=1e2)
+    ax.set_ylim(bottom=1e-3, top=1e2)
     plt.savefig(f"benchmark_{format}.png", dpi=300)
 
 
 def main():
     num_atoms = 512
-    for format in ["xtc", "h5md", "xyz", "pdb"]:  # []:
+    for format in ["xtc", "h5md", "xyz", "pdb", "h5md-uncompressed"]:  # []:
         # for format in ["h5md"]:
         print(f"Running benchmark for {format.upper()} format")
         full_results = {

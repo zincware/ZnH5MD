@@ -72,8 +72,7 @@ def preprocess_data(value: np.ndarray, variable_shape: bool) -> list:
             return [v.decode() if v != b"" else MISSING for v in value]
     else:
         if variable_shape:
-            data = decompose_varying_shape_arrays(value, np.nan)
-            return [x if not np.all(np.isnan(x)) else MISSING for x in data]
+            return decompose_varying_shape_arrays(value, np.nan)
         else:
             return value
 

@@ -80,16 +80,22 @@ def decompose_varying_shape_arrays(
             mask = ~np.isnan(value)
         else:
             mask = value != fillvalue
-        for axis in range(value.ndim):
-            # Sum along all dimensions except the current one
-            axis_sum = mask.any(axis=tuple(i for i in range(value.ndim) if i != axis))
-            end = len(axis_sum) - np.argmax(
-                axis_sum[::-1]
-            )  # Last non-fillvalue index + 1
-            slices.append(slice(0, end))
+        if not mask.any():
+            # There is no data in "value", so we append MISSING
+            decomposed.append(MISSING)
+        else:
+            for axis in range(value.ndim):
+                # Sum along all dimensions except the current one
+                axis_sum = mask.any(
+                    axis=tuple(i for i in range(value.ndim) if i != axis)
+                )
+                end = len(axis_sum) - np.argmax(
+                    axis_sum[::-1]
+                )  # Last non-fillvalue index + 1
+                slices.append(slice(0, end))
 
-        # Use slices to extract the non-fillvalue portion of the array
-        decomposed.append(value[tuple(slices)])
+            # Use slices to extract the non-fillvalue portion of the array
+            decomposed.append(value[tuple(slices)])
 
     return decomposed
 

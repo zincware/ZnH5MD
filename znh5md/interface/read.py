@@ -5,9 +5,9 @@ import ase
 import numpy as np
 from ase.calculators.calculator import all_properties
 
-from znh5md.misc import decompose_varying_shape_arrays, open_file
+from znh5md.misc import MISSING, decompose_varying_shape_arrays, open_file
 from znh5md.path import AttributePath, H5MDToASEMapping
-from znh5md.serialization import MISSING, ORIGIN_TYPE, Frames
+from znh5md.serialization import ORIGIN_TYPE, Frames
 
 if t.TYPE_CHECKING:
     from znh5md.interface.io import IO

@@ -6,6 +6,15 @@ import h5py
 import numpy as np
 
 
+class _MISSING:
+    """Sentinel value for missing entries."""
+
+    pass
+
+
+MISSING = _MISSING()
+
+
 def concatenate_varying_shape_arrays(
     values: list, fillvalue: str | int | float | bool, dtype
 ) -> np.ndarray:

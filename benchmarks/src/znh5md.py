@@ -1,14 +1,16 @@
+from dataclasses import dataclass
+
 import ase
 
 import znh5md
-from dataclasses import dataclass
 
 from .abc import IOBase
 
+
 @dataclass(kw_only=True)
 class ZnH5MDIO(IOBase):
-    compression: str| None = "gzip"
-    
+    compression: str | None = "gzip"
+
     def setup(self):
         pass
 
@@ -20,7 +22,9 @@ class ZnH5MDIO(IOBase):
 
     def write(self, atoms: list[ase.Atoms]) -> None:
         if self.format == "h5md":
-            znh5md.IO(self.filename, store="time", compression=self.compression).extend(atoms)
+            znh5md.IO(self.filename, store="time", compression=self.compression).extend(
+                atoms
+            )
         else:
             raise ValueError(f"Unsupported format: {self.format}")
 

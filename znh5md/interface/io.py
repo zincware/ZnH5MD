@@ -39,6 +39,7 @@ class IO(MutableSequence):
     chunk_size: int | None = 64
     use_ase_calc: bool = True
     variable_shape: bool = True
+    keys: list[str] | None = None
 
     _store_ase_origin: bool = True  # for testing purposes only
 
@@ -51,6 +52,9 @@ class IO(MutableSequence):
             self.filename = pathlib.Path(self.filename)
         self._set_particle_group()
         self._read_author_creator()
+        if self.keys is not None:
+            if "position" not in self.keys:
+                raise ValueError("'position' must be in keys")
 
     def _set_particle_group(self):
         if self.particles_group is not None:

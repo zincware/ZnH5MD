@@ -190,9 +190,12 @@ class Frames:
     def items(self) -> t.Iterator[Entry]:
         """Iterate over the items."""
         yield Entry(self.numbers, "atoms", name="numbers")  # numbers has to be first!
-        yield Entry(self.positions, "atoms", name="positions")
-        yield Entry(self.pbc, "atoms", name="pbc")
-        yield Entry(self.cell, "atoms", name="cell")
+        if len(self.positions) > 0:
+            yield Entry(self.positions, "atoms", name="positions")
+        if len(self.pbc) > 0:
+            yield Entry(self.pbc, "atoms", name="pbc")
+        if len(self.cell) > 0:
+            yield Entry(self.cell, "atoms", name="cell")
         for key in self.arrays:
             yield Entry(self.arrays[key], "arrays", name=key)
         for key in self.info:
@@ -214,9 +217,9 @@ class Frames:
 
     def __iter__(self) -> t.Iterator[ase.Atoms]:
         """Iterate over the frames."""
-        if self.positions is None:
+        if self.numbers is None:
             return iter([])
-        for idx in range(len(self.positions)):
+        for idx in range(len(self.numbers)):
             try:
                 yield self[idx]
             except IndexError:
@@ -233,10 +236,16 @@ class Frames:
         # this raises the IndexError to determine the length of the Frames object
         atoms = ase.Atoms(
             numbers=self.numbers[idx],
-            positions=self.positions[idx],
-            cell=self.cell[idx],
-            pbc=self.pbc[idx],
+            # positions=self.positions[idx],
+            # cell=self.cell[idx],
+            # pbc=self.pbc[idx],
         )
+        if len(self.positions) > 0:
+            atoms.set_positions(self.positions[idx])
+        if len(self.cell) > 0:
+            atoms.set_cell(self.cell[idx])
+        if len(self.pbc) > 0:
+            atoms.set_pbc(self.pbc[idx])
         # all data following here can be missing
         for key in self.arrays:
             with contextlib.suppress(IndexError):

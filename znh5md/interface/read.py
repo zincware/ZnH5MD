@@ -203,7 +203,6 @@ def getitem(
         if f"/observables/{self.particles_group}" in f:
             observables = f[f"/observables/{self.particles_group}"]
             process_observables(self, frames, observables, index)
-
     return list(frames) if not is_single_item else frames[0]
 
 
@@ -233,7 +232,7 @@ def process_species_group(self, frames: Frames, particles, index) -> None:
     )
 
 
-def process_particle_groups(self, frames: Frames, particles, index) -> None:
+def process_particle_groups(self: "IO", frames: Frames, particles, index) -> None:
     """
     Process particle groups other than 'species' and update the frames.
 
@@ -250,6 +249,8 @@ def process_particle_groups(self, frames: Frames, particles, index) -> None:
     """
     for grp_name in particles:
         if grp_name == "species":
+            continue
+        if self.keys is not None and grp_name not in self.keys:
             continue
         try:
             grp = particles[grp_name]
@@ -356,7 +357,7 @@ def process_generic_group(
         )
 
 
-def process_observables(self, frames: Frames, observables, index) -> None:
+def process_observables(self: "IO", frames: Frames, observables, index) -> None:
     """
     Process observables and update the frames.
 
@@ -372,6 +373,8 @@ def process_observables(self, frames: Frames, observables, index) -> None:
         Indices specifying the frames to retrieve.
     """
     for grp_name in observables:
+        if self.keys is not None and grp_name not in self.keys:
+            continue
         grp = observables[grp_name]
         origin = grp.attrs.get(AttributePath.origin.value, None)
         try:

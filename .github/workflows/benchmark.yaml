@@ -38,6 +38,7 @@ jobs:
 
           echo '## Read: Comparison with other packages' >> report.md
           echo '![](./benchmark_h5md.png "Read benchmark, comparison with other packages")' >> report.md
+          echo '![](./benchmark_h5md-uncompressed.png "Read benchmark, comparison with other packages")' >> report.md
           echo '![](./benchmark_xyz.png "Read benchmark, comparison with other packages")' >> report.md
           echo '![](./benchmark_pdb.png "Read benchmark, comparison with other packages")' >> report.md
           echo '![](./benchmark_xtc.png "Read benchmark, comparison with other packages")' >> report.md

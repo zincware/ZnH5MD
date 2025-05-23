@@ -4,7 +4,8 @@ import h5py
 import numpy as np
 import numpy.testing as npt
 
-from znh5md.serialization import MISSING, Entry
+from znh5md.misc import MISSING
+from znh5md.serialization import Entry
 
 
 def test_entry_list_int():

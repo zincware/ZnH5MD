@@ -5,9 +5,9 @@ import ase
 import numpy as np
 from ase.calculators.calculator import all_properties
 
-from znh5md.misc import decompose_varying_shape_arrays, open_file
+from znh5md.misc import MISSING, decompose_varying_shape_arrays, open_file
 from znh5md.path import AttributePath, H5MDToASEMapping
-from znh5md.serialization import MISSING, ORIGIN_TYPE, Frames
+from znh5md.serialization import ORIGIN_TYPE, Frames
 
 if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
@@ -72,8 +72,7 @@ def preprocess_data(value: np.ndarray, variable_shape: bool) -> list:
             return [v.decode() if v != b"" else MISSING for v in value]
     else:
         if variable_shape:
-            data = decompose_varying_shape_arrays(value, np.nan)
-            return [x if not np.all(np.isnan(x)) else MISSING for x in data]
+            return decompose_varying_shape_arrays(value, np.nan)
         else:
             return value
 

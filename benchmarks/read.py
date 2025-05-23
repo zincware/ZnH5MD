@@ -32,50 +32,81 @@ IO_CLASSES = [
 
 def benchmark_io_for_frame_count(
     num_frames: int,
-    num_atoms: int = 100,
-    filename: str = "test_ase_io",
-    format: str = "xyz",
+    num_atoms: int,
+    file_format: str,
+    filename: str = "test_io_benchmark",
 ):
-    try:
-        frames = create_frames(num_frames=num_frames, num_atoms=num_atoms)
-        results = {}
-        if format == "xtc":
-            instance = MDTrajIO(
-                filename=filename,
-                format=format,
-                num_atoms=num_atoms,
-                num_frames=num_frames,
-            )
-        elif format == "h5md":
-            instance = ZnH5MDIO(
-                filename=filename,
-                format=format,
-                num_atoms=num_atoms,
-                num_frames=num_frames,
-            )
-        else:
-            instance = ASEIO(
-                filename=filename,
-                format=format,
-                num_atoms=num_atoms,
-                num_frames=num_frames,
-            )
-        instance.setup()
-        instance.write(frames)
+    frames = create_frames(num_frames=num_frames, num_atoms=num_atoms)
+    results = {}
 
+    # Determine the actual format and compression based on the input file_format
+    actual_format = file_format
+    if file_format == "h5md-uncompressed":
+        actual_format = "h5md"
+
+    # Create the appropriate writer instance
+    writer_instance = None
+    if actual_format == "xtc":
+        writer_instance = MDTrajIO(
+            filename=filename,
+            format=actual_format,
+            num_atoms=num_atoms,
+            num_frames=num_frames,
+        )
+    elif actual_format == "h5md":
+        writer_instance = ZnH5MDIO(
+            filename=filename,
+            format=actual_format,
+            num_atoms=num_atoms,
+            num_frames=num_frames,
+            compression=None if file_format == "h5md-uncompressed" else "gzip",
+        )
+    else:
+        writer_instance = ASEIO(
+            filename=filename,
+            format=actual_format,
+            num_atoms=num_atoms,
+            num_frames=num_frames,
+        )
+
+    writer_instance.setup()
+    writer_instance.write(frames)
+
+    try:
+        # Benchmark all reader classes
         for io_cls in IO_CLASSES:
-            io_obj = io_cls(
-                filename=filename,
-                format=format,
-                num_atoms=num_atoms,
-                num_frames=num_frames,
-            )
+            # Create reader instance, handling h5md compression for ZnH5MDIO
+            if io_cls == ZnH5MDIO:
+                io_obj = io_cls(
+                    filename=filename,
+                    format=actual_format,
+                    num_atoms=num_atoms,
+                    num_frames=num_frames,
+                )
+            elif io_cls == ZnH5MDFixedShapeIO:
+                io_obj = io_cls(
+                    filename=filename,
+                    format=actual_format,
+                    num_atoms=num_atoms,
+                    num_frames=num_frames,
+                )
+            else:
+                io_obj = io_cls(
+                    filename=filename,
+                    format=actual_format,
+                    num_atoms=num_atoms,
+                    num_frames=num_frames,
+                )
+
             io_obj.setup()
-            with contextlib.suppress(ValueError):  # not supported
+            with contextlib.suppress(
+                ValueError
+            ):  # Catch ValueError for unsupported formats
                 metrics = benchmark_read(io_obj)
                 results[io_cls.__name__] = metrics.asdict()
     finally:
-        os.unlink(filename)
+        if os.path.exists(filename):
+            os.unlink(filename)
     return results
 
 
@@ -143,18 +174,17 @@ def plot_benchmarks(df_avg, df_std_avg, format: str):
     ax.legend(title="Library")
     ax.grid(which="both", linestyle="--", linewidth=0.5)
     plt.tight_layout()
-    ax.set_ylim(bottom=1e-2, top=1e2)
+    ax.set_ylim(bottom=1e-3, top=1e2)
     plt.savefig(f"benchmark_{format}.png", dpi=300)
 
 
 def main():
     num_atoms = 512
-    for format in ["xtc", "h5md", "xyz", "pdb"]:  # []:
-        # for format in ["h5md"]:
+    for format in ["xtc", "h5md", "xyz", "pdb", "h5md-uncompressed"]:
         print(f"Running benchmark for {format.upper()} format")
         full_results = {
             num_frames: benchmark_io_for_frame_count(
-                num_atoms=num_atoms, num_frames=num_frames, format=format
+                num_atoms=num_atoms, num_frames=num_frames, file_format=format
             )
             for num_frames in tqdm(np.logspace(2, 3, num=10, dtype=int))
         }

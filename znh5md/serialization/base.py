@@ -9,20 +9,11 @@ import h5py
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from znh5md.misc import concatenate_varying_shape_arrays
+from znh5md.misc import MISSING, concatenate_varying_shape_arrays
 from znh5md.units import get_unit
 
-
-class _MISSING:
-    """Sentinel value for missing entries."""
-
-    pass
-
-
-MISSING = _MISSING()
-
 # Define allowed types
-ALLOWED_TYPES = t.Union[np.ndarray, dict, float, int, str, bool, list, _MISSING]
+ALLOWED_TYPES = t.Union[np.ndarray, dict, float, int, str, bool, list, type(MISSING)]
 
 # Define content type
 CONTENT_TYPE = dict[str, ALLOWED_TYPES]
@@ -249,7 +240,7 @@ class Frames:
         # all data following here can be missing
         for key in self.arrays:
             with contextlib.suppress(IndexError):
-                if isinstance(self.arrays[key][idx], _MISSING):
+                if self.arrays[key][idx] is MISSING:
                     continue
                 if key == "velocities":
                     atoms.set_velocities(self.arrays[key][idx])
@@ -258,11 +249,11 @@ class Frames:
 
         for key in self.info:
             with contextlib.suppress(IndexError):
-                if not isinstance(self.info[key][idx], _MISSING):
+                if self.info[key][idx] is not MISSING:
                     atoms.info[key] = self.info[key][idx]
         for key in self.calc:
             with contextlib.suppress(IndexError):
-                if not isinstance(self.calc[key][idx], _MISSING):
+                if self.calc[key][idx] is not MISSING:
                     if atoms.calc is None:
                         atoms.calc = SinglePointCalculator(atoms)
                     atoms.calc.results[key] = self.calc[key][idx]

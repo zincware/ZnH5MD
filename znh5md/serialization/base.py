@@ -168,10 +168,12 @@ class Frames:
     calc: dict[str, list] = dataclasses.field(default_factory=dict)
 
     @classmethod
-    def from_ase(cls, frames: t.Iterable[ase.Atoms]) -> "Frames":
+    def from_ase(
+        cls, frames: t.Iterable[ase.Atoms], include: list[str] | None = None
+    ) -> "Frames":
         """Create a Frames object from a sequence of ASE Atoms objects."""
         obj = cls()
-        obj.extend(frames)
+        obj.extend(frames, include=include)
         return obj
 
     def keys(self) -> t.Iterator[str]:
@@ -190,9 +192,12 @@ class Frames:
     def items(self) -> t.Iterator[Entry]:
         """Iterate over the items."""
         yield Entry(self.numbers, "atoms", name="numbers")  # numbers has to be first!
-        yield Entry(self.positions, "atoms", name="positions")
-        yield Entry(self.pbc, "atoms", name="pbc")
-        yield Entry(self.cell, "atoms", name="cell")
+        if len(self.positions) > 0:
+            yield Entry(self.positions, "atoms", name="positions")
+        if len(self.pbc) > 0:
+            yield Entry(self.pbc, "atoms", name="pbc")
+        if len(self.cell) > 0:
+            yield Entry(self.cell, "atoms", name="cell")
         for key in self.arrays:
             yield Entry(self.arrays[key], "arrays", name=key)
         for key in self.info:
@@ -214,9 +219,9 @@ class Frames:
 
     def __iter__(self) -> t.Iterator[ase.Atoms]:
         """Iterate over the frames."""
-        if self.positions is None:
+        if self.numbers is None:
             return iter([])
-        for idx in range(len(self.positions)):
+        for idx in range(len(self.numbers)):
             try:
                 yield self[idx]
             except IndexError:
@@ -233,10 +238,16 @@ class Frames:
         # this raises the IndexError to determine the length of the Frames object
         atoms = ase.Atoms(
             numbers=self.numbers[idx],
-            positions=self.positions[idx],
-            cell=self.cell[idx],
-            pbc=self.pbc[idx],
+            # positions=self.positions[idx],
+            # cell=self.cell[idx],
+            # pbc=self.pbc[idx],
         )
+        if len(self.positions) > 0:
+            atoms.set_positions(self.positions[idx])
+        if len(self.cell) > 0:
+            atoms.set_cell(self.cell[idx])
+        if len(self.pbc) > 0:
+            atoms.set_pbc(self.pbc[idx])
         # all data following here can be missing
         for key in self.arrays:
             with contextlib.suppress(IndexError):
@@ -264,32 +275,65 @@ class Frames:
         """Append a frame to the frames."""
         self.extend([atoms])
 
-    def extend(self, frames: t.Iterable[ase.Atoms]) -> None:
+    def extend(
+        self, frames: t.Iterable[ase.Atoms], include: list[str] | None = None
+    ) -> None:
         """Extend the frames with a sequence of frames."""
 
-        start_idx = len(self.positions)
+        if include is not None:
+            # Convert include list to a set for faster lookups
+            include_set = set(include)
+        else:
+            include_set = None
 
-        self.positions.extend([atoms.positions for atoms in frames])
+        start_idx = len(self.positions)
         self.numbers.extend([atoms.numbers for atoms in frames])
-        self.pbc.extend([atoms.pbc for atoms in frames])
-        self.cell.extend([atoms.cell.array for atoms in frames])
+
+        if include_set is None or "position" in include_set:
+            self.positions.extend([atoms.positions for atoms in frames])
+        if include_set is None or "box" in include_set:
+            self.pbc.extend([atoms.pbc for atoms in frames])
+            self.cell.extend([atoms.cell.array for atoms in frames])
 
         for idx, atoms in enumerate(frames, start=start_idx):
             # Process arrays
-            atoms_arrays = {
-                key: value
-                for key, value in atoms.arrays.items()
-                if key not in ["positions", "numbers"]
-            }
+            if include_set is None:
+                atoms_arrays = {
+                    key: value
+                    for key, value in atoms.arrays.items()
+                    if key not in ["positions", "numbers"]
+                }
+            else:
+                atoms_arrays = {
+                    key: value
+                    for key, value in atoms.arrays.items()
+                    if key not in ["positions", "numbers"] and key in include
+                }
             process_category(self.arrays, atoms_arrays, idx)
-
-            process_momenta(self.arrays, atoms, idx)
+            if include_set is None or "velocities" in include_set:
+                process_momenta(self.arrays, atoms, idx)
 
             # Process info
-            process_category(self.info, atoms.info, idx)
+            if include_set is None:
+                atoms_info = atoms.info
+            else:
+                atoms_info = {
+                    key: value
+                    for key, value in atoms.info.items()
+                    if key in include_set
+                }
+            process_category(self.info, atoms_info, idx)
 
             # Process calc
             if atoms.calc is not None:
-                process_category(self.calc, atoms.calc.results, idx)
+                if include_set is None:
+                    atoms_calc = atoms.calc.results
+                else:
+                    atoms_calc = {
+                        key: value
+                        for key, value in atoms.calc.results.items()
+                        if key in include_set
+                    }
+                process_category(self.calc, atoms_calc, idx)
             elif len(self.calc) != 0:
                 process_category(self.calc, {}, idx)

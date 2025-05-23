@@ -111,6 +111,10 @@ def s22_mixed_pbc_cell() -> list[ase.Atoms]:
     for atoms in ase.collections.s22:
         atoms.set_pbc(np.random.rand(3) > 0.5)
         atoms.set_cell(np.random.rand(3, 3))
+        # add something to info
+        atoms.info["mlip_energy"] = np.random.rand()
+        # add something to arrays
+        atoms.new_array("mlip_forces", np.random.rand(len(atoms), 3))
         images.append(atoms)
     return images
 

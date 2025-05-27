@@ -57,9 +57,7 @@ class IO(MutableSequence):
             if "position" not in self.include:
                 raise ValueError("'position' must be in keys")
         if self.mask is not None and self.variable_shape is True:
-            raise ValueError(
-                "mask is not supported with variable_shape=True. "
-            )
+            raise ValueError("mask is not supported with variable_shape=True. ")
 
     def _set_particle_group(self):
         if self.particles_group is not None:

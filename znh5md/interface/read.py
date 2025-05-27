@@ -222,10 +222,18 @@ def process_species_group(self, frames: Frames, particles, index) -> None:
         Indices specifying the frames to retrieve.
     """
     grp = particles["species/value"]
+    if self.mask is None:
+        value = grp[index]
+    else:
+        if isinstance(index, list):
+           value = np.array([grp[i, self.mask] for i in index])
+        else:
+            value = grp[index, self.mask]
+
     update_frames(
         frames,
         H5MDToASEMapping.species.value,
-        grp[index],
+        value,
         None,
         self.use_ase_calc,
         variable_shape=self.variable_shape,
@@ -330,11 +338,23 @@ def process_generic_group(
         If the group does not contain a valid 'value' dataset.
     """
     try:
+        if self.mask is None:
+            value = grp["value"][index]
+        else:
+            if grp["value"].ndim == 1:
+                # If the value is 1D, we can directly index it
+                value = grp["value"][index]
+            else:
+                if isinstance(index, list):
+                    # If index is a list, we need to apply the mask for each index
+                    value = np.array([grp["value"][i, self.mask] for i in index])
+                else:
+                    value = value = grp["value"][index, self.mask]
         try:
             update_frames(
                 frames,
                 H5MDToASEMapping[grp_name].value,
-                grp["value"][index],
+                value,
                 origin,
                 self.use_ase_calc,
                 variable_shape=self.variable_shape,
@@ -343,7 +363,7 @@ def process_generic_group(
             update_frames(
                 frames,
                 grp_name,
-                grp["value"][index],
+                value,
                 origin,
                 self.use_ase_calc,
                 variable_shape=self.variable_shape,
@@ -379,11 +399,22 @@ def process_observables(self: "IO", frames: Frames, observables, index) -> None:
         origin = grp.attrs.get(AttributePath.origin.value, None)
         try:
             try:
+                if self.mask is None:
+                    value = grp["value"][index]
+                else:
+                    if grp["value"].ndim == 1:
+                        value = grp["value"][index]
+                    else:
+                        if isinstance(index, list):
+                            # If index is a list, we need to apply the mask for each index
+                            value = np.array([grp["value"][i, self.mask] for i in index])
+                        else:
+                            value = grp["value"][index, self.mask]
                 try:
                     update_frames(
                         frames,
                         H5MDToASEMapping[grp_name].value,
-                        grp["value"][index],
+                        value,
                         origin,
                         self.use_ase_calc,
                         variable_shape=self.variable_shape,
@@ -392,7 +423,7 @@ def process_observables(self: "IO", frames: Frames, observables, index) -> None:
                     update_frames(
                         frames,
                         grp_name,
-                        grp["value"][index],
+                        value,
                         origin,
                         self.use_ase_calc,
                         variable_shape=self.variable_shape,

@@ -226,7 +226,7 @@ def process_species_group(self, frames: Frames, particles, index) -> None:
         value = grp[index]
     else:
         if isinstance(index, list):
-           value = np.array([grp[i, self.mask] for i in index])
+            value = np.array([grp[i, self.mask] for i in index])
         else:
             value = grp[index, self.mask]
 
@@ -406,8 +406,11 @@ def process_observables(self: "IO", frames: Frames, observables, index) -> None:
                         value = grp["value"][index]
                     else:
                         if isinstance(index, list):
-                            # If index is a list, we need to apply the mask for each index
-                            value = np.array([grp["value"][i, self.mask] for i in index])
+                            # If index is a list, we need to
+                            #  apply the mask for each index
+                            value = np.array(
+                                [grp["value"][i, self.mask] for i in index]
+                            )
                         else:
                             value = grp["value"][index, self.mask]
                 try:

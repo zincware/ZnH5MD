@@ -23,7 +23,8 @@ def test_restricted_read_position(tmp_path, dataset, request):
     for atoms, ref in zip(rio, frames):
         assert atoms.calc is None
         assert atoms.info == {}
-        # 'numbers' is always implicitly added when reading, even if only 'positions' is requested.
+        # 'numbers' is always implicitly added when reading,
+        #  even if only 'positions' is requested.
         # This is because 'numbers' defines the structure of the atom.
         assert atoms.arrays.keys() == {"numbers", "positions"}
         npt.assert_array_equal(atoms.get_atomic_numbers(), ref.get_atomic_numbers())

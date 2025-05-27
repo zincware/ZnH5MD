@@ -1,8 +1,8 @@
 import numpy.testing as npt
 import pytest
+
 import znh5md
 
-# TODO: test list, slice and int as index access
 
 @pytest.mark.parametrize("index", ["slice", "list", "int", "iter"])
 def test_masked(tmp_path, full_water, index):
@@ -49,14 +49,15 @@ def test_masked(tmp_path, full_water, index):
                     full_water.calc.results[key][[0, 2]],
                 )
 
+
 def test_masked_variable_shape():
-    with pytest.raises(
-        ValueError    ):
+    with pytest.raises(ValueError):
         znh5md.IO(
             "test.h5",
             variable_shape=True,
             mask=[0, 2],
         )
+
 
 @pytest.mark.parametrize("index", ["slice", "list", "int", "iter"])
 def test_masked_slice(tmp_path, full_water, index):

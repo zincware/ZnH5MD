@@ -233,7 +233,7 @@ class Frames:
             return 0
         return len(self.numbers)
 
-    def __getitem__(self, idx: int) -> ase.Atoms:
+    def __getitem__(self, idx: int) -> ase.Atoms:  # noqa: C901
         """Return a single frame."""
         # this raises the IndexError to determine the length of the Frames object
         atoms = ase.Atoms(
@@ -275,7 +275,7 @@ class Frames:
         """Append a frame to the frames."""
         self.extend([atoms])
 
-    def extend(
+    def extend(  # noqa: C901
         self, frames: t.Iterable[ase.Atoms], include: list[str] | None = None
     ) -> None:
         """Extend the frames with a sequence of frames."""

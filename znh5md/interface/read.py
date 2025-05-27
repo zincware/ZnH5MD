@@ -342,11 +342,9 @@ def process_generic_group(
             value = grp["value"][index]
         else:
             if grp["value"].ndim == 1:
-                # If the value is 1D, we can directly index it
                 value = grp["value"][index]
             else:
                 if isinstance(index, list):
-                    # If index is a list, we need to apply the mask for each index
                     value = np.array([grp["value"][i, self.mask] for i in index])
                 else:
                     value = value = grp["value"][index, self.mask]
@@ -406,8 +404,6 @@ def process_observables(self: "IO", frames: Frames, observables, index) -> None:
                         value = grp["value"][index]
                     else:
                         if isinstance(index, list):
-                            # If index is a list, we need to
-                            #  apply the mask for each index
                             value = np.array(
                                 [grp["value"][i, self.mask] for i in index]
                             )

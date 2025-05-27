@@ -59,7 +59,6 @@ class IO(MutableSequence):
         if self.mask is not None and self.variable_shape is True:
             raise ValueError(
                 "mask is not supported with variable_shape=True. "
-                "Please set variable_shape=False."
             )
 
     def _set_particle_group(self):

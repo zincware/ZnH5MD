@@ -13,6 +13,20 @@ if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
 
+def _fetch_masked_value(self: "IO", grp, index, key: str) -> np.ndarray:
+    """Apply masking if specified."""
+    if self.mask is None:
+        return grp[key][index]
+    else:
+        if grp[key].ndim == 1:
+            return grp[key][index]
+        else:
+            if isinstance(index, list):
+                return np.array([grp[key][i, self.mask] for i in index])
+            else:
+                return grp[key][index, self.mask]
+
+
 def update_frames(
     self: Frames,
     name: str,
@@ -221,11 +235,11 @@ def process_species_group(self, frames: Frames, particles, index) -> None:
     index : list[int]
         Indices specifying the frames to retrieve.
     """
-    grp = particles["species/value"]
+
     update_frames(
         frames,
         H5MDToASEMapping.species.value,
-        grp[index],
+        _fetch_masked_value(self, particles, index, "species/value"),
         None,
         self.use_ase_calc,
         variable_shape=self.variable_shape,
@@ -334,7 +348,7 @@ def process_generic_group(
             update_frames(
                 frames,
                 H5MDToASEMapping[grp_name].value,
-                grp["value"][index],
+                _fetch_masked_value(self, grp, index, "value"),
                 origin,
                 self.use_ase_calc,
                 variable_shape=self.variable_shape,
@@ -343,7 +357,7 @@ def process_generic_group(
             update_frames(
                 frames,
                 grp_name,
-                grp["value"][index],
+                _fetch_masked_value(self, grp, index, "value"),
                 origin,
                 self.use_ase_calc,
                 variable_shape=self.variable_shape,
@@ -383,7 +397,7 @@ def process_observables(self: "IO", frames: Frames, observables, index) -> None:
                     update_frames(
                         frames,
                         H5MDToASEMapping[grp_name].value,
-                        grp["value"][index],
+                        _fetch_masked_value(self, grp, index, "value"),
                         origin,
                         self.use_ase_calc,
                         variable_shape=self.variable_shape,
@@ -392,7 +406,7 @@ def process_observables(self: "IO", frames: Frames, observables, index) -> None:
                     update_frames(
                         frames,
                         grp_name,
-                        grp["value"][index],
+                        _fetch_masked_value(self, grp, index, "value"),
                         origin,
                         self.use_ase_calc,
                         variable_shape=self.variable_shape,

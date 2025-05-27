@@ -1347,12 +1347,11 @@ wheels = [
 
 [[package]]
 name = "znh5md"
-version = "0.4.5"
+version = "0.4.6"
 source = { editable = "." }
 dependencies = [
     { name = "ase" },
     { name = "h5py" },
-    { name = "plams" },
     { name = "tqdm" },
     { name = "typer" },
 ]
@@ -1379,7 +1378,6 @@ dev = [
 requires-dist = [
     { name = "ase", specifier = ">=3.24.0" },
     { name = "h5py", specifier = ">=3.12.1" },
-    { name = "plams", specifier = ">=2025.102" },
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "typer", specifier = ">=0.15.1" },
 ]

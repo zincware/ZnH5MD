@@ -1,6 +1,6 @@
 [project]
 name = "znh5md"
-version = "0.4.5"
+version = "0.4.6"
 description = "ASE Interface for the H5MD format."
 authors = [
     { name = "Fabian Zills", email = "fzills@icp.uni-stuttgart.de" },

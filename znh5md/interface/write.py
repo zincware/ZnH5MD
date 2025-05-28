@@ -11,7 +11,10 @@ from znh5md.serialization import Entry, Frames
 if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
-def _get_chunk_size(data, chunk_size: int | list[int] | tuple[int, ...] | None) -> tuple[int, ...]|bool:
+
+def _get_chunk_size(
+    data, chunk_size: int | list[int] | tuple[int, ...] | None
+) -> tuple[int, ...] | bool:
     if chunk_size is None:
         chunks = True
     elif isinstance(chunk_size, int):

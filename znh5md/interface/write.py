@@ -12,7 +12,28 @@ if t.TYPE_CHECKING:
     from znh5md.interface.io import IO
 
 
-def create_group(
+def _get_chunk_size(
+    data, chunk_size: int | list[int] | tuple[int, ...] | None
+) -> tuple[int, ...] | bool:
+    if chunk_size is None:
+        chunks = True
+    elif isinstance(chunk_size, int):
+        chunks = tuple([chunk_size] + list(data.shape[1:]))
+    elif isinstance(chunk_size, (list, tuple)):
+        chunks = []
+        for i in range(len(data.shape)):
+            try:
+                if chunk_size[i] <= data.shape[i]:
+                    chunks.append(chunk_size[i])
+                else:
+                    chunks.append(data.shape[i])
+            except IndexError:
+                chunks.append(data.shape[i])
+        chunks = tuple(chunks)
+    return chunks
+
+
+def create_group(  # noqa: C901
     f,
     path,
     entry: Entry,
@@ -24,7 +45,7 @@ def create_group(
     timestep: float,
     compression: str | None,
     compression_opts: int | None,
-    chunk_size: int | None,
+    chunk_size: int | None | list[int] | tuple[int, ...],
 ) -> None:
     if path in f:
         raise ValueError(f"Group {path} already exists")
@@ -43,7 +64,12 @@ def create_group(
     grp = f.create_group(path)
 
     if dtype == h5py.string_dtype():
-        chunks = True if chunk_size is None else (chunk_size,)
+        if chunk_size is None:
+            chunks = True
+        elif isinstance(chunk_size, int):
+            chunks = (chunk_size,)
+        elif isinstance(chunk_size, (list, tuple)):
+            chunks = (chunk_size[0],)
         ds = grp.create_dataset(
             "value",
             shape=(ref_length + len(data),),
@@ -58,10 +84,7 @@ def create_group(
     else:
         maxshape = tuple(None for _ in data.shape)
         shape = (ref_length + len(data),) + data.shape[1:]
-        chunks = (
-            True if chunk_size is None else tuple([chunk_size] + list(data.shape[1:]))
-        )
-
+        chunks = _get_chunk_size(data, chunk_size)
         ds = grp.create_dataset(
             "value",
             shape=shape,

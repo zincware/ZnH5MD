@@ -1,6 +1,7 @@
 import ase.build
 import ase.collections
 import ase.io
+import h5py
 import numpy as np
 import pytest
 from ase.calculators.calculator import all_properties
@@ -282,3 +283,27 @@ def test_np_int_getitem(tmp_path):
         io[np.int64(1)]
     with pytest.raises(IndexError):
         io[np.int64(-2)]
+
+
+@pytest.mark.parametrize("chunk_size", (None, 4, (4, 4), [4, 4, 4], (4, 4, 4, 4)))
+def test_chunk_size(tmp_path, chunk_size, s22_energy_forces):
+    io = znh5md.IO(tmp_path / "test.h5", chunk_size=chunk_size)
+    io.extend(s22_energy_forces)
+    with h5py.File(tmp_path / "test.h5", "r") as f:
+        ds = f["particles/atoms/species/value"]
+        assert ds.shape == (22, 30)
+        if chunk_size is None:
+            assert ds.chunks == (22, 30)
+        elif chunk_size == 4:
+            assert ds.chunks == (4, 30)
+        else:
+            assert ds.chunks == (4, 4)
+    with h5py.File(tmp_path / "test.h5", "r") as f:
+        ds = f["particles/atoms/force/value"]
+        assert ds.shape == (22, 30, 3)
+        if chunk_size is None:
+            assert ds.chunks == (11, 30, 3)  # auto chunking
+        elif chunk_size == 4:
+            assert ds.chunks == (4, 30, 3)
+        else:
+            assert ds.chunks == (4, 4, 3)

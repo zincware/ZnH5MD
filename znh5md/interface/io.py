@@ -36,7 +36,7 @@ class IO(MutableSequence):
     timestep: float = 1.0
     store: t.Literal["time", "linear"] = "linear"
     tqdm_limit: int = 100
-    chunk_size: int | None = 64
+    chunk_size: int | None | list[int] | tuple[int, ...] = (64, 64)
     use_ase_calc: bool = True
     variable_shape: bool = True
     include: list[str] | None = None

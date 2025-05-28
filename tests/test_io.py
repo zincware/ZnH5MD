@@ -293,7 +293,7 @@ def test_chunk_size(tmp_path, chunk_size, s22_energy_forces):
         ds = f["particles/atoms/species/value"]
         assert ds.shape == (22, 30)
         if chunk_size is None:
-            assert ds.chunks  == (22, 30)
+            assert ds.chunks == (22, 30)
         elif chunk_size == 4:
             assert ds.chunks == (4, 30)
         else:
@@ -302,9 +302,8 @@ def test_chunk_size(tmp_path, chunk_size, s22_energy_forces):
         ds = f["particles/atoms/force/value"]
         assert ds.shape == (22, 30, 3)
         if chunk_size is None:
-            assert ds.chunks == (11, 30, 3) # auto chunking
+            assert ds.chunks == (11, 30, 3)  # auto chunking
         elif chunk_size == 4:
             assert ds.chunks == (4, 30, 3)
         else:
             assert ds.chunks == (4, 4, 3)
-

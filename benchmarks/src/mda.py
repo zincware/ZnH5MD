@@ -30,6 +30,8 @@ class MDAIO(IOBase):
             universe.trajectory = reader
         else:
             universe = mda.Universe(self.filename, format=self.format.upper())
+
+        universe.transfer_to_memory()
         frames = []
         for ts in universe.trajectory:
             positions = ts.positions

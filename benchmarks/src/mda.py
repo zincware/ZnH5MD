@@ -1,6 +1,7 @@
 import ase
 import MDAnalysis as mda  # noqa: N813
 from MDAnalysis.coordinates.H5MD import H5MDReader
+from MDAnalysis.coordinates.XTC import XTCReader
 
 from .abc import IOBase
 
@@ -21,7 +22,12 @@ class MDAIO(IOBase):
             )
             universe.trajectory = reader
         elif self.format == "xtc":
-            raise ValueError("xtc format not supported")
+            universe = mda.Universe.empty(self.num_atoms, trajectory=True)
+            reader = XTCReader(
+                self.filename,
+                convert_units=False,
+            )
+            universe.trajectory = reader
         else:
             universe = mda.Universe(self.filename, format=self.format.upper())
         frames = []

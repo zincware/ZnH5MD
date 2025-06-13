@@ -29,7 +29,8 @@ def _get_chunk_size(
                     chunks.append(data.shape[i])
             except IndexError:
                 chunks.append(data.shape[i])
-        chunks = tuple(chunks)
+        # if any chunk size is 0, set it to 1, as h5py does not allow 0 chunks
+        chunks = tuple(x if x > 0 else 1 for x in chunks)
     return chunks
 
 
@@ -85,6 +86,8 @@ def create_group(  # noqa: C901
         maxshape = tuple(None for _ in data.shape)
         shape = (ref_length + len(data),) + data.shape[1:]
         chunks = _get_chunk_size(data, chunk_size)
+        import warnings
+        warnings.warn(f"Using chunk size {chunks} for dataset {path}/value", UserWarning)
         ds = grp.create_dataset(
             "value",
             shape=shape,

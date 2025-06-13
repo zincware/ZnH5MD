@@ -53,9 +53,10 @@ dev = [
     "pytest>=8.3.4",
     "pytest-benchmark[histogram]>=5.1.0",
     "pytest-cov>=6.1.1",
-    "rdkit2ase>=0.1.4",
+    "rdkit2ase>=0.1.7",
     "ruff>=0.11.8",
     "plams>=2025.102",
+    "ipykernel>=6.29.5",
 ]
 
 [project.entry-points."ase.ioformats"]

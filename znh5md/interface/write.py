@@ -29,7 +29,8 @@ def _get_chunk_size(
                     chunks.append(data.shape[i])
             except IndexError:
                 chunks.append(data.shape[i])
-        chunks = tuple(chunks)
+        # if any chunk size is 0, set it to 1, as h5py does not allow 0 chunks
+        chunks = tuple(x if x > 0 else 1 for x in chunks)
     return chunks
 
 

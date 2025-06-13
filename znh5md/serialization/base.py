@@ -238,7 +238,6 @@ class Frames:
         # this raises the IndexError to determine the length of the Frames object
         import warnings
 
-        warnings.warn(f"self.numbers: {self.numbers}, idx: {idx}", UserWarning)
         if self.numbers[idx] is MISSING:
             atoms = ase.Atoms()
         else:

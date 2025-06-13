@@ -53,13 +53,11 @@ def update_frames(
     """
     if name in ["positions", "numbers", "pbc", "cell"]:
         if variable_shape:
-            setattr(self, name, decompose_varying_shape_arrays(value, np.nan))
-        else:
-            setattr(self, name, value)
-        return
-
-    data = preprocess_data(value, variable_shape)
-    store_data(self, name, data, origin, use_ase_calc)
+            value = decompose_varying_shape_arrays(value, np.nan)
+        setattr(self, name, value)
+    else:
+        data = preprocess_data(value, variable_shape)
+        store_data(self, name, data, origin, use_ase_calc)
 
 
 def preprocess_data(value: np.ndarray, variable_shape: bool) -> list:

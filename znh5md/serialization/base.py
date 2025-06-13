@@ -236,14 +236,18 @@ class Frames:
     def __getitem__(self, idx: int) -> ase.Atoms:  # noqa: C901
         """Return a single frame."""
         # this raises the IndexError to determine the length of the Frames object
-        atoms = ase.Atoms(
-            numbers=self.numbers[idx],
-            # positions=self.positions[idx],
-            # cell=self.cell[idx],
-            # pbc=self.pbc[idx],
-        )
+        import warnings
+
+        warnings.warn(f"self.numbers: {self.numbers}, idx: {idx}", UserWarning)
+        if self.numbers[idx] is MISSING:
+            atoms = ase.Atoms()
+        else:
+            atoms = ase.Atoms(
+                numbers=self.numbers[idx],
+            )
         if len(self.positions) > 0:
-            atoms.set_positions(self.positions[idx])
+            if self.positions[idx] is not MISSING:
+                atoms.set_positions(self.positions[idx])
         if len(self.cell) > 0:
             atoms.set_cell(self.cell[idx])
         if len(self.pbc) > 0:

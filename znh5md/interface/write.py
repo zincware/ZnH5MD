@@ -86,8 +86,6 @@ def create_group(  # noqa: C901
         maxshape = tuple(None for _ in data.shape)
         shape = (ref_length + len(data),) + data.shape[1:]
         chunks = _get_chunk_size(data, chunk_size)
-        import warnings
-        warnings.warn(f"Using chunk size {chunks} for dataset {path}/value", UserWarning)
         ds = grp.create_dataset(
             "value",
             shape=shape,

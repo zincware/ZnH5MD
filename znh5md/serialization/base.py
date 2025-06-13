@@ -236,7 +236,6 @@ class Frames:
     def __getitem__(self, idx: int) -> ase.Atoms:  # noqa: C901
         """Return a single frame."""
         # this raises the IndexError to determine the length of the Frames object
-        import warnings
 
         if self.numbers[idx] is MISSING:
             atoms = ase.Atoms()

@@ -1,7 +1,8 @@
-import numpy.testing as npt
-import numpy as np
-import pytest
 import typing as t
+
+import numpy as np
+import numpy.testing as npt
+import pytest
 
 import znh5md
 
@@ -21,6 +22,7 @@ def test_keys_missing(tmp_path, s22, s22_energy_forces):
                 npt.assert_array_equal(a.calc.results[key], b.calc.results[key])
         else:
             assert a.calc is None
+
 
 @pytest.mark.parametrize("state", ["before", "middle", "after"])
 def test_velocity(tmp_path, s22, state: t.Literal["before", "middle", "after"]):

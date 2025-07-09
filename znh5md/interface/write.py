@@ -161,7 +161,7 @@ def extend(self: "IO", data: list[ase.Atoms]) -> None:
 
     species_path = get_h5md_path("numbers", self.particles_group, frames)
 
-    with open_file(self.filename, self.file_handle, mode="a") as f:
+    with open_file(self.filename, self.file_handle, self.file_factory, mode="a") as f:
         if species_path in f:
             ref_length = len(f[species_path]["value"])
         else:

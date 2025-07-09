@@ -102,10 +102,16 @@ def decompose_varying_shape_arrays(
 
 @contextlib.contextmanager
 def open_file(
-    filename: str | os.PathLike | None, file_handle: h5py.File | None, **kwargs
+    filename: str | os.PathLike | None = None,
+    file_handle: h5py.File | None = None,
+    file_factory: t.Callable[[], t.ContextManager[h5py.File]] | None = None,
+    **kwargs,
 ) -> t.Generator[h5py.File, None, None]:
     if file_handle is not None:
         yield file_handle
+    elif file_factory is not None:
+        with file_factory() as f:
+            yield f
     else:
         with h5py.File(filename, **kwargs) as f:
             yield f

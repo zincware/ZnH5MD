@@ -207,7 +207,7 @@ def getitem(
     if is_single_item:
         index = [index]
 
-    with open_file(self.filename, self.file_handle, mode="r") as f:
+    with open_file(self.filename, self.file_handle, self.file_factory, mode="r") as f:
         particles = f[f"/particles/{self.particles_group}"]
         process_species_group(self, frames, particles, index)
         process_particle_groups(self, frames, particles, index)

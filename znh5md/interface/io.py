@@ -33,7 +33,7 @@ class IO(MutableSequence):
         Path to the H5MD file. If `file_handle` is not provided, this must be specified.
         Defaults to None.
     file_handle : h5py.File | None, optional
-        An existing h5py file handle. If `filename` is not provided, this must 
+        An existing h5py file handle. If `filename` is not provided, this must
         be specified.
         Defaults to None.
     file_factory : Callable[[], ContextManager[h5py.File]] | None, optional
@@ -146,11 +146,19 @@ class IO(MutableSequence):
     _store_ase_origin: bool = True  # for testing purposes only
 
     def __post_init__(self):
-        sources = [self.filename is not None, self.file_handle is not None, self.file_factory is not None]
+        sources = [
+            self.filename is not None,
+            self.file_handle is not None,
+            self.file_factory is not None,
+        ]
         if sum(sources) == 0:
-            raise ValueError("Either filename, file_handle, or file_factory must be provided")
+            raise ValueError(
+                "Either filename, file_handle, or file_factory must be provided"
+            )
         if sum(sources) > 1:
-            raise ValueError("Only one of filename, file_handle, or file_factory can be provided")
+            raise ValueError(
+                "Only one of filename, file_handle, or file_factory can be provided"
+            )
         if self.filename is not None:
             self.filename = pathlib.Path(self.filename)
         self._set_particle_group()
@@ -165,13 +173,17 @@ class IO(MutableSequence):
         if self.particles_group is not None:
             pass
         elif self.filename is not None and self.filename.exists():
-            with open_file(self.filename, self.file_handle, self.file_factory, mode="r") as f:
+            with open_file(
+                self.filename, self.file_handle, self.file_factory, mode="r"
+            ) as f:
                 self.particles_group = next(iter(f["particles"].keys()))
         elif (
             self.file_handle is not None
             and pathlib.Path(self.file_handle.filename).exists()
         ):
-            with open_file(self.filename, self.file_handle, self.file_factory, mode="r") as f:
+            with open_file(
+                self.filename, self.file_handle, self.file_factory, mode="r"
+            ) as f:
                 self.particles_group = next(iter(f["particles"].keys()))
         else:
             self.particles_group = "atoms"  # Default group name
@@ -182,14 +194,18 @@ class IO(MutableSequence):
             # KeyError if the file has not yet been initialized as H5MD
             #   or the keys are not provided, which is officially
             #   not allowed in H5MD.
-            with open_file(self.filename, self.file_handle, self.file_factory, mode="r") as f:
+            with open_file(
+                self.filename, self.file_handle, self.file_factory, mode="r"
+            ) as f:
                 self.author = f["h5md"]["author"].attrs["name"]
                 self.author_email = f["h5md"]["author"].attrs["email"]
                 self.creator = f["h5md"]["creator"].attrs["name"]
                 self.creator_version = f["h5md"]["creator"].attrs["version"]
 
     def create_file(self):
-        with open_file(self.filename, self.file_handle, self.file_factory, mode="w") as f:
+        with open_file(
+            self.filename, self.file_handle, self.file_factory, mode="w"
+        ) as f:
             g_h5md = f.create_group("h5md")
             g_h5md.attrs["version"] = np.array([1, 1])
             g_author = g_h5md.create_group("author")
@@ -201,7 +217,9 @@ class IO(MutableSequence):
             f.create_group("particles")
 
     def __len__(self) -> int:
-        with open_file(self.filename, self.file_handle, self.file_factory, mode="r") as f:
+        with open_file(
+            self.filename, self.file_handle, self.file_factory, mode="r"
+        ) as f:
             return len(f["particles"][self.particles_group]["species"]["value"])
 
     @t.overload
@@ -237,7 +255,9 @@ class IO(MutableSequence):
             self.create_file()
         if self.file_handle is not None:
             needs_creation = False
-            with open_file(self.filename, self.file_handle, self.file_factory, mode="r") as f:
+            with open_file(
+                self.filename, self.file_handle, self.file_factory, mode="r"
+            ) as f:
                 needs_creation = "h5md" not in f
             if needs_creation:
                 self.create_file()

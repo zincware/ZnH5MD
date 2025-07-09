@@ -2,8 +2,6 @@ import ase.io
 import h5py
 import numpy.testing as npt
 import pytest
-import typing as t
-import os
 
 import znh5md
 
@@ -177,7 +175,9 @@ def test_two_datasets(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
 
 
 @pytest.mark.parametrize("store", ["linear"])
-def test_two_datasets_file_handle(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):
+def test_two_datasets_file_handle(
+    tmp_path, s22_all_properties, s22_mixed_pbc_cell, store
+):
     with h5py.File(tmp_path / "test.h5", "w") as f:
         io_a = znh5md.IO(file_handle=f, particles_group="a")
         io_b = znh5md.IO(file_handle=f, particles_group="b", store=store)
@@ -197,7 +197,9 @@ def test_two_datasets_file_handle(tmp_path, s22_all_properties, s22_mixed_pbc_ce
 
 
 @pytest.mark.parametrize("store", ["linear"])
-def test_two_datasets_file_factory(tmp_path, s22_all_properties, s22_mixed_pbc_cell, store):    
+def test_two_datasets_file_factory(
+    tmp_path, s22_all_properties, s22_mixed_pbc_cell, store
+):
     io_a = znh5md.IO(filename=tmp_path / "test.h5", particles_group="a")
     io_b = znh5md.IO(filename=tmp_path / "test.h5", particles_group="b", store=store)
 
@@ -207,13 +209,12 @@ def test_two_datasets_file_factory(tmp_path, s22_all_properties, s22_mixed_pbc_c
     assert len(io_a) == len(s22_all_properties)
     assert len(io_b) == len(s22_mixed_pbc_cell)
 
-    def make_h5py_opener(
-        filename: str
-    ):
+    def make_h5py_opener(filename: str):
         def _opener():
             return h5py.File(filename, mode="r")
+
         return _opener
-    
+
     # The file_factory is read-only!
     file_factory = make_h5py_opener(tmp_path / "test.h5")
 
@@ -222,6 +223,7 @@ def test_two_datasets_file_factory(tmp_path, s22_all_properties, s22_mixed_pbc_c
 
     assert len(io_a) == len(s22_all_properties)
     assert len(io_b) == len(s22_mixed_pbc_cell)
+
 
 def test_pbc(tmp_path, s22_mixed_pbc_cell):
     io = znh5md.IO(tmp_path / "test.h5")

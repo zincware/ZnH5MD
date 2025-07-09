@@ -146,7 +146,9 @@ def handle_origin_data(
             self.arrays[name] = np.array(data)
         except ValueError:
             # Try individual arrays
-            self.arrays[name] = [np.array(d) if d is not MISSING else MISSING for d in data]
+            self.arrays[name] = [
+                np.array(d) if d is not MISSING else MISSING for d in data
+            ]
     elif origin == "atoms":
         raise ValueError(f"Origin 'atoms' is not allowed for {name}")
     else:

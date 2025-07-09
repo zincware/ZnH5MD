@@ -20,7 +20,104 @@ __version__ = importlib.metadata.version("znh5md")
 
 @dataclasses.dataclass
 class IO(MutableSequence):
-    """A class for handling H5MD files for ASE Atoms objects."""
+    """
+    A class for handling H5MD files for ASE Atoms objects.
+
+    This class provides an interface to read from and write to H5MD files,
+    treating them as a sequence of ASE Atoms objects. It supports various
+    configurations for file handling, data compression, and metadata.
+
+    Parameters
+    ----------
+    filename : str | os.PathLike | None, optional
+        Path to the H5MD file. If `file_handle` is not provided, this must be specified.
+        Defaults to None.
+    file_handle : h5py.File | None, optional
+        An existing h5py file handle. If `filename` is not provided, this must 
+        be specified.
+        Defaults to None.
+    pbc_group : bool, optional
+        Specify if Periodic Boundary Conditions (PBC) should be stored per step.
+        This is not H5MD conformant, but it allows for more flexibility in data storage.
+        Defaults to True.
+    save_units : bool, optional
+        Export ASE units into the H5MD file. Defaults to True.
+    author : str, optional
+        Author's name for H5MD metadata. Defaults to "N/A".
+    author_email : str, optional
+        Author's email for H5MD metadata. Defaults to "N/A".
+    creator : str, optional
+        Name of the creating software. Defaults to "znh5md".
+    creator_version : str, optional
+        Version of the creating software. Defaults to the znh5md package version.
+    particles_group : str | None, optional
+        Name of the particles group within the H5MD file (e.g., "atoms").
+        If None, it tries to infer from an existing file or defaults to "atoms".
+        Defaults to None.
+    compression : str | None, optional
+        Compression filter to use for datasets (e.g., "gzip", "lzf").
+        Defaults to "gzip".
+    compression_opts : int | None, optional
+        Compression options (e.g., compression level for gzip). Defaults to None.
+    timestep : float, optional
+        Time step between frames in the H5MD file. Defaults to 1.0.
+    store : t.Literal["time", "linear"], optional
+        Method for storing time and step information.
+        "time" stores a time series, "linear" stores a single value.
+        Defaults to "linear".
+    tqdm_limit : int, optional
+        Threshold for using tqdm progress bar. Defaults to 100.
+    chunk_size : int | None | list[int] | tuple[int, ...], optional
+        Chunk shape for HDF5 datasets. Can be an integer, list, or tuple.
+        Defaults to (64, 64).
+    use_ase_calc : bool, optional
+        Whether to use ASE calculator for storing and retrieving data.
+        Defaults to True.
+    variable_shape : bool, optional
+        Whether the data has a variable shape across frames. Defaults to True.
+        This is not H5MD conformant, but allows for more flexibility in data storage.
+    include : list[str] | None, optional
+        List of attributes to include when reading/writing. If specified,
+        "position" must be included. Defaults to None, which means all
+        data is included.
+    mask : list[int] | slice | None, optional
+        Mask to apply when reading data, e.g., to select specific atoms.
+        Not supported with `variable_shape=True`. Defaults to None.
+
+    Raises
+    ------
+    ValueError
+        If both `filename` and `file_handle` are provided or neither is provided.
+        If "position" is not in `include` list when `include` is specified.
+        If `mask` is used with `variable_shape=True`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ase.build import bulk
+    >>> from znh5md import IO
+    >>>
+    >>> # Create some dummy atoms objects
+    >>> atoms1 = bulk("Cu", "fcc", a=3.6)
+    >>> atoms2 = atoms1.copy()
+    >>> atoms2.positions[0, 0] += 0.1
+    >>>
+    >>> # Write to an H5MD file
+    >>> io = IO(filename="test.h5")
+    >>> io.extend([atoms1, atoms2])
+    >>>
+    >>> # Read from the H5MD file
+    >>> io_read = IO(filename="test.h5")
+    >>> print(len(io_read))
+    2
+    >>> atoms_read = io_read[0]
+    >>> print(atoms_read.positions[0])
+    [0. 0. 0.]
+    >>>
+    >>> # Clean up
+    >>> import os
+    >>> os.remove("test.h5")
+    """
 
     filename: str | os.PathLike | None = None
     file_handle: h5py.File | None = None

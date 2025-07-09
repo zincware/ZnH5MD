@@ -47,7 +47,10 @@ def test_velocity(tmp_path, s22, state: t.Literal["before", "middle", "after"]):
     assert len(list(io)) == len(images)
     if state == "before":
         npt.assert_array_almost_equal(io[0].get_velocities(), velocity)
+        npt.assert_array_almost_equal(io[:][0].get_velocities(), velocity)
     elif state == "middle":
         npt.assert_array_almost_equal(io[1].get_velocities(), velocity)
+        npt.assert_array_almost_equal(io[:][1].get_velocities(), velocity)
     elif state == "after":
         npt.assert_array_almost_equal(io[-1].get_velocities(), velocity)
+        npt.assert_array_almost_equal(io[:][-1].get_velocities(), velocity)

@@ -146,7 +146,7 @@ def handle_origin_data(
             self.arrays[name] = np.array(data)
         except ValueError:
             # Try individual arrays
-            self.arrays[name] = [np.array(d) for d in data]
+            self.arrays[name] = [np.array(d) if d is not MISSING else MISSING for d in data]
     elif origin == "atoms":
         raise ValueError(f"Origin 'atoms' is not allowed for {name}")
     else:
@@ -360,8 +360,8 @@ def process_generic_group(
                 self.use_ase_calc,
                 variable_shape=self.variable_shape,
             )
-        except (OSError, IndexError):
-            pass  # Handle backfilling for invalid values
+    except (OSError, IndexError):
+        pass  # Handle backfilling for invalid values
     except KeyError:
         raise KeyError(
             f"Key '{grp_name}' does not seem to be a valid H5MD group"

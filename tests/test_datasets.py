@@ -1,9 +1,10 @@
+import contextlib
+import typing as t
+
 import ase.io
 import h5py
 import numpy.testing as npt
 import pytest
-import contextlib
-import typing as t
 
 import znh5md
 
@@ -228,16 +229,16 @@ def test_two_datasets_file_factory(
 
     # test another file opener factory
     def make_h5py_opener_b(
-        filename: str,
-        **h5py_kwargs
+        filename: str, **h5py_kwargs
     ) -> t.Callable[[], t.ContextManager[h5py.File]]:
         @contextlib.contextmanager
         def _opener() -> t.Generator[h5py.File, None, None]:
             with open(filename, "rb") as f:
                 with h5py.File(f, "r", **h5py_kwargs) as h5f:
                     yield h5f
+
         return _opener
-    
+
     # The file_factory is read-only!
     file_factory = make_h5py_opener_b(tmp_path / "test.h5")
 

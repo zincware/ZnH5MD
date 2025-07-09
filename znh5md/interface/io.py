@@ -199,8 +199,19 @@ class IO(MutableSequence):
         with open_file(self.filename, self.file_handle, mode="r") as f:
             return len(f["particles"][self.particles_group]["species"]["value"])
 
+    @t.overload
+    def __getitem__(self, index: int) -> ase.Atoms: ...
+    @t.overload
+    def __getitem__(self, index: np.int_) -> ase.Atoms: ...
+    @t.overload
+    def __getitem__(self, index: slice) -> list[ase.Atoms]: ...
+    @t.overload
+    def __getitem__(self, index: np.ndarray) -> list[ase.Atoms]: ...
+    @t.overload
+    def __getitem__(self, index: list[int]) -> list[ase.Atoms]: ...
+
     def __getitem__(
-        self, index: int | np.int_ | slice | np.ndarray
+        self, index: int | np.int_ | slice | np.ndarray | list[int]
     ) -> ase.Atoms | list[ase.Atoms]:
         try:
             return getitem(self, index)

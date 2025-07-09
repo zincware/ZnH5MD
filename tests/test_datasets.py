@@ -1,3 +1,6 @@
+import contextlib
+import typing as t
+
 import ase.io
 import h5py
 import numpy.testing as npt
@@ -209,14 +212,35 @@ def test_two_datasets_file_factory(
     assert len(io_a) == len(s22_all_properties)
     assert len(io_b) == len(s22_mixed_pbc_cell)
 
-    def make_h5py_opener(filename: str):
+    def make_h5py_opener_a(filename: str):
         def _opener():
             return h5py.File(filename, mode="r")
 
         return _opener
 
     # The file_factory is read-only!
-    file_factory = make_h5py_opener(tmp_path / "test.h5")
+    file_factory = make_h5py_opener_a(tmp_path / "test.h5")
+
+    io_a = znh5md.IO(file_factory=file_factory, particles_group="a")
+    io_b = znh5md.IO(file_factory=file_factory, particles_group="b")
+
+    assert len(io_a) == len(s22_all_properties)
+    assert len(io_b) == len(s22_mixed_pbc_cell)
+
+    # test another file opener factory
+    def make_h5py_opener_b(
+        filename: str, **h5py_kwargs
+    ) -> t.Callable[[], t.ContextManager[h5py.File]]:
+        @contextlib.contextmanager
+        def _opener() -> t.Generator[h5py.File, None, None]:
+            with open(filename, "rb") as f:
+                with h5py.File(f, "r", **h5py_kwargs) as h5f:
+                    yield h5f
+
+        return _opener
+
+    # The file_factory is read-only!
+    file_factory = make_h5py_opener_b(tmp_path / "test.h5")
 
     io_a = znh5md.IO(file_factory=file_factory, particles_group="a")
     io_b = znh5md.IO(file_factory=file_factory, particles_group="b")

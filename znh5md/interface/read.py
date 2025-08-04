@@ -217,11 +217,11 @@ def getitem(
         if f"/observables/{self.particles_group}" in f:
             observables = f[f"/observables/{self.particles_group}"]
             process_observables(self, frames, observables, index)
-        
+
         # Add timestep information if export_timestep is True
         if self.export_timestep:
             add_timestep_info(self, frames, particles, index)
-    
+
     return list(frames) if not is_single_item else frames[0]
 
 
@@ -430,7 +430,7 @@ def process_observables(self: "IO", frames: Frames, observables, index) -> None:
 def add_timestep_info(self: "IO", frames: Frames, particles, index) -> None:
     """
     Add timestep information to atoms.info when export_timestep is True.
-    
+
     Parameters
     ----------
     self : IO
@@ -444,7 +444,7 @@ def add_timestep_info(self: "IO", frames: Frames, particles, index) -> None:
     """
     # Try to find timestep information from the species group (always present)
     timestep_fs = None
-    
+
     # Read timestep from the species group
     if "species" in particles and "time" in particles["species"]:
         time_data = particles["species"]["time"]
@@ -455,18 +455,22 @@ def add_timestep_info(self: "IO", frames: Frames, particles, index) -> None:
             # This is "time" storage mode - array of times
             # Calculate timestep from the difference
             time_array = time_data[:]
-            timestep_fs = float(time_array[1] - time_array[0]) if len(time_array) > 1 else float(time_array[0])
-    
+            timestep_fs = (
+                float(time_array[1] - time_array[0])
+                if len(time_array) > 1
+                else float(time_array[0])
+            )
+
     # If no timestep found, use the default from IO instance
     if timestep_fs is None:
         timestep_fs = self.timestep
-    
+
     # Calculate timestep for each requested frame and add to frames.info
     timestep_values = []
-    
+
     # Get the total dataset length for slice conversion
     total_length = len(particles["species"]["value"])
-    
+
     # Handle different index types
     if isinstance(index, slice):
         # Convert slice to list of indices based on total dataset length
@@ -476,11 +480,11 @@ def add_timestep_info(self: "IO", frames: Frames, particles, index) -> None:
         actual_indices = list(index)
     else:
         actual_indices = [index]
-    
+
     for frame_idx in actual_indices:
         # Calculate the timestep for this specific frame (in femtoseconds from start)
         frame_timestep = frame_idx * timestep_fs
         timestep_values.append(frame_timestep)
-    
+
     # Add timestep to frames.info dictionary
-    frames.info['timestep'] = timestep_values
+    frames.info["timestep"] = timestep_values

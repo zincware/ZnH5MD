@@ -216,7 +216,7 @@ class IO(MutableSequence):
             ) as f:
                 if self.particles_group and f"particles/{self.particles_group}" in f:
                     particles = f[f"particles/{self.particles_group}"]
-                    
+
                     # Read timestep from the species group (always present)
                     if "species" in particles and "time" in particles["species"]:
                         time_data = particles["species"]["time"]

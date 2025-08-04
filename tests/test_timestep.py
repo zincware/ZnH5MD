@@ -1,8 +1,61 @@
 import warnings
 
 import ase.build
+import numpy as np
+import pytest
 
 import znh5md
+
+
+@pytest.fixture
+def trajectory_time(tmp_path):
+    """Fixture to create a trajectory with time information."""
+    io = znh5md.IO(
+        tmp_path / "test_time_step.h5", store="time", export_timestep=True, timestep=0.5
+    )
+    for _ in range(1, 10):
+        atoms = ase.build.molecule("H2O")
+        io.append(atoms)
+    return io
+
+
+@pytest.fixture
+def trajectory_linear(tmp_path):
+    """Fixture to create a trajectory with linear storage."""
+    io = znh5md.IO(
+        tmp_path / "test_linear_step.h5",
+        store="linear",
+        export_timestep=True,
+        timestep=0.5,
+    )
+    for _ in range(1, 10):
+        atoms = ase.build.molecule("H2O")
+        io.append(atoms)
+    return io
+
+
+@pytest.mark.parametrize("trajectory", ["trajectory_time", "trajectory_linear"])
+def test_time_step(trajectory, request):
+    """Test that the time step is correctly stored and retrieved."""
+    io = request.getfixturevalue(trajectory)
+
+    assert io[0].info["timestep"] == 0
+    assert io[1].info["timestep"] == 0.5
+
+    timesteps = [atoms.info["timestep"] for atoms in io[:]]
+    assert timesteps == list(np.arange(0, 9) * 0.5)
+
+    timesteps = [atoms.info["timestep"] for atoms in io[::2]]
+    assert timesteps == list(np.arange(0, 9) * 0.5)[::2]
+
+    timesteps = [atoms.info["timestep"] for atoms in io[1:3]]
+    assert timesteps == [0.5, 1.0]
+
+    timesteps = [atoms.info["timestep"] for atoms in io[[2, 6, 7]]]
+    assert timesteps == list(np.arange(0, 9)[[2, 6, 7]] * 0.5)
+
+    assert io.timestep == 0.5
+
 
 # def test_h5md_time(tmp_path):
 #     io = znh5md.IO(tmp_path / "test_time_step.h5", store="time")

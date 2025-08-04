@@ -217,6 +217,11 @@ def getitem(
         if f"/observables/{self.particles_group}" in f:
             observables = f[f"/observables/{self.particles_group}"]
             process_observables(self, frames, observables, index)
+
+        # Add timestep information if export_timestep is True
+        if self.export_timestep:
+            add_timestep_info(self, frames, particles, index)
+
     return list(frames) if not is_single_item else frames[0]
 
 
@@ -420,3 +425,66 @@ def process_observables(self: "IO", frames: Frames, observables, index) -> None:
             )
         except Exception as err:
             raise ValueError(f"Error processing group '{grp_name}'") from err
+
+
+def add_timestep_info(self: "IO", frames: Frames, particles, index) -> None:
+    """
+    Add timestep information to atoms.info when export_timestep is True.
+
+    Parameters
+    ----------
+    self : IO
+        The IO object containing file information and settings.
+    frames : Frames
+        The frames to update with timestep information.
+    particles : h5py.Group
+        The particles group from the HDF5 file.
+    index : int | slice | list[int] | np.ndarray
+        Indices specifying the frames to retrieve.
+    """
+    # Try to find timestep information from the species group (always present)
+    timestep_fs = None
+
+    # Read timestep from the species group
+    if "species" in particles and "time" in particles["species"]:
+        time_data = particles["species"]["time"]
+        if time_data.shape == ():  # Single scalar value
+            # This is "linear" storage mode - time per step
+            timestep_fs = float(time_data[()])
+        elif len(time_data) > 1:
+            # This is "time" storage mode - array of times
+            # Calculate timestep from the difference
+            time_array = time_data[:]
+            timestep_fs = (
+                float(time_array[1] - time_array[0])
+                if len(time_array) > 1
+                else float(time_array[0])
+            )
+
+    # If no timestep found, use the default from IO instance
+    if timestep_fs is None:
+        timestep_fs = self.timestep
+
+    # Calculate timestep for each requested frame and add to frames.info
+    timestep_values = []
+
+    # Get the total dataset length for slice conversion
+    total_length = len(particles["species"]["value"])
+
+    # Handle different index types
+    if isinstance(index, slice):
+        # Convert slice to list of indices based on total dataset length
+        start, stop, step = index.indices(total_length)
+        actual_indices = list(range(start, stop, step))
+    elif isinstance(index, (list, np.ndarray)):
+        actual_indices = list(index)
+    else:
+        actual_indices = [index]
+
+    for frame_idx in actual_indices:
+        # Calculate the timestep for this specific frame (in femtoseconds from start)
+        frame_timestep = frame_idx * timestep_fs
+        timestep_values.append(frame_timestep)
+
+    # Add timestep to frames.info dictionary
+    frames.info["timestep"] = timestep_values

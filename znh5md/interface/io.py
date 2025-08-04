@@ -86,6 +86,10 @@ class IO(MutableSequence):
     mask : list[int] | slice | None, optional
         Mask to apply when reading data, e.g., to select specific atoms.
         Not supported with `variable_shape=True`. Defaults to None.
+    export_timestep : bool, optional
+        Whether to save the timestep into the atoms.info object when reading.
+        The timestep represents the step of the atoms object in femtoseconds from the start.
+        Defaults to False.
 
     Raises
     ------
@@ -142,6 +146,7 @@ class IO(MutableSequence):
     variable_shape: bool = True
     include: list[str] | None = None
     mask: list[int] | slice | None = None
+    export_timestep: bool = False
 
     _store_ase_origin: bool = True  # for testing purposes only
 
@@ -163,6 +168,7 @@ class IO(MutableSequence):
             self.filename = pathlib.Path(self.filename)
         self._set_particle_group()
         self._read_author_creator()
+        self._read_timestep()
         if self.include is not None:
             if "position" not in self.include:
                 raise ValueError("'position' must be in keys")
@@ -201,6 +207,23 @@ class IO(MutableSequence):
                 self.author_email = f["h5md"]["author"].attrs["email"]
                 self.creator = f["h5md"]["creator"].attrs["name"]
                 self.creator_version = f["h5md"]["creator"].attrs["version"]
+
+    def _read_timestep(self):
+        """Read timestep from h5 file if available as a single scalar value."""
+        with contextlib.suppress(FileNotFoundError, KeyError, OSError):
+            with open_file(
+                self.filename, self.file_handle, self.file_factory, mode="r"
+            ) as f:
+                if self.particles_group and f"particles/{self.particles_group}" in f:
+                    particles = f[f"particles/{self.particles_group}"]
+
+                    # Read timestep from the species group (always present)
+                    if "species" in particles and "time" in particles["species"]:
+                        time_data = particles["species"]["time"]
+                        # Only use if it's a single scalar value (linear storage mode)
+                        if time_data.shape == ():
+                            self.timestep = float(time_data[()])
+                            return
 
     def create_file(self):
         with open_file(
